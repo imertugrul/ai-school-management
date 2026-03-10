@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Get all tests created by this teacher
     const tests = await prisma.test.findMany({
       where: {
-        teacherId: user.id
+        createdById: user.id
       },
       include: {
         questions: true,
