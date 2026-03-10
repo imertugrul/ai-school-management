@@ -1,0 +1,19 @@
+
+> ai-grading-system@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+   - Environments: .env
+
+ ⚠ Invalid next.config.js options detected: 
+ ⚠     Expected object, received boolean at "experimental.serverActions"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ⚠ Server Actions are available by default now, `experimental.serverActions` option can be safely removed.
+ ✓ Ready in 1856ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 4.8s (558 modules)
+ ✓ Compiled in 88ms (288 modules)
+ ✓ Compiled /api/auth/[...nextauth] in 323ms (512 modules)
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."name", "public"."User"."role"::text, "public"."User"."passwordHash", "public"."User"."schoolId", "public"."User"."createdAt", "public"."User"."updatedAt" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ ✓ Compiled /teacher/dashboard in 136ms (792 modules)

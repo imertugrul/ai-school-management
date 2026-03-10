@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Submission" ADD COLUMN     "currentQuestionIndex" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "lastActiveAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "suspiciousActivity" JSONB,
+ADD COLUMN     "tabSwitchCount" INTEGER NOT NULL DEFAULT 0;
