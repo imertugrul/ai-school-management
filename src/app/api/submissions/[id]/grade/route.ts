@@ -75,7 +75,7 @@ export async function POST(
           content: question.content,
           points: question.points,
           options: question.options,
-          correctAnswer: question.correctAnswer,
+          correctAnswer: question.correctAnswer || undefined,
           rubric: question.rubric
         },
         answer.response
