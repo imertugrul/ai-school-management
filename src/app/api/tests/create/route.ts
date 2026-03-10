@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         title,
         subject: subject || null,
         description: description || null,
-        teacherId: user.id,
+        createdById: user.id,
         isPublished: true,
         isActive: isActive || false,
         startDate: startDate ? new Date(startDate) : null,
