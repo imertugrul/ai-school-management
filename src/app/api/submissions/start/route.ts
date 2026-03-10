@@ -16,53 +16,41 @@ export async function POST(request: NextRequest) {
       where: { email: session.user.email! }
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || user.role !== 'STUDENT') {
+      return NextResponse.json({ error: 'Only students can start tests' }, { status: 403 })
     }
 
-    // Mevcut submission var mı kontrol et
+    // Check if submission already exists
     let submission = await prisma.submission.findUnique({
       where: {
-        testId_studentId: {
-          testId,
-          studentId: user.id
+        studentId_testId: {
+          studentId: user.id,
+          testId
         }
-      },
-      include: {
-        answers: true
       }
     })
 
-    // Yoksa yeni oluştur
+    // If submission doesn't exist, create it
     if (!submission) {
       submission = await prisma.submission.create({
         data: {
           testId,
           studentId: user.id,
           status: 'IN_PROGRESS',
-          currentQuestionIndex: 0,
-          tabSwitchCount: 0,
-          lastActiveAt: new Date(),
-        },
-        include: {
-          answers: true
+          currentQuestionIndex: 0
         }
-      })
-    } else {
-      // Varsa lastActiveAt'i güncelle
-      submission = await prisma.submission.update({
-        where: { id: submission.id },
-        data: { lastActiveAt: new Date() },
-        include: { answers: true }
       })
     }
 
     return NextResponse.json({
       success: true,
-      submission
+      submissionId: submission.id
     })
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Start submission error:', error)
-    return NextResponse.json({ error: 'Failed to start submission' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to start submission' 
+    }, { status: 500 })
   }
 }
