@@ -50,11 +50,11 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/auth/complete-signup' })
+    signIn('google', { callbackUrl: '/teacher/dashboard' })
   }
 
   const handleMicrosoftLogin = () => {
-    signIn('azure-ad', { callbackUrl: '/auth/complete-signup' })
+    signIn('azure-ad', { callbackUrl: '/teacher/dashboard' })
   }
 
   return (

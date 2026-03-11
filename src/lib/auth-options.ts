@@ -81,6 +81,11 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // After successful login, redirect based on URL or default to teacher dashboard
+      if (url.startsWith(baseUrl)) return url
+      return baseUrl + '/teacher/dashboard'
     }
   },
   pages: {
