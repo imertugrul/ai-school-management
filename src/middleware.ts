@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Allow ADMIN to access teacher routes
+    // Only allow TEACHER and ADMIN
     if (token.role !== 'TEACHER' && token.role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/student/dashboard', request.url))
     }
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // If not a student, redirect to appropriate dashboard
+    // Only allow STUDENT
     if (token.role !== 'STUDENT') {
       if (token.role === 'TEACHER') {
         return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
