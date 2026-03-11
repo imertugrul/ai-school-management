@@ -68,17 +68,40 @@ export const authOptions: NextAuthOptions = {
       }
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // For credentials login
       if (user) {
         token.role = user.role
         token.id = user.id
       }
+      
+      // For OAuth, always fetch fresh role from database
+      if (account?.provider === 'google' || !token.role) {
+        if (token.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            select: { role: true, id: true }
+          })
+          if (dbUser) {
+            token.role = dbUser.role
+            token.id = dbUser.id
+          }
+        }
+      }
+      
       return token
     },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string
+        session.user.id = token.id as string
+      }
+      return session
+    },
     async redirect({ url, baseUrl }) {
-      // After successful login, redirect based on URL or default to teacher dashboard
+      // After successful login, redirect based on URL or default to home
       if (url.startsWith(baseUrl)) return url
-      return baseUrl + '/teacher/dashboard'
+      return baseUrl
     }
   },
   pages: {
