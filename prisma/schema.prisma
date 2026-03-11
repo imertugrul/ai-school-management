@@ -35,33 +35,36 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  password      String?
-  emailVerified DateTime?
-  image         String?
-  role          UserRole  @default(STUDENT)
-  classId       String?
-  
-  accounts      Account[]
-  sessions      Session[]
-  
-  class         Class?    @relation("ClassStudents", fields: [classId], references: [id])
-  school        School?   @relation(fields: [schoolId], references: [id])
-  schoolId      String?
-  
-  testsCreated  Test[]    @relation("CreatedTests")
-  submissions   Submission[]
-  testAssignments TestAssignment[]
-  scannedTests  ScannedTest[]
-  
-  attendanceRecords     AttendanceRecord[] @relation("StudentAttendance")
-  markedAttendances     AttendanceRecord[] @relation("MarkedByTeacher")
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String?
+  emailVerified     DateTime?
+  image             String?
+  role              UserRole  @default(STUDENT)
+  classId           String?
+
+  accounts          Account[]
+  sessions          Session[]
+
+  class             Class?    @relation("ClassStudents", fields: [classId], references: [id])
+  school            School?   @relation(fields: [schoolId], references: [id])
+  schoolId          String?
+
+  testsCreated      Test[]    @relation("CreatedTests")
+  submissions       Submission[]
+  testAssignments   TestAssignment[]
+  scannedTests      ScannedTest[]
+
+  attendanceRecords AttendanceRecord[] @relation("StudentAttendance")
+  markedAttendances AttendanceRecord[] @relation("MarkedByTeacher")
   attendanceNotifications AttendanceNotification[] @relation("StudentNotifications")
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  teacherSchedules  Schedule[] @relation("TeacherSchedules")
+  studentEnrollments Enrollment[] @relation("StudentEnrollments")
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model VerificationToken {
@@ -82,29 +85,31 @@ enum UserRole {
 model School {
   id        String   @id @default(cuid())
   name      String
-  slug      String   @unique
+  address   String?
+  
   users     User[]
   classes   Class[]
+  courses   Course[]  // BU SATIRI EKLE
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Class {
-  id        String   @id @default(cuid())
-  name      String
-  grade     Int?
-  section   String?
+  id          String   @id @default(cuid())
+  name        String
+  grade       String?
+  section     String?
   
-  schoolId  String?
-  school    School?  @relation(fields: [schoolId], references: [id])
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
-  students  User[]   @relation("ClassStudents")
+  students    User[]   @relation("ClassStudents")
   attendanceRecords AttendanceRecord[]
+  schedules   Schedule[]  // BU SATIRI EKLE
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@unique([schoolId, name])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Test {
@@ -305,4 +310,74 @@ enum NotificationType {
   SMS
   EMAIL
   PUSH
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "MATH101"
+  name        String   // e.g., "Introduction to Calculus"
+  description String?
+  credits     Int      @default(3)
+  grade       String?  // e.g., "9", "10", "11", "12"
+  
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  schedules   Schedule[]
+  enrollments Enrollment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  teacherId   String
+  teacher     User     @relation("TeacherSchedules", fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  classId     String?
+  class       Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  
+  dayOfWeek   Int      // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+  startTime   String   // e.g., "09:00"
+  endTime     String   // e.g., "10:00"
+  room        String?  // e.g., "Room 101"
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([courseId, dayOfWeek, startTime])
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  studentId   String
+  student     User     @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  enrolledAt  DateTime @default(now())
+  status      EnrollmentStatus @default(ACTIVE)
+  
+  grade       Float?   // Final grade
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([courseId, studentId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  WITHDRAWN
 }

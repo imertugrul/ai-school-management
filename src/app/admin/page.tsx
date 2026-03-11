@@ -53,6 +53,17 @@ export default function AdminDashboard() {
             </p>
           </button>
 
+          <button
+            onClick={() => router.push('/admin/courses')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📚</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Manage Courses</h3>
+            <p className="text-gray-600 text-sm">
+              Create and manage school courses
+            </p>
+          </button>
+
           {/* CSV Import */}
           <button
             onClick={() => router.push('/admin/import')}
