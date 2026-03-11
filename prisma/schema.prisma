@@ -62,6 +62,8 @@ model User {
 
   teacherSchedules  Schedule[] @relation("TeacherSchedules")
   studentEnrollments Enrollment[] @relation("StudentEnrollments")
+  teacherCourseAssignments CourseAssignment[] @relation("TeacherCourseAssignments")
+
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -89,7 +91,7 @@ model School {
   
   users     User[]
   classes   Class[]
-  courses   Course[]  // BU SATIRI EKLE
+  courses   Course[]  
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,7 +108,9 @@ model Class {
   
   students    User[]   @relation("ClassStudents")
   attendanceRecords AttendanceRecord[]
-  schedules   Schedule[]  // BU SATIRI EKLE
+  schedules   Schedule[]  
+  courseAssignments CourseAssignment[]  
+
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -325,6 +329,8 @@ model Course {
   
   schedules   Schedule[]
   enrollments Enrollment[]
+  assignments CourseAssignment[]  
+
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -373,6 +379,29 @@ model Enrollment {
   updatedAt   DateTime @updatedAt
   
   @@unique([courseId, studentId])
+}
+model CourseAssignment {
+  id            String   @id @default(cuid())
+  
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  teacherId     String
+  teacher       User     @relation("TeacherCourseAssignments", fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  classId       String?
+  class         Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  
+  weeklyHours   Int      @default(4)  // How many hours per week
+  
+  preferences   Json?    // Preferred days/times
+  
+  isScheduled   Boolean  @default(false)  // Has AI generated schedule?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([courseId, teacherId, classId])
 }
 
 enum EnrollmentStatus {

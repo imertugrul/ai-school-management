@@ -65,6 +65,17 @@ export default function AdminDashboard() {
           </button>
 
           <button
+            onClick={() => router.push('/admin/course-assignments')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-purple-50 border-2 border-purple-200"
+          >
+            <div className="text-4xl mb-3">🤖</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Course Assignments (AI)</h3>
+            <p className="text-gray-600 text-sm">
+              Assign courses and let AI generate optimal schedules
+            </p>
+          </button>
+
+          <button
             onClick={() => router.push('/admin/schedules')}
             className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
@@ -74,6 +85,7 @@ export default function AdminDashboard() {
               Create and manage class timetables
             </p>
           </button>
+          
 
           {/* CSV Import */}
           <button
