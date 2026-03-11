@@ -52,15 +52,19 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!existingUser) {
+          // Yeni kullanıcı - varsayılan olarak STUDENT
+          // Admin tarafından CSV import ile veya manuel olarak düzenlenebilir
           await prisma.user.create({
             data: {
               email: user.email!,
               name: user.name || '',
               image: user.image,
-              role: 'STUDENT'
+              role: 'STUDENT' // Default role
             }
           })
         }
+        // Eğer kullanıcı zaten varsa (CSV ile import edilmişse),
+        // mevcut role'ü kullan - değiştirme!
       }
       return true
     },
