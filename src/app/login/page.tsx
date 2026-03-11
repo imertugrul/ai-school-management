@@ -1,16 +1,42 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const checkSession = async () => {
+      if (status === 'loading') return
+      
+      if (session) {
+        try {
+          const response = await fetch('/api/auth/me')
+          const data = await response.json()
+          
+          if (data.user?.role === 'ADMIN') {
+            router.push('/admin')
+          } else if (data.user?.role === 'TEACHER') {
+            router.push('/teacher/dashboard')
+          } else {
+            router.push('/student/dashboard')
+          }
+        } catch (error) {
+          console.error('Error checking session:', error)
+        }
+      }
+    }
+
+    checkSession()
+  }, [session, status, router])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +81,18 @@ export default function LoginPage() {
 
   const handleMicrosoftLogin = () => {
     signIn('azure-ad')
+  }
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
