@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const newClass = await prisma.class.create({
       data: {
         name,
-        grade: parseInt(grade),
+        grade: grade,
         section,
       }
     })
