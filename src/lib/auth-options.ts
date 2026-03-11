@@ -75,13 +75,6 @@ export const authOptions: NextAuthOptions = {
       }
       return token
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.role = token.role as string
-        session.user.id = token.id as string
-      }
-      return session
-    },
     async redirect({ url, baseUrl }) {
       // After successful login, redirect based on URL or default to teacher dashboard
       if (url.startsWith(baseUrl)) return url
