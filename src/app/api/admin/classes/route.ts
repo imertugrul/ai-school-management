@@ -1,71 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
-// GET - Tüm sınıfları listele
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! }
+    })
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
     const classes = await prisma.class.findMany({
       include: {
+        school: true,
+        students: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
         _count: {
           select: {
             students: true
           }
         }
       },
-      orderBy: [
-        { grade: 'asc' },
-        { section: 'asc' }
-      ]
+      orderBy: {
+        name: 'asc'
+      }
     })
 
     return NextResponse.json({
       success: true,
       classes
     })
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Get classes error:', error)
-    return NextResponse.json({ error: 'Failed to get classes' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to get classes' 
+    }, { status: 500 })
   }
 }
 
-// POST - Yeni sınıf oluştur
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { grade, section } = await request.json()
-
-    if (!grade || !section) {
-      return NextResponse.json({ error: 'Grade and section required' }, { status: 400 })
-    }
-
-    const name = `${grade}-${section}`
-
-    // Check if already exists
-    const existing = await prisma.class.findFirst({
-      where: { name }
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! }
     })
 
-    if (existing) {
-      return NextResponse.json({ error: 'Class already exists' }, { status: 400 })
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
+
+    if (!user.schoolId) {
+      return NextResponse.json({ error: 'School not found' }, { status: 400 })
+    }
+
+    const { name, grade, section } = await request.json()
 
     const newClass = await prisma.class.create({
       data: {
         name,
         grade: grade,
         section,
+        schoolId: user.schoolId
       }
     })
 
@@ -73,8 +88,11 @@ export async function POST(request: NextRequest) {
       success: true,
       class: newClass
     })
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Create class error:', error)
-    return NextResponse.json({ error: 'Failed to create class' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to create class' 
+    }, { status: 500 })
   }
 }
