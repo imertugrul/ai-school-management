@@ -1,65 +1,66 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminImportPage() {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
-  const [userType, setUserType] = useState<'STUDENT' | 'TEACHER'>('STUDENT')
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<any>(null)
 
   const downloadTemplate = () => {
-    const csvContent = userType === 'STUDENT' 
-      ? 'name,email,password,className\nJohn Doe,john@example.com,password123,11-A\nJane Smith,jane@example.com,password123,11-B'
-      : 'name,email,password\nAlice Teacher,alice@example.com,password123\nBob Instructor,bob@example.com,password123'
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `${userType.toLowerCase()}_template.csv`
-    link.click()
+    const template = 'name,email,password,role,className\nAli Yilmaz,ali@school.com,pass123,STUDENT,9A\nAyse Demir,ayse@school.com,pass123,STUDENT,9A\nMehmet Oz,mehmet@school.com,pass123,TEACHER,'
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'import-template.csv'
+    a.click()
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
-      setResult(null)
-    }
+  const parseCSV = (text: string) => {
+    const lines = text.trim().split('\n')
+    const headers = lines[0].split(',').map(h => h.trim())
+    
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim())
+      const user: any = {}
+      headers.forEach((header, index) => {
+        user[header] = values[index] || ''
+      })
+      return user
+    }).filter(user => user.name && user.email) // Filter out empty rows
   }
 
-  const handleImport = async () => {
-    if (!file) {
-      alert('Please select a file!')
-      return
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!file) return
 
     setImporting(true)
     setResult(null)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('userType', userType)
+      const text = await file.text()
+      const users = parseCSV(text)
 
       const response = await fetch('/api/admin/import', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users })
       })
 
       const data = await response.json()
-
-      if (data.success) {
-        setResult(data)
-        setFile(null)
-        alert(`Success! ${data.imported} users imported.`)
-      } else {
-        alert('Error: ' + data.error)
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('An error occurred!')
+      setResult(data)
+    } catch (error: any) {
+      setResult({ 
+        success: false, 
+        results: { 
+          success: 0, 
+          failed: 0, 
+          errors: [error.message || 'Failed to import'] 
+        } 
+      })
     } finally {
       setImporting(false)
     }
@@ -67,135 +68,88 @@ export default function AdminImportPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">Bulk Import (CSV)</h1>
-            <button 
-              onClick={() => router.push('/admin')}
-              className="btn-secondary"
-            >
-              ← Admin Panel
-            </button>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Import Users</h1>
+            <p className="text-gray-600 mt-1">Bulk import students and teachers via CSV</p>
           </div>
-        </div>
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* User Type Selection */}
-        <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">1. Select User Type</h2>
-          <div className="flex gap-4">
-            <button
-              onClick={() => setUserType('STUDENT')}
-              className={`flex-1 p-4 border-2 rounded-lg transition-all ${
-                userType === 'STUDENT'
-                  ? 'border-primary-600 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="text-3xl mb-2">👨‍🎓</div>
-              <div className="font-semibold">Student</div>
-            </button>
-            <button
-              onClick={() => setUserType('TEACHER')}
-              className={`flex-1 p-4 border-2 rounded-lg transition-all ${
-                userType === 'TEACHER'
-                  ? 'border-primary-600 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="text-3xl mb-2">👨‍🏫</div>
-              <div className="font-semibold">Teacher</div>
-            </button>
-          </div>
-        </div>
-
-        {/* Download Template */}
-        <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">2. Download CSV Template</h2>
-          <p className="text-gray-600 mb-4">
-            {userType === 'STUDENT' 
-              ? 'Student template: name, email, password, className (e.g., 11-A)'
-              : 'Teacher template: name, email, password'
-            }
-          </p>
-          <button onClick={downloadTemplate} className="btn-secondary">
-            📥 Download {userType === 'STUDENT' ? 'Student' : 'Teacher'} Template
+          <button
+            onClick={() => router.push('/admin')}
+            className="btn-secondary"
+          >
+            ← Back
           </button>
         </div>
 
-        {/* Upload File */}
         <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">3. Upload CSV File</h2>
-          
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="hidden"
-              id="csv-upload"
-            />
-            <label htmlFor="csv-upload" className="cursor-pointer">
-              <div className="text-4xl mb-4">📄</div>
-              {file ? (
-                <div>
-                  <p className="text-green-600 font-semibold mb-2">Selected file:</p>
-                  <p className="text-gray-700">{file.name}</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-gray-600 mb-2">Click to select CSV file</p>
-                  <p className="text-sm text-gray-500">or drag and drop</p>
-                </div>
-              )}
-            </label>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">CSV Format</h2>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Required columns:</strong> name, email, password, role, className
+            </p>
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Role values:</strong> STUDENT, TEACHER, ADMIN
+            </p>
+            <p className="text-sm text-blue-800">
+              <strong>className:</strong> Must match existing class (e.g., 9A, 10B) - leave empty for teachers
+            </p>
           </div>
-
-          {file && (
-            <button
-              onClick={handleImport}
-              disabled={importing}
-              className="btn-primary w-full mt-4"
-            >
-              {importing ? 'Importing...' : `Import ${userType === 'STUDENT' ? 'Students' : 'Teachers'}`}
-            </button>
-          )}
+          <button
+            onClick={downloadTemplate}
+            className="btn-secondary text-sm"
+          >
+            📄 Download Template CSV
+          </button>
         </div>
 
-        {/* Result */}
-        {result && (
-          <div className="card bg-green-50 border border-green-200">
-            <h2 className="text-xl font-bold text-green-900 mb-4">✅ Import Complete!</h2>
-            <div className="space-y-2 text-green-800">
-              <p>✅ Success: <span className="font-bold">{result.imported}</span> users</p>
-              {result.errors && result.errors.length > 0 && (
-                <div>
-                  <p className="text-red-600">❌ Errors: {result.errors.length} rows</p>
-                  <div className="mt-2 text-sm">
-                    {result.errors.slice(0, 5).map((err: any, i: number) => (
-                      <p key={i} className="text-red-600">Row {err.row}: {err.error}</p>
+        <div className="card">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Upload CSV File</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select CSV File
+              </label>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="input-field"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={!file || importing}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {importing ? 'Importing...' : 'Import Users'}
+            </button>
+          </form>
+
+          {result && (
+            <div className={`mt-6 border rounded-lg p-4 ${
+              result.success && result.results.failed === 0
+                ? 'bg-green-50 border-green-200'
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <h3 className="font-semibold mb-2">Import Results:</h3>
+              <p className="text-sm">✅ Success: {result.results.success}</p>
+              <p className="text-sm">❌ Failed: {result.results.failed}</p>
+              
+              {result.results.errors && result.results.errors.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-semibold mb-1">Errors:</p>
+                  <ul className="text-xs list-disc list-inside space-y-1">
+                    {result.results.errors.map((err: string, i: number) => (
+                      <li key={i}>{err}</li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Important Notes */}
-        <div className="card bg-blue-50 border border-blue-200">
-          <h3 className="font-semibold text-blue-900 mb-2">ℹ️ Important Notes:</h3>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>CSV file must be in UTF-8 format</li>
-            <li>First row should be the header</li>
-            <li>Email addresses must be unique</li>
-            {userType === 'STUDENT' && (
-              <li>className column must match an existing class name (e.g., 11-A)</li>
-            )}
-            <li>Passwords must be at least 6 characters</li>
-          </ul>
+          )}
         </div>
       </div>
     </div>
