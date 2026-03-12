@@ -87,6 +87,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
     }
 
+    // Check if class already exists
+    const existingClass = await prisma.class.findFirst({
+      where: {
+        name,
+        schoolId: user.schoolId
+      }
+    })
+
+    if (existingClass) {
+      return NextResponse.json({ 
+        error: `Class "${name}" already exists!` 
+      }, { status: 400 })
+    }
+
     const newClass = await prisma.class.create({
       data: {
         name,

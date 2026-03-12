@@ -246,34 +246,100 @@ export default function AdminClassesPage() {
           {classes.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No classes created yet</p>
           ) : (
-            <div className="grid md:grid-cols-3 gap-4">
-              {classes.map((cls) => (
-                <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(cls)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(cls.id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
+            <>
+              {/* Group by grade */}
+              {[9, 10, 11, 12].map(gradeLevel => {
+                const gradeClasses = classes
+                  .filter(cls => cls.grade === String(gradeLevel))
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                
+                if (gradeClasses.length === 0) return null
+
+                return (
+                  <div key={gradeLevel} className="mb-8">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full">
+                        Grade {gradeLevel}
+                      </span>
+                      <span className="text-sm text-gray-500">({gradeClasses.length} classes)</span>
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {gradeClasses.map((cls) => (
+                        <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(cls)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(cls.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                          {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
+                          <p className="text-sm text-gray-600">
+                            👥 {cls._count.students} students
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  {cls.grade && <p className="text-sm text-gray-600">Grade: {cls.grade}</p>}
-                  {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
-                  <p className="text-sm text-gray-600">
-                    👥 {cls._count.students} students
-                  </p>
-                </div>
-              ))}
-            </div>
+                )
+              })}
+
+              {/* Classes without grade */}
+              {(() => {
+                const noGradeClasses = classes
+                  .filter(cls => !cls.grade)
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                
+                if (noGradeClasses.length === 0) return null
+
+                return (
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
+                        Other Classes
+                      </span>
+                      <span className="text-sm text-gray-500">({noGradeClasses.length} classes)</span>
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {noGradeClasses.map((cls) => (
+                        <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(cls)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(cls.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            👥 {cls._count.students} students
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </>
           )}
         </div>
       </div>
