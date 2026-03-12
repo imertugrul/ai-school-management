@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 interface Student {
@@ -12,7 +11,6 @@ interface Student {
     id: string
     name: string
   } | null
-  createdAt: string
 }
 
 interface Class {
@@ -21,7 +19,6 @@ interface Class {
 }
 
 export default function AdminStudentsPage() {
-  const { data: session } = useSession()
   const router = useRouter()
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<Class[]>([])
@@ -35,16 +32,19 @@ export default function AdminStudentsPage() {
 
   const fetchData = async () => {
     try {
-      const studentsRes = await fetch('/api/admin/students')
+      const [studentsRes, classesRes] = await Promise.all([
+        fetch('/api/admin/students'),
+        fetch('/api/admin/classes')
+      ])
+
       const studentsData = await studentsRes.json()
-      
-      const classesRes = await fetch('/api/admin/classes')
       const classesData = await classesRes.json()
-      
+
       if (studentsData.success) setStudents(studentsData.students)
       if (classesData.success) setClasses(classesData.classes)
+
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
@@ -52,115 +52,134 @@ export default function AdminStudentsPage() {
 
   const handleAssignClass = async (studentId: string, classId: string) => {
     try {
-      const response = await fetch(`/api/admin/students/${studentId}/assign-class`, {
+      const response = await fetch('/api/admin/students/assign-class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classId }),
+        body: JSON.stringify({ studentId, classId: classId || null })
       })
 
       if (response.ok) {
-        alert('Student assigned to class!')
         setEditingStudent(null)
         fetchData()
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error assigning class:', error)
     }
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading students...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">Student Management</h1>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => router.push('/admin/classes')}
-                className="btn-secondary"
-              >
-                Classes
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Student Management</h1>
+            <p className="text-gray-600 mt-1">Assign students to classes</p>
           </div>
+          <button
+            onClick={() => router.push('/admin')}
+            className="btn-secondary"
+          >
+            ← Back
+          </button>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="card">
-          <h2 className="text-xl font-bold mb-4">All Students ({students.length})</h2>
-
+          <h2 className="text-xl font-bold text-gray-900 mb-4">All Students ({students.length})</h2>
+          
           {students.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No students yet</p>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👨‍🎓</div>
+              <p className="text-gray-500 mb-4">No students yet</p>
+              <p className="text-gray-400 text-sm">Import students via CSV</p>
+            </div>
           ) : (
-            <div className="space-y-2">
-              {students.map((student) => (
-                <div key={student.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{student.name}</h3>
-                      <p className="text-sm text-gray-600">{student.email}</p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {editingStudent === student.id ? (
-                        <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {students.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{student.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {student.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {editingStudent === student.id ? (
                           <select
-                            className="input-field"
+                            className="input-field text-sm"
                             value={selectedClass}
                             onChange={(e) => setSelectedClass(e.target.value)}
+                            autoFocus
                           >
-                            <option value="">Select class...</option>
-                            {classes.map((cls) => (
+                            <option value="">No class</option>
+                            {classes.map(cls => (
                               <option key={cls.id} value={cls.id}>
                                 {cls.name}
                               </option>
                             ))}
                           </select>
-                          <button
-                            onClick={() => handleAssignClass(student.id, selectedClass)}
-                            className="btn-primary text-sm"
-                            disabled={!selectedClass}
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingStudent(null)}
-                            className="btn-secondary text-sm"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {student.class ? (
-                            <span className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">
-                              {student.class.name}
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                              No class assigned
-                            </span>
-                          )}
+                        ) : (
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            student.class 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {student.class?.name || 'Not assigned'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {editingStudent === student.id ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAssignClass(student.id, selectedClass)}
+                              className="text-green-600 hover:text-green-800 font-medium"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingStudent(null)}
+                              className="text-gray-600 hover:text-gray-800 font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
                           <button
                             onClick={() => {
                               setEditingStudent(student.id)
                               setSelectedClass(student.class?.id || '')
                             }}
-                            className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+                            className="text-primary-600 hover:text-primary-800 font-medium"
                           >
-                            {student.class ? 'Change' : 'Assign Class'}
+                            Assign Class
                           </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

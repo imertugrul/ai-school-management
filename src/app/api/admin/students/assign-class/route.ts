@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -19,36 +19,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    const students = await prisma.user.findMany({
-      where: {
-        role: 'STUDENT',
-        schoolId: user.schoolId
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        class: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: {
-        name: 'asc'
+    const { studentId, classId } = await request.json()
+
+    if (!studentId) {
+      return NextResponse.json({ error: 'Student ID required' }, { status: 400 })
+    }
+
+    // Update student's class
+    await prisma.user.update({
+      where: { id: studentId },
+      data: {
+        classId: classId || null
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      students
-    })
+    return NextResponse.json({ success: true })
 
   } catch (error: any) {
-    console.error('Get students error:', error)
+    console.error('Assign class error:', error)
     return NextResponse.json({ 
-      error: 'Failed to get students' 
+      error: 'Failed to assign class' 
     }, { status: 500 })
   }
 }

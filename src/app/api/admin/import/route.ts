@@ -1,93 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const userType = formData.get('userType') as string
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! }
+    })
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    const text = await file.text()
-    const lines = text.split('\n').filter(line => line.trim())
-    
-    if (lines.length < 2) {
-      return NextResponse.json({ error: 'CSV file is empty or invalid' }, { status: 400 })
+    if (!user.schoolId) {
+      return NextResponse.json({ error: 'School not found' }, { status: 400 })
     }
 
-    const header = lines[0].split(',').map(h => h.trim())
-    const rows = lines.slice(1)
+    const { users } = await request.json()
 
-    let imported = 0
-    const errors: any[] = []
+    if (!Array.isArray(users) || users.length === 0) {
+      return NextResponse.json({ error: 'Invalid users data' }, { status: 400 })
+    }
 
-    for (let i = 0; i < rows.length; i++) {
-      const values = rows[i].split(',').map(v => v.trim())
-      const rowData: any = {}
-      
-      header.forEach((key, index) => {
-        rowData[key] = values[index] || ''
-      })
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[]
+    }
 
+    for (const userData of users) {
       try {
-        if (userType === 'STUDENT') {
-          // Find class by name
-          const studentClass = await prisma.class.findFirst({
-            where: { name: rowData.className }
-          })
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+          where: { email: userData.email }
+        })
 
-          if (!studentClass) {
-            errors.push({ row: i + 2, error: `Class "${rowData.className}" not found` })
-            continue
-          }
-
-          // Hash password
-          const hashedPassword = await hashPassword(rowData.password)
-
-          await prisma.user.create({
-            data: {
-              name: rowData.name,
-              email: rowData.email,
-              password: hashedPassword,
-              role: 'STUDENT',
-              classId: studentClass.id
-            }
-          })
-          imported++
-        } else if (userType === 'TEACHER') {
-          // Hash password
-          const hashedPassword = await hashPassword(rowData.password)
-
-          await prisma.user.create({
-            data: {
-              name: rowData.name,
-              email: rowData.email,
-              password: hashedPassword,
-              role: 'TEACHER'
-            }
-          })
-          imported++
+        if (existingUser) {
+          results.failed++
+          results.errors.push(`User ${userData.email} already exists`)
+          continue
         }
+
+        // Find class by name if className provided
+        let classId = null
+        if (userData.className) {
+          const foundClass = await prisma.class.findFirst({
+            where: {
+              name: userData.className,
+              schoolId: user.schoolId
+            }
+          })
+          
+          if (foundClass) {
+            classId = foundClass.id
+          } else {
+            results.errors.push(`Class ${userData.className} not found for user ${userData.email}`)
+          }
+        }
+
+        // Create user
+        const hashedPassword = userData.password 
+          ? await bcrypt.hash(userData.password, 10)
+          : null
+
+        await prisma.user.create({
+          data: {
+            email: userData.email,
+            name: userData.name,
+            password: hashedPassword,
+            role: userData.role || 'STUDENT',
+            schoolId: user.schoolId,
+            classId: classId
+          }
+        })
+
+        results.success++
       } catch (error: any) {
-        errors.push({ row: i + 2, error: error.message })
+        results.failed++
+        results.errors.push(`Failed to import ${userData.email}: ${error.message}`)
       }
     }
 
     return NextResponse.json({
       success: true,
-      imported,
-      errors
+      results
     })
 
   } catch (error: any) {
