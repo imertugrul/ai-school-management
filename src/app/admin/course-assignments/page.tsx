@@ -65,6 +65,10 @@ export default function CourseAssignmentsPage() {
   })
   const [error, setError] = useState('')
   
+  // Auto-Assign
+  const [autoAssigning, setAutoAssigning] = useState(false)
+  const [autoAssignResults, setAutoAssignResults] = useState<any>(null)
+  
   // AI Schedule Generation
   const [generatingFor, setGeneratingFor] = useState<string | null>(null)
   const [currentAssignment, setCurrentAssignment] = useState<Assignment | null>(null)
@@ -128,6 +132,30 @@ export default function CourseAssignmentsPage() {
     }
   }
 
+  const handleAutoAssign = async () => {
+    if (!confirm('This will automatically assign courses to teachers based on their subjects. Continue?')) return
+
+    setAutoAssigning(true)
+    setAutoAssignResults(null)
+
+    try {
+      const response = await fetch('/api/admin/auto-assign-courses', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setAutoAssignResults(data.results)
+        fetchData()
+      }
+    } catch (error) {
+      alert('Failed to auto-assign')
+    } finally {
+      setAutoAssigning(false)
+    }
+  }
+
   const handleGenerateSchedule = async (assignment: Assignment) => {
     setGeneratingFor(assignment.id)
     setCurrentAssignment(assignment)
@@ -169,7 +197,6 @@ export default function CourseAssignmentsPage() {
     if (!currentAssignment) return
 
     try {
-      // Create schedules for selected slots
       const promises = Array.from(selectedSlots).map(async (index) => {
         const slot = suggestedSlots[index]
         return fetch('/api/admin/schedules', {
@@ -189,7 +216,6 @@ export default function CourseAssignmentsPage() {
 
       await Promise.all(promises)
 
-      // Mark assignment as scheduled
       setShowSchedulePreview(false)
       setSuggestedSlots([])
       setSelectedSlots(new Set())
@@ -240,6 +266,13 @@ export default function CourseAssignmentsPage() {
               ← Back
             </button>
             <button
+              onClick={handleAutoAssign}
+              disabled={autoAssigning}
+              className="btn-secondary disabled:opacity-50"
+            >
+              {autoAssigning ? '🤖 Auto-Assigning...' : '🤖 Auto-Assign All'}
+            </button>
+            <button
               onClick={() => setShowForm(true)}
               className="btn-primary"
             >
@@ -247,6 +280,35 @@ export default function CourseAssignmentsPage() {
             </button>
           </div>
         </div>
+
+        {/* Auto-Assign Results */}
+        {autoAssignResults && (
+          <div className={`card mb-6 ${
+            autoAssignResults.success > 0 ? 'border-2 border-green-500' : 'border-2 border-yellow-500'
+          }`}>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">🤖 Auto-Assign Results</h2>
+            <div className="space-y-2">
+              <p className="text-sm">✅ Successfully assigned: {autoAssignResults.success}</p>
+              <p className="text-sm">⏭️ Skipped: {autoAssignResults.skipped}</p>
+              {autoAssignResults.errors.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-semibold mb-1">Errors:</p>
+                  <ul className="text-xs list-disc list-inside space-y-1">
+                    {autoAssignResults.errors.map((err: string, i: number) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setAutoAssignResults(null)}
+              className="btn-secondary text-sm mt-4"
+            >
+              Close
+            </button>
+          </div>
+        )}
 
         {/* Create Assignment Form */}
         {showForm && (
@@ -423,9 +485,18 @@ export default function CourseAssignmentsPage() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📚</div>
               <p className="text-gray-500 mb-4">No course assignments yet</p>
-              <button onClick={() => setShowForm(true)} className="btn-primary">
-                Create First Assignment
-              </button>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={handleAutoAssign}
+                  disabled={autoAssigning}
+                  className="btn-secondary disabled:opacity-50"
+                >
+                  🤖 Auto-Assign All
+                </button>
+                <button onClick={() => setShowForm(true)} className="btn-primary">
+                  Create First Assignment
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
