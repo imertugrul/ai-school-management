@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     }
 
     const classes = await prisma.class.findMany({
+      where: {
+        schoolId: user.schoolId
+      },
       include: {
         school: true,
         students: {
@@ -73,13 +76,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'School not found' }, { status: 400 })
     }
 
-    const { name, grade, section } = await request.json()
+    const body = await request.json()
+    const { name, grade, section } = body
+
+    if (!name) {
+      return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
+    }
 
     const newClass = await prisma.class.create({
       data: {
         name,
-        grade: grade,
-        section,
+        grade: grade || null,
+        section: section || null,
         schoolId: user.schoolId
       }
     })
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Create class error:', error)
     return NextResponse.json({ 
-      error: 'Failed to create class' 
+      error: error.message || 'Failed to create class' 
     }, { status: 500 })
   }
 }
