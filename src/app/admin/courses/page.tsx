@@ -121,13 +121,13 @@ export default function AdminCoursesPage() {
   }
 
   const downloadTemplate = () => {
-    const template = 'code,name,description,credits,grade\nMATH101,Introduction to Calculus,Basic calculus concepts,3,10\nPHYS201,Physics I,Mechanics and thermodynamics,4,11\nCHEM101,Chemistry Basics,Introduction to chemistry,3,9'
-    const blob = new Blob([template], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'courses-template.csv'
-    a.click()
+  const template = 'code,name,description,credits,grade,weeklyHours\nMATH101,Introduction to Calculus,Basic calculus concepts,3,10,4\nPHYS201,Physics I,Mechanics and thermodynamics,4,11,3\nCHEM101,Chemistry Basics,Introduction to chemistry,3,9,4'
+  const blob = new Blob([template], { type: 'text/csv' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'courses-template.csv'
+  a.click()
   }
 
   if (loading) {

@@ -330,6 +330,8 @@ model Course {
   description String?
   credits     Int      @default(3)
   grade       String?  // e.g., "9", "10", "11", "12"
+  weeklyHours Int      @default(4)  // BU SATIRI EKLE
+
   
   schoolId    String
   school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)

@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
             description: course.description || null,
             credits: parseInt(course.credits) || 3,
             grade: course.grade || null,
+            weeklyHours: parseInt(course.weeklyHours) || 4,  // BU SATIRI EKLE
             schoolId: user.schoolId
           }
         })

@@ -26,6 +26,7 @@ interface Course {
   id: string
   code: string
   name: string
+  weeklyHours: number
 }
 
 interface Teacher {
@@ -266,12 +267,20 @@ export default function CourseAssignmentsPage() {
                     required
                     className="input-field"
                     value={formData.courseId}
-                    onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+                    onChange={(e) => {
+                      const courseId = e.target.value
+                      const selectedCourse = courses.find(c => c.id === courseId)
+                      setFormData({ 
+                        ...formData, 
+                        courseId,
+                        weeklyHours: selectedCourse?.weeklyHours ? String(selectedCourse.weeklyHours) : '4'
+                      })
+                    }}
                   >
                     <option value="">Select course</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
-                        {course.code} - {course.name}
+                        {course.code} - {course.name} ({course.weeklyHours}h/week)
                       </option>
                     ))}
                   </select>
@@ -329,6 +338,7 @@ export default function CourseAssignmentsPage() {
                     value={formData.weeklyHours}
                     onChange={(e) => setFormData({ ...formData, weeklyHours: e.target.value })}
                   />
+                  <p className="text-xs text-gray-500 mt-1">Auto-filled from course, can be adjusted</p>
                 </div>
               </div>
 
