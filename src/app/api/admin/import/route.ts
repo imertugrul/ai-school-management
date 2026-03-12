@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
             name: userData.name,
             password: hashedPassword,
             role: userData.role || 'STUDENT',
+            subject: userData.subject || null,
             schoolId: user.schoolId,
             classId: classId
           }

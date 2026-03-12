@@ -10,7 +10,7 @@ export default function AdminImportPage() {
   const [result, setResult] = useState<any>(null)
 
   const downloadTemplate = () => {
-    const template = 'name,email,password,role,className\nAli Yilmaz,ali@school.com,pass123,STUDENT,9A\nAyse Demir,ayse@school.com,pass123,STUDENT,9A\nMehmet Oz,mehmet@school.com,pass123,TEACHER,'
+    const template = 'name,email,password,role,className,subject\nAli Yilmaz,ali@school.com,pass123,STUDENT,9A,\nMehmet Oz,mehmet@school.com,pass123,TEACHER,,Mathematics'
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')

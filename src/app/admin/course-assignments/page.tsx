@@ -32,6 +32,7 @@ interface Course {
 interface Teacher {
   id: string
   name: string
+  subject: string | null
 }
 
 interface Class {
@@ -299,7 +300,7 @@ export default function CourseAssignmentsPage() {
                     <option value="">Select teacher</option>
                     {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
-                        {teacher.name}
+                        {teacher.name}{teacher.subject ? ` (${teacher.subject})` : ''}
                       </option>
                     ))}
                   </select>
