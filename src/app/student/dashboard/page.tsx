@@ -179,6 +179,23 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
+
+        {/* My Schedule */}
+        <div className="card mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">📅</span>
+              <h2 className="text-xl font-bold text-gray-900">My Schedule</h2>
+            </div>
+            <button
+              onClick={() => router.push('/student/schedule')}
+              className="btn-primary text-sm"
+            >
+              View Full Schedule
+            </button>
+          </div>
+          <p className="text-gray-600 text-sm">View your weekly class timetable</p>
+        </div>
       </div>
     </div>
   )
