@@ -21,6 +21,9 @@ export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showImportForm, setShowImportForm] = useState(false)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [importResults, setImportResults] = useState<any>(null)
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -75,6 +78,58 @@ export default function AdminCoursesPage() {
     }
   }
 
+  const parseCSV = (text: string) => {
+    const lines = text.trim().split('\n')
+    const headers = lines[0].split(',').map(h => h.trim())
+    
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim())
+      const course: any = {}
+      headers.forEach((header, index) => {
+        course[header] = values[index]
+      })
+      return course
+    })
+  }
+
+  const handleCSVUpload = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!csvFile) return
+
+    setImportResults(null)
+
+    try {
+      const text = await csvFile.text()
+      const courses = parseCSV(text)
+
+      const response = await fetch('/api/admin/import-courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courses })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setImportResults(data.results)
+        setCsvFile(null)
+        fetchCourses()
+      }
+    } catch (error) {
+      alert('Failed to import courses')
+    }
+  }
+
+  const downloadTemplate = () => {
+    const template = 'code,name,description,credits,grade\nMATH101,Introduction to Calculus,Basic calculus concepts,3,10\nPHYS201,Physics I,Mechanics and thermodynamics,4,11\nCHEM101,Chemistry Basics,Introduction to chemistry,3,9'
+    const blob = new Blob([template], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'courses-template.csv'
+    a.click()
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -102,6 +157,12 @@ export default function AdminCoursesPage() {
               ← Back
             </button>
             <button
+              onClick={() => setShowImportForm(true)}
+              className="btn-secondary"
+            >
+              📥 Import CSV
+            </button>
+            <button
               onClick={() => setShowForm(true)}
               className="btn-primary"
             >
@@ -109,6 +170,80 @@ export default function AdminCoursesPage() {
             </button>
           </div>
         </div>
+
+        {/* CSV Import Form */}
+        {showImportForm && (
+          <div className="card mb-6 border-2 border-blue-500">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">📥 Import Courses from CSV</h2>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800 mb-2">
+                <strong>CSV Format:</strong> code, name, description, credits, grade
+              </p>
+              <button
+                onClick={downloadTemplate}
+                className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
+              >
+                📄 Download Template CSV
+              </button>
+            </div>
+
+            <form onSubmit={handleCSVUpload} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                  className="input-field"
+                />
+              </div>
+
+              {importResults && (
+                <div className={`border rounded-lg p-4 ${
+                  importResults.failed === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+                }`}>
+                  <p className="font-semibold mb-2">Import Results:</p>
+                  <p className="text-sm">✅ Success: {importResults.success}</p>
+                  <p className="text-sm">❌ Failed: {importResults.failed}</p>
+                  {importResults.errors.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-semibold">Errors:</p>
+                      <ul className="text-xs list-disc list-inside">
+                        {importResults.errors.map((err: string, i: number) => (
+                          <li key={i}>{err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={!csvFile}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Upload & Import
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImportForm(false)
+                    setImportResults(null)
+                    setCsvFile(null)
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Create Course Form */}
         {showForm && (
@@ -221,9 +356,14 @@ export default function AdminCoursesPage() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📚</div>
               <p className="text-gray-500 mb-4">No courses yet</p>
-              <button onClick={() => setShowForm(true)} className="btn-primary">
-                Create First Course
-              </button>
+              <div className="flex gap-3 justify-center">
+                <button onClick={() => setShowImportForm(true)} className="btn-secondary">
+                  📥 Import CSV
+                </button>
+                <button onClick={() => setShowForm(true)} className="btn-primary">
+                  Create First Course
+                </button>
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -236,7 +376,6 @@ export default function AdminCoursesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Students</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedules</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -262,14 +401,6 @@ export default function AdminCoursesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {course._count.schedules}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => router.push(`/admin/courses/${course.id}`)}
-                          className="text-primary-600 hover:text-primary-800 font-medium"
-                        >
-                          Manage
-                        </button>
                       </td>
                     </tr>
                   ))}
