@@ -8,13 +8,16 @@ interface Assignment {
   weeklyHours: number
   isScheduled: boolean
   course: {
+    id: string
     code: string
     name: string
   }
   teacher: {
+    id: string
     name: string
   }
   class: {
+    id: string
     name: string
   } | null
 }
@@ -62,6 +65,7 @@ export default function CourseAssignmentsPage() {
   
   // AI Schedule Generation
   const [generatingFor, setGeneratingFor] = useState<string | null>(null)
+  const [currentAssignment, setCurrentAssignment] = useState<Assignment | null>(null)
   const [suggestedSlots, setSuggestedSlots] = useState<SuggestedSlot[]>([])
   const [selectedSlots, setSelectedSlots] = useState<Set<number>>(new Set())
   const [showSchedulePreview, setShowSchedulePreview] = useState(false)
@@ -122,8 +126,9 @@ export default function CourseAssignmentsPage() {
     }
   }
 
-  const handleGenerateSchedule = async (assignmentId: string) => {
-    setGeneratingFor(assignmentId)
+  const handleGenerateSchedule = async (assignment: Assignment) => {
+    setGeneratingFor(assignment.id)
+    setCurrentAssignment(assignment)
     setSuggestedSlots([])
     setSelectedSlots(new Set())
     setError('')
@@ -132,7 +137,7 @@ export default function CourseAssignmentsPage() {
       const response = await fetch('/api/admin/generate-schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignmentId })
+        body: JSON.stringify({ assignmentId: assignment.id })
       })
 
       const data = await response.json()
@@ -159,10 +164,9 @@ export default function CourseAssignmentsPage() {
       return
     }
 
-    try {
-      const assignment = assignments.find(a => a.id === generatingFor)
-      if (!assignment) return
+    if (!currentAssignment) return
 
+    try {
       // Create schedules for selected slots
       const promises = Array.from(selectedSlots).map(async (index) => {
         const slot = suggestedSlots[index]
@@ -170,9 +174,9 @@ export default function CourseAssignmentsPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            courseId: assignment.course.id,
-            teacherId: assignment.teacher.id,
-            classId: assignment.class?.id || null,
+            courseId: currentAssignment.course.id,
+            teacherId: currentAssignment.teacher.id,
+            classId: currentAssignment.class?.id || null,
             dayOfWeek: slot.dayOfWeek,
             startTime: slot.startTime,
             endTime: slot.endTime,
@@ -187,6 +191,7 @@ export default function CourseAssignmentsPage() {
       setShowSchedulePreview(false)
       setSuggestedSlots([])
       setSelectedSlots(new Set())
+      setCurrentAssignment(null)
       fetchData()
 
       alert('Schedule created successfully!')
@@ -436,7 +441,7 @@ export default function CourseAssignmentsPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => handleGenerateSchedule(assignment.id)}
+                          onClick={() => handleGenerateSchedule(assignment)}
                           disabled={generatingFor === assignment.id}
                           className="btn-primary text-sm disabled:opacity-50"
                         >
