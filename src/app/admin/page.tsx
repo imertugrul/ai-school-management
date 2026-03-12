@@ -96,18 +96,6 @@ export default function AdminDashboard() {
             </p>
           </button>
           
-
-          {/* CSV Import */}
-          <button
-            onClick={() => router.push('/admin/import')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
-          >
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Bulk Import</h3>
-            <p className="text-gray-600">
-              Import users via CSV
-            </p>
-          </button>
         </div>
       </div>
     </div>
