@@ -21,9 +21,7 @@ export default function AdminClassesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
-    name: '',
-    grade: '',
-    section: '',
+    name: ''
   })
 
   useEffect(() => {
@@ -57,7 +55,7 @@ export default function AdminClassesPage() {
       const response = await fetch('/api/admin/classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ name: formData.name }),
       })
 
       const data = await response.json()
@@ -65,7 +63,7 @@ export default function AdminClassesPage() {
       if (response.ok) {
         alert('Class created!')
         setShowForm(false)
-        setFormData({ name: '', grade: '', section: '' })
+        setFormData({ name: '' })
         fetchClasses()
       } else {
         alert(data.error || 'Error occurred!')
@@ -144,52 +142,21 @@ export default function AdminClassesPage() {
           <div className="card mb-6">
             <h2 className="text-xl font-bold mb-4">Create New Class</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="input-field"
-                    placeholder="e.g., 9A"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Grade
-                  </label>
-                  <select
-                    className="input-field"
-                    value={formData.grade}
-                    onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                  >
-                    <option value="">Select...</option>
-                    {[9, 10, 11, 12].map(g => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Section
-                  </label>
-                  <select
-                    className="input-field"
-                    value={formData.section}
-                    onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                  >
-                    <option value="">Select...</option>
-                    {['A', 'B', 'C', 'D', 'E', 'F'].map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="max-w-md">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Class Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="input-field"
+                  placeholder="e.g., 9A, 10B, Grade 11 Science"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ name: e.target.value })}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Use any format: 9A, Grade 10-B, Class 11A, etc.
+                </p>
               </div>
 
               <button type="submit" className="btn-primary">
@@ -217,8 +184,6 @@ export default function AdminClassesPage() {
                       Delete
                     </button>
                   </div>
-                  {cls.grade && <p className="text-sm text-gray-600">Grade: {cls.grade}</p>}
-                  {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
                   <p className="text-sm text-gray-600">
                     👥 {cls._count.students} students
                   </p>
