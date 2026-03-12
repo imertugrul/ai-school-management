@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
+    if (!user.schoolId) {
+      return NextResponse.json({ error: 'School not found' }, { status: 400 })
+    }
+
     const classes = await prisma.class.findMany({
       where: {
         schoolId: user.schoolId
