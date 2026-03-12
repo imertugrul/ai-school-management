@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 interface Class {
   id: string
   name: string
-  grade: number | null
+  grade: string | null
   section: string | null
   _count: {
     students: number
@@ -21,6 +21,7 @@ export default function AdminClassesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
+    name: '',
     grade: '',
     section: '',
   })
@@ -47,8 +48,8 @@ export default function AdminClassesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.grade || !formData.section) {
-      alert('Please select grade and section!')
+    if (!formData.name) {
+      alert('Please enter class name!')
       return
     }
 
@@ -59,13 +60,15 @@ export default function AdminClassesPage() {
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         alert('Class created!')
         setShowForm(false)
-        setFormData({ grade: '', section: '' })
+        setFormData({ name: '', grade: '', section: '' })
         fetchClasses()
       } else {
-        alert('Error occurred!')
+        alert(data.error || 'Error occurred!')
       }
     } catch (error) {
       console.error('Error:', error)
@@ -141,7 +144,21 @@ export default function AdminClassesPage() {
           <div className="card mb-6">
             <h2 className="text-xl font-bold mb-4">Create New Class</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Class Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="input-field"
+                    placeholder="e.g., 9A"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Grade
@@ -200,6 +217,8 @@ export default function AdminClassesPage() {
                       Delete
                     </button>
                   </div>
+                  {cls.grade && <p className="text-sm text-gray-600">Grade: {cls.grade}</p>}
+                  {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
                   <p className="text-sm text-gray-600">
                     👥 {cls._count.students} students
                   </p>
