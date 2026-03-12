@@ -87,11 +87,18 @@ enum UserRole {
 model School {
   id        String   @id @default(cuid())
   name      String
-  address   String?
+  
+  // Schedule Settings
+  schoolStartTime    String?  @default("08:00")  // School starts
+  schoolEndTime      String?  @default("16:00")  // School ends
+  lessonDuration     Int?     @default(45)       // Minutes per lesson
+  breakDuration      Int?     @default(10)       // Minutes between lessons
+  lunchBreakStart    String?  @default("12:00")
+  lunchBreakEnd      String?  @default("13:00")
   
   users     User[]
   classes   Class[]
-  courses   Course[]  
+  courses   Course[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
