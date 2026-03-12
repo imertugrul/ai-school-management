@@ -188,6 +188,39 @@ export default function CourseAssignmentsPage() {
     }
   }
 
+  const handleGenerateAllForTeacher = async (teacherAssignments: Assignment[]) => {
+    if (!confirm(`Generate schedules for all ${teacherAssignments.length} assignments?`)) return
+
+    for (const assignment of teacherAssignments) {
+      if (!assignment.isScheduled) {
+        await handleGenerateSchedule(assignment)
+        // Wait for user to approve each schedule
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+  }
+
+  const handleDeleteAllForTeacher = async (teacherId: string) => {
+    const teacherAssignments = assignments.filter(a => a.teacher.id === teacherId)
+    
+    if (!confirm(`Delete all ${teacherAssignments.length} assignments for this teacher?`)) return
+
+    try {
+      await Promise.all(
+        teacherAssignments.map(assignment =>
+          fetch(`/api/admin/course-assignments/${assignment.id}`, {
+            method: 'DELETE'
+          })
+        )
+      )
+      
+      alert('All assignments deleted!')
+      fetchData()
+    } catch (error) {
+      alert('Failed to delete assignments')
+    }
+  }
+
   const handleApproveSchedule = async () => {
     if (selectedSlots.size === 0) {
       alert('Please select at least one time slot')
@@ -477,7 +510,7 @@ export default function CourseAssignmentsPage() {
           </div>
         )}
 
-        {/* Assignments List */}
+        {/* Assignments List - Teacher Grouped */}
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-4">All Assignments ({assignments.length})</h2>
           
@@ -499,45 +532,82 @@ export default function CourseAssignmentsPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold text-gray-900">
-                        {assignment.course.code} - {assignment.course.name}
+            <div className="space-y-6">
+              {/* Group by teacher */}
+              {(() => {
+                const groupedByTeacher = assignments.reduce((acc, assignment) => {
+                  const teacherId = assignment.teacher.id
+                  if (!acc[teacherId]) {
+                    acc[teacherId] = {
+                      teacher: assignment.teacher,
+                      assignments: []
+                    }
+                  }
+                  acc[teacherId].assignments.push(assignment)
+                  return acc
+                }, {} as Record<string, { teacher: any, assignments: Assignment[] }>)
+
+                return Object.values(groupedByTeacher).map(({ teacher, assignments: teacherAssignments }) => (
+                  <div key={teacher.id} className="border-2 border-gray-200 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          👨‍🏫 {teacher.name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {teacherAssignments.length} assignment(s)
+                        </p>
                       </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        👤 {assignment.teacher.name}
-                        {assignment.class && ` • 🎓 ${assignment.class.name}`}
-                        {` • ⏰ ${assignment.weeklyHours}h/week`}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDeleteAllForTeacher(teacher.id)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete All
+                        </button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {assignment.isScheduled ? (
-                        <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                          Scheduled ✅
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleGenerateSchedule(assignment)}
-                          disabled={generatingFor === assignment.id}
-                          className="btn-primary text-sm disabled:opacity-50"
+
+                    <div className="space-y-2">
+                      {teacherAssignments.map((assignment) => (
+                        <div
+                          key={assignment.id}
+                          className="bg-gray-50 rounded-lg p-3 flex justify-between items-center"
                         >
-                          {generatingFor === assignment.id ? (
-                            <>🤖 Generating...</>
-                          ) : (
-                            <>🤖 Generate Schedule</>
-                          )}
-                        </button>
-                      )}
+                          <div className="flex-1">
+                            <span className="font-semibold text-gray-900">
+                              {assignment.course.code} - {assignment.course.name}
+                            </span>
+                            {assignment.class && (
+                              <span className="text-sm text-gray-600 ml-2">
+                                → 🎓 {assignment.class.name}
+                              </span>
+                            )}
+                            <span className="text-sm text-gray-600 ml-2">
+                              ⏰ {assignment.weeklyHours}h/week
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            {assignment.isScheduled ? (
+                              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                Scheduled ✅
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleGenerateSchedule(assignment)}
+                                disabled={generatingFor === assignment.id}
+                                className="btn-primary text-xs disabled:opacity-50"
+                              >
+                                {generatingFor === assignment.id ? '🤖 Generating...' : '🤖 Generate'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              })()}
             </div>
           )}
         </div>
