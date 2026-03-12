@@ -7,10 +7,6 @@ interface Teacher {
   id: string
   name: string
   email: string
-  createdAt: string
-  _count: {
-    testsCreated: number
-  }
 }
 
 export default function AdminTeachersPage() {
@@ -31,67 +27,70 @@ export default function AdminTeachersPage() {
         setTeachers(data.teachers)
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error fetching teachers:', error)
     } finally {
       setLoading(false)
     }
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading teachers...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">Teacher Management</h1>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => router.push('/admin/students')}
-                className="btn-secondary"
-              >
-                Students
-              </button>
-              <button 
-                onClick={() => router.push('/admin/classes')}
-                className="btn-secondary"
-              >
-                Classes
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Teacher Management</h1>
+            <p className="text-gray-600 mt-1">View and manage teachers</p>
           </div>
+          <button
+            onClick={() => router.push('/admin')}
+            className="btn-secondary"
+          >
+            ← Back
+          </button>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="card">
-          <h2 className="text-xl font-bold mb-4">All Teachers ({teachers.length})</h2>
-
+          <h2 className="text-xl font-bold text-gray-900 mb-4">All Teachers ({teachers.length})</h2>
+          
           {teachers.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No teachers yet</p>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👨‍🏫</div>
+              <p className="text-gray-500 mb-4">No teachers yet</p>
+              <p className="text-gray-400 text-sm">Import teachers via CSV or create manually</p>
+            </div>
           ) : (
-            <div className="space-y-2">
-              {teachers.map((teacher) => (
-                <div key={teacher.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{teacher.name}</h3>
-                      <p className="text-sm text-gray-600">{teacher.email}</p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-gray-600">
-                        📝 {teacher._count.testsCreated} tests
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {new Date(teacher.createdAt).toLocaleDateString('en-US')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {teachers.map((teacher) => (
+                    <tr key={teacher.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{teacher.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {teacher.email}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
