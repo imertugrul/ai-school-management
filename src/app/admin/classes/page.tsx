@@ -20,6 +20,7 @@ export default function AdminClassesPage() {
   const [classes, setClasses] = useState<Class[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingClass, setEditingClass] = useState<Class | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     grade: '',
@@ -54,8 +55,14 @@ export default function AdminClassesPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/classes', {
-        method: 'POST',
+      const url = editingClass 
+        ? `/api/admin/classes/${editingClass.id}`
+        : '/api/admin/classes'
+      
+      const method = editingClass ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
@@ -63,8 +70,9 @@ export default function AdminClassesPage() {
       const data = await response.json()
 
       if (response.ok) {
-        alert('Class created!')
+        alert(editingClass ? 'Class updated!' : 'Class created!')
         setShowForm(false)
+        setEditingClass(null)
         setFormData({ name: '', grade: '', section: '' })
         fetchClasses()
       } else {
@@ -74,6 +82,22 @@ export default function AdminClassesPage() {
       console.error('Error:', error)
       alert('An error occurred!')
     }
+  }
+
+  const handleEdit = (cls: Class) => {
+    setEditingClass(cls)
+    setFormData({
+      name: cls.name,
+      grade: cls.grade || '',
+      section: cls.section || ''
+    })
+    setShowForm(true)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingClass(null)
+    setFormData({ name: '', grade: '', section: '' })
+    setShowForm(false)
   }
 
   const handleDelete = async (id: string) => {
@@ -129,7 +153,11 @@ export default function AdminClassesPage() {
                 ← Panel
               </button>
               <button 
-                onClick={() => setShowForm(!showForm)}
+                onClick={() => {
+                  setEditingClass(null)
+                  setFormData({ name: '', grade: '', section: '' })
+                  setShowForm(!showForm)
+                }}
                 className="btn-primary text-sm"
               >
                 {showForm ? 'Cancel' : '+ New Class'}
@@ -142,7 +170,9 @@ export default function AdminClassesPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {showForm && (
           <div className="card mb-6">
-            <h2 className="text-xl font-bold mb-4">Create New Class</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {editingClass ? 'Edit Class' : 'Create New Class'}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
@@ -192,9 +222,20 @@ export default function AdminClassesPage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary">
-                Create Class
-              </button>
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary">
+                  {editingClass ? 'Update Class' : 'Create Class'}
+                </button>
+                {editingClass && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         )}
@@ -210,12 +251,20 @@ export default function AdminClassesPage() {
                 <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
-                    <button
-                      onClick={() => handleDelete(cls.id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(cls)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(cls.id)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                   {cls.grade && <p className="text-sm text-gray-600">Grade: {cls.grade}</p>}
                   {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
