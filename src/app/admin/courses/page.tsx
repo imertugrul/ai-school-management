@@ -10,6 +10,7 @@ interface Course {
   description: string | null
   credits: number
   grade: string | null
+  weeklyHours: number
   _count: {
     enrollments: number
     schedules: number
@@ -29,7 +30,8 @@ export default function AdminCoursesPage() {
     name: '',
     description: '',
     credits: '3',
-    grade: ''
+    grade: '',
+    weeklyHours: '4'
   })
   const [error, setError] = useState('')
 
@@ -71,7 +73,7 @@ export default function AdminCoursesPage() {
       }
 
       setShowForm(false)
-      setFormData({ code: '', name: '', description: '', credits: '3', grade: '' })
+      setFormData({ code: '', name: '', description: '', credits: '3', grade: '', weeklyHours: '4' })
       fetchCourses()
     } catch (error) {
       setError('Something went wrong')
@@ -121,13 +123,35 @@ export default function AdminCoursesPage() {
   }
 
   const downloadTemplate = () => {
-  const template = 'code,name,description,credits,grade,weeklyHours\nMATH101,Introduction to Calculus,Basic calculus concepts,3,10,4\nPHYS201,Physics I,Mechanics and thermodynamics,4,11,3\nCHEM101,Chemistry Basics,Introduction to chemistry,3,9,4'
-  const blob = new Blob([template], { type: 'text/csv' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'courses-template.csv'
-  a.click()
+    const template = 'code,name,description,credits,grade,weeklyHours\nMATH101,Introduction to Calculus,Basic calculus concepts,3,10,4\nPHYS201,Physics I,Mechanics and thermodynamics,4,11,3\nCHEM101,Chemistry Basics,Introduction to chemistry,3,9,4'
+    const blob = new Blob([template], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'courses-template.csv'
+    a.click()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this course? This will also delete related schedules and assignments.')) return
+
+    try {
+      const response = await fetch(`/api/admin/courses/${id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert('Course deleted!')
+        fetchCourses()
+      } else {
+        alert(data.error || 'Failed to delete course')
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Failed to delete course')
+    }
   }
 
   if (loading) {
@@ -178,7 +202,7 @@ export default function AdminCoursesPage() {
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-800 mb-2">
-                <strong>CSV Format:</strong> code, name, description, credits, grade
+                <strong>CSV Format:</strong> code, name, description, credits, grade, weeklyHours
               </p>
               <button
                 onClick={downloadTemplate}
@@ -299,7 +323,7 @@ export default function AdminCoursesPage() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Credits
@@ -329,6 +353,20 @@ export default function AdminCoursesPage() {
                     <option value="11">Grade 11</option>
                     <option value="12">Grade 12</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Weekly Hours
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    className="input-field"
+                    value={formData.weeklyHours}
+                    onChange={(e) => setFormData({ ...formData, weeklyHours: e.target.value })}
+                  />
                 </div>
               </div>
 
@@ -374,8 +412,10 @@ export default function AdminCoursesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Credits</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weekly Hours</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Students</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedules</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -397,10 +437,21 @@ export default function AdminCoursesPage() {
                         {course.grade || 'All'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {course.weeklyHours}h
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {course._count.enrollments}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {course._count.schedules}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleDelete(course.id)}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
