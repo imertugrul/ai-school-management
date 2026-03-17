@@ -196,18 +196,10 @@ export default function CourseAssignmentsPage() {
       return
     }
 
-    for (const assignment of unscheduled) {
-      await handleGenerateSchedule(assignment)
-      // Wait for user to approve schedule in modal
-      await new Promise<void>((resolve) => {
-        const checkInterval = setInterval(() => {
-          if (!showSchedulePreview) {
-            clearInterval(checkInterval)
-            resolve()
-          }
-        }, 500)
-      })
-    }
+    // Generate schedule for first unscheduled assignment
+    // User will manually approve each one
+    const firstUnscheduled = unscheduled[0]
+    await handleGenerateSchedule(firstUnscheduled)
   }
 
   const handleDeleteAllForTeacher = async (teacherId: string) => {
