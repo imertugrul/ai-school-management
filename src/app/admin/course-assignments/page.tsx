@@ -224,45 +224,51 @@ export default function CourseAssignmentsPage() {
   }
 
   const handleApproveSchedule = async () => {
-    if (selectedSlots.size === 0) {
-      alert('Please select at least one time slot')
-      return
-    }
+  if (selectedSlots.size === 0) {
+    alert('Please select at least one time slot')
+    return
+  }
 
-    if (!currentAssignment) return
+  if (!currentAssignment) return
 
-    try {
-      const promises = Array.from(selectedSlots).map(async (index) => {
-        const slot = suggestedSlots[index]
-        return fetch('/api/admin/schedules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            courseId: currentAssignment.course.id,
-            teacherId: currentAssignment.teacher.id,
-            classId: currentAssignment.class?.id || null,
-            dayOfWeek: slot.dayOfWeek,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            room: null
-          })
+  try {
+    // Create schedules
+    const promises = Array.from(selectedSlots).map(async (index) => {
+      const slot = suggestedSlots[index]
+      return fetch('/api/admin/schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: currentAssignment.course.id,
+          teacherId: currentAssignment.teacher.id,
+          classId: currentAssignment.class?.id || null,
+          dayOfWeek: slot.dayOfWeek,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          room: null
         })
       })
+    })
 
-      await Promise.all(promises)
+    await Promise.all(promises)
 
-      setShowSchedulePreview(false)
-      setSuggestedSlots([])
-      setSelectedSlots(new Set())
-      setCurrentAssignment(null)
-      fetchData()
+    // Mark assignment as scheduled
+    await fetch(`/api/admin/course-assignments/${currentAssignment.id}/mark-scheduled`, {
+      method: 'POST'
+    })
 
-      alert('Schedule created successfully!')
+    setShowSchedulePreview(false)
+    setSuggestedSlots([])
+    setSelectedSlots(new Set())
+    setCurrentAssignment(null)
+    fetchData()
 
-    } catch (error) {
-      alert('Failed to create schedule')
-    }
+    alert('Schedule created successfully!')
+
+  } catch (error) {
+    alert('Failed to create schedule')
   }
+}
 
   const toggleSlot = (index: number) => {
     const newSelected = new Set(selectedSlots)
