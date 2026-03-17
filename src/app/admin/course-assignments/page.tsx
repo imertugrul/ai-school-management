@@ -189,14 +189,24 @@ export default function CourseAssignmentsPage() {
   }
 
   const handleGenerateAllForTeacher = async (teacherAssignments: Assignment[]) => {
-    if (!confirm(`Generate schedules for all ${teacherAssignments.length} assignments?`)) return
+    const unscheduled = teacherAssignments.filter(a => !a.isScheduled)
+    
+    if (unscheduled.length === 0) {
+      alert('All assignments are already scheduled!')
+      return
+    }
 
-    for (const assignment of teacherAssignments) {
-      if (!assignment.isScheduled) {
-        await handleGenerateSchedule(assignment)
-        // Wait for user to approve each schedule
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
+    for (const assignment of unscheduled) {
+      await handleGenerateSchedule(assignment)
+      // Wait for user to approve schedule in modal
+      await new Promise<void>((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!showSchedulePreview) {
+            clearInterval(checkInterval)
+            resolve()
+          }
+        }, 500)
+      })
     }
   }
 
@@ -533,7 +543,6 @@ export default function CourseAssignmentsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Group by teacher */}
               {(() => {
                 const groupedByTeacher = assignments.reduce((acc, assignment) => {
                   const teacherId = assignment.teacher.id
@@ -547,66 +556,73 @@ export default function CourseAssignmentsPage() {
                   return acc
                 }, {} as Record<string, { teacher: any, assignments: Assignment[] }>)
 
-                return Object.values(groupedByTeacher).map(({ teacher, assignments: teacherAssignments }) => (
-                  <div key={teacher.id} className="border-2 border-gray-200 rounded-lg p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">
-                          👨‍🏫 {teacher.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {teacherAssignments.length} assignment(s)
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDeleteAllForTeacher(teacher.id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Delete All
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {teacherAssignments.map((assignment) => (
-                        <div
-                          key={assignment.id}
-                          className="bg-gray-50 rounded-lg p-3 flex justify-between items-center"
-                        >
-                          <div className="flex-1">
-                            <span className="font-semibold text-gray-900">
-                              {assignment.course.code} - {assignment.course.name}
-                            </span>
-                            {assignment.class && (
-                              <span className="text-sm text-gray-600 ml-2">
-                                → 🎓 {assignment.class.name}
-                              </span>
-                            )}
-                            <span className="text-sm text-gray-600 ml-2">
-                              ⏰ {assignment.weeklyHours}h/week
-                            </span>
-                          </div>
-                          <div className="flex gap-2">
-                            {assignment.isScheduled ? (
-                              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                                Scheduled ✅
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleGenerateSchedule(assignment)}
-                                disabled={generatingFor === assignment.id}
-                                className="btn-primary text-xs disabled:opacity-50"
-                              >
-                                {generatingFor === assignment.id ? '🤖 Generating...' : '🤖 Generate'}
-                              </button>
-                            )}
-                          </div>
+                return Object.values(groupedByTeacher).map(({ teacher, assignments: teacherAssignments }) => {
+                  const allScheduled = teacherAssignments.every(a => a.isScheduled)
+                  const someScheduled = teacherAssignments.some(a => a.isScheduled)
+                  
+                  return (
+                    <div key={teacher.id} className="border-2 border-gray-200 rounded-lg p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            👨‍🏫 {teacher.name}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {teacherAssignments.length} assignment(s)
+                            {allScheduled && <span className="ml-2 text-green-600 font-semibold">✅ All scheduled</span>}
+                            {someScheduled && !allScheduled && <span className="ml-2 text-yellow-600 font-semibold">⚠️ Partially scheduled</span>}
+                          </p>
                         </div>
-                      ))}
+                        <div className="flex gap-2">
+                          {!allScheduled && (
+                            <button
+                              onClick={() => handleGenerateAllForTeacher(teacherAssignments)}
+                              className="btn-primary text-sm"
+                            >
+                              🤖 Generate All Schedules
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteAllForTeacher(teacher.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete All
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {teacherAssignments.map((assignment) => (
+                          <div
+                            key={assignment.id}
+                            className="bg-gray-50 rounded-lg p-3 flex justify-between items-center"
+                          >
+                            <div className="flex-1">
+                              <span className="font-semibold text-gray-900">
+                                {assignment.course.code} - {assignment.course.name}
+                              </span>
+                              {assignment.class && (
+                                <span className="text-sm text-gray-600 ml-2">
+                                  → 🎓 {assignment.class.name}
+                                </span>
+                              )}
+                              <span className="text-sm text-gray-600 ml-2">
+                                ⏰ {assignment.weeklyHours}h/week
+                              </span>
+                            </div>
+                            <div className="flex gap-2">
+                              {assignment.isScheduled && (
+                                <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                  Scheduled ✅
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               })()}
             </div>
           )}
