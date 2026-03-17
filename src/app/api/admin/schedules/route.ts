@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
-// GET - List all schedules
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,19 +15,30 @@ export async function GET(request: NextRequest) {
       where: { email: session.user.email! }
     })
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    if (!user.schoolId) {
+      return NextResponse.json({ error: 'School not found' }, { status: 400 })
     }
 
     const schedules = await prisma.schedule.findMany({
+      where: {
+        course: {
+          schoolId: user.schoolId
+        }
+      },
       include: {
         course: true,
         teacher: {
-          select: { id: true, name: true, email: true }
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
         },
-        class: {
-          select: { id: true, name: true }
-        }
+        class: true
       },
       orderBy: [
         { dayOfWeek: 'asc' },
@@ -36,7 +46,10 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({ success: true, schedules })
+    return NextResponse.json({
+      success: true,
+      schedules
+    })
 
   } catch (error: any) {
     console.error('Get schedules error:', error)
@@ -46,7 +59,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new schedule
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -65,55 +77,22 @@ export async function POST(request: NextRequest) {
 
     const { courseId, teacherId, classId, dayOfWeek, startTime, endTime, room } = await request.json()
 
-    // Check for conflicts
-    const conflict = await prisma.schedule.findFirst({
+    // Check for duplicate schedule
+    const existingSchedule = await prisma.schedule.findFirst({
       where: {
-        OR: [
-          // Teacher conflict
-          {
-            teacherId,
-            dayOfWeek: parseInt(dayOfWeek),
-            OR: [
-              {
-                AND: [
-                  { startTime: { lte: startTime } },
-                  { endTime: { gt: startTime } }
-                ]
-              },
-              {
-                AND: [
-                  { startTime: { lt: endTime } },
-                  { endTime: { gte: endTime } }
-                ]
-              }
-            ]
-          },
-          // Class conflict (if class specified)
-          classId ? {
-            classId,
-            dayOfWeek: parseInt(dayOfWeek),
-            OR: [
-              {
-                AND: [
-                  { startTime: { lte: startTime } },
-                  { endTime: { gt: startTime } }
-                ]
-              },
-              {
-                AND: [
-                  { startTime: { lt: endTime } },
-                  { endTime: { gte: endTime } }
-                ]
-              }
-            ]
-          } : {}
-        ]
+        courseId,
+        teacherId,
+        classId: classId || null,
+        dayOfWeek,
+        startTime,
+        endTime
       }
     })
 
-    if (conflict) {
+    if (existingSchedule) {
       return NextResponse.json({ 
-        error: 'Schedule conflict detected' 
+        error: 'Schedule already exists for this slot',
+        duplicate: true
       }, { status: 400 })
     }
 
@@ -122,19 +101,21 @@ export async function POST(request: NextRequest) {
         courseId,
         teacherId,
         classId: classId || null,
-        dayOfWeek: parseInt(dayOfWeek),
+        dayOfWeek,
         startTime,
         endTime,
-        room
+        room: room || null
       },
       include: {
         course: true,
         teacher: {
-          select: { name: true }
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
         },
-        class: {
-          select: { name: true }
-        }
+        class: true
       }
     })
 
@@ -143,7 +124,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Create schedule error:', error)
     return NextResponse.json({ 
-      error: 'Failed to create schedule' 
+      error: error.message || 'Failed to create schedule' 
     }, { status: 500 })
   }
 }
