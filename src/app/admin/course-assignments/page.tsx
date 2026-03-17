@@ -187,20 +187,77 @@ export default function CourseAssignmentsPage() {
       setGeneratingFor(null)
     }
   }
-
   const handleGenerateAllForTeacher = async (teacherAssignments: Assignment[]) => {
-    const unscheduled = teacherAssignments.filter(a => !a.isScheduled)
-    
-    if (unscheduled.length === 0) {
-      alert('All assignments are already scheduled!')
-      return
+  const unscheduled = teacherAssignments.filter(a => !a.isScheduled)
+  
+  if (unscheduled.length === 0) {
+    alert('All assignments are already scheduled!')
+    return
+  }
+
+  if (!confirm(`Auto-generate schedules for ${unscheduled.length} assignments? This will create schedules automatically.`)) return
+
+  setGeneratingFor('teacher-bulk')
+  let successCount = 0
+  let errorCount = 0
+
+  try {
+    for (const assignment of unscheduled) {
+      try {
+        // Call AI to generate schedule
+        const scheduleResponse = await fetch('/api/admin/generate-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignmentId: assignment.id })
+        })
+
+        const scheduleData = await scheduleResponse.json()
+
+        if (scheduleResponse.ok && scheduleData.suggestedSlots) {
+          // Auto-approve all suggested slots
+          const createPromises = scheduleData.suggestedSlots.map(async (slot: SuggestedSlot) => {
+            return fetch('/api/admin/schedules', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                courseId: assignment.course.id,
+                teacherId: assignment.teacher.id,
+                classId: assignment.class?.id || null,
+                dayOfWeek: slot.dayOfWeek,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                room: null
+              })
+            })
+          })
+
+          await Promise.all(createPromises)
+
+          // Mark as scheduled
+          await fetch(`/api/admin/course-assignments/${assignment.id}/mark-scheduled`, {
+            method: 'POST'
+          })
+
+          successCount++
+        } else {
+          errorCount++
+        }
+      } catch (error) {
+        errorCount++
+      }
     }
 
-    // Generate schedule for first unscheduled assignment
-    // User will manually approve each one
-    const firstUnscheduled = unscheduled[0]
-    await handleGenerateSchedule(firstUnscheduled)
+    setGeneratingFor(null)
+    fetchData()
+
+    alert(`✅ Generated schedules for ${successCount} assignments${errorCount > 0 ? `. ${errorCount} failed.` : '!'}`)
+
+  } catch (error) {
+    setGeneratingFor(null)
+    alert('Failed to generate schedules')
   }
+}
+  
 
   const handleDeleteAllForTeacher = async (teacherId: string) => {
     const teacherAssignments = assignments.filter(a => a.teacher.id === teacherId)
