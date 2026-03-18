@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
     // Get school settings
     const schoolSettings = user.school
 
+    // Calculate required number of slots
+    const lessonDurationHours = (schoolSettings.lessonDuration || 45) / 60
+    const requiredSlots = Math.ceil(assignment.weeklyHours / lessonDurationHours)
+
     // Prepare AI prompt with school settings
     const prompt = `You are a school schedule optimizer. Generate a weekly schedule for the following:
 
@@ -93,7 +97,7 @@ ${existingSchedules.map(s =>
   `Day ${s.dayOfWeek}: ${s.startTime}-${s.endTime}`
 ).join('\n')}
 
-Generate ${Math.ceil(assignment.weeklyHours / ((schoolSettings.lessonDuration || 45) / 60))} optimal time slots.
+Generate EXACTLY ${requiredSlots} optimal time slots (no more, no less).
 
 Return ONLY a JSON array with this format:
 [
@@ -114,7 +118,7 @@ Times must be in HH:MM format and aligned to school settings.`
       messages: [
         {
           role: 'system',
-          content: 'You are an expert school schedule optimizer. Always return valid JSON arrays. Follow school settings strictly.'
+          content: 'You are an expert school schedule optimizer. Always return valid JSON arrays. Follow school settings strictly. Generate EXACTLY the requested number of slots.'
         },
         {
           role: 'user',
@@ -133,6 +137,12 @@ Times must be in HH:MM format and aligned to school settings.`
       // Remove markdown code blocks if present
       const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim()
       suggestedSlots = JSON.parse(cleanedResponse)
+      
+      // LIMIT TO REQUIRED NUMBER OF SLOTS
+      suggestedSlots = suggestedSlots.slice(0, requiredSlots)
+      
+      console.log(`AI suggested ${suggestedSlots.length} slots for ${assignment.weeklyHours}h (${requiredSlots} required)`)
+      
     } catch (error) {
       console.error('Failed to parse AI response:', aiResponse)
       return NextResponse.json({ 
