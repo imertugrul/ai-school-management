@@ -47,6 +47,7 @@ model User {
 
   accounts          Account[]
   sessions          Session[]
+  studentGrades    Grade[]  @relation("StudentGrades")
 
   class             Class?    @relation("ClassStudents", fields: [classId], references: [id])
   school            School?   @relation(fields: [schoolId], references: [id])
@@ -333,7 +334,7 @@ model Course {
   grade       String?  // e.g., "9", "10", "11", "12"
   weeklyHours Int      @default(4)  // BU SATIRI EKLE
 
-  
+  gradeComponents  GradeComponent[]
   schoolId    String
   school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
@@ -412,6 +413,51 @@ model CourseAssignment {
   updatedAt     DateTime @updatedAt
   
   @@unique([courseId, teacherId, classId])
+}
+
+model GradeComponent {
+  id          String   @id @default(cuid())
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  name        String   // "Midterm Exam", "Final Exam", "Homework 1"
+  type        GradeType // EXAM, QUIZ, HOMEWORK, PROJECT, PARTICIPATION
+  weight      Float    // 0.3 = 30%
+  maxScore    Float    // 100
+  date        DateTime?
+  
+  grades      Grade[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Grade {
+  id              String   @id @default(cuid())
+  
+  componentId     String
+  component       GradeComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  
+  studentId       String
+  student         User     @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  score           Float    // Actual score (e.g., 85)
+  feedback        String?  // Teacher comments
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([componentId, studentId])
+}
+
+enum GradeType {
+  EXAM
+  QUIZ
+  HOMEWORK
+  PROJECT
+  PARTICIPATION
+  ATTENDANCE
 }
 
 enum EnrollmentStatus {
