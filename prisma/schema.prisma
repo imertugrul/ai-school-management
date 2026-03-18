@@ -358,17 +358,17 @@ model Schedule {
   classId     String?
   class       Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
   
-  dayOfWeek   Int      // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-  startTime   String   // e.g., "09:00"
-  endTime     String   // e.g., "10:00"
-  room        String?  // e.g., "Room 101"
+  dayOfWeek   Int      // 0=Monday, 6=Sunday
+  startTime   String   // HH:MM format
+  endTime     String   // HH:MM format
+  room        String?
   
   isActive    Boolean  @default(true)
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  @@unique([courseId, dayOfWeek, startTime])
+  @@unique([teacherId, dayOfWeek, startTime])
 }
 
 model Enrollment {
