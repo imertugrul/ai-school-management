@@ -1,200 +1,169 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-
-interface Test {
-  id: string
-  title: string
-  subject: string
-  questionCount: number
-  status: string
-  submittedAt: Date | null
-  totalScore: number | null
-  maxScore: number | null
-}
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function StudentDashboard() {
-  const router = useRouter()
   const { data: session } = useSession()
-  const [tests, setTests] = useState<Test[]>([])
-  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const [stats, setStats] = useState({
+    coursesEnrolled: 0,
+    averageGrade: 0,
+    attendanceRate: 0
+  })
 
   useEffect(() => {
-    fetchTests()
+    // Fetch student stats
+    fetchStats()
   }, [])
 
-  const fetchTests = async () => {
+  const fetchStats = async () => {
     try {
-      const response = await fetch('/api/student/available-tests')
+      const response = await fetch('/api/student/stats')
       const data = await response.json()
-      
       if (data.success) {
-        setTests(data.tests)
+        setStats(data.stats)
       }
     } catch (error) {
-      console.error('Error fetching tests:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error fetching stats:', error)
     }
-  }
-
-  const availableTests = tests.filter(t => t.status === 'NOT_STARTED')
-  const inProgressTests = tests.filter(t => t.status === 'IN_PROGRESS')
-  const completedTests = tests.filter(t => t.status === 'RELEASED')
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-              <p className="text-gray-600 mt-1">View your tests and check your results</p>
-            </div>
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-2xl font-bold text-primary-600">Student Dashboard</h1>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="btn-secondary"
+              className="btn-secondary text-sm"
             >
               Logout
             </button>
           </div>
         </div>
+      </nav>
 
-        {/* Stats Cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back, {session?.user?.name}!
+          </h2>
+          <p className="text-gray-600">Here's your academic overview</p>
+        </div>
+
+        {/* Quick Stats */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">Available Tests</h3>
-              <span className="text-2xl">📝</span>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="text-4xl">📚</div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Courses Enrolled</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.coursesEnrolled}</p>
+              </div>
             </div>
-            <p className="text-3xl font-bold text-blue-600">{availableTests.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Assigned tests</p>
           </div>
 
           <div className="card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">In Progress</h3>
-              <span className="text-2xl">⏳</span>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="text-4xl">📊</div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Average Grade</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.averageGrade > 0 ? `${stats.averageGrade.toFixed(1)}%` : 'N/A'}
+                </p>
+              </div>
             </div>
-            <p className="text-3xl font-bold text-orange-600">{inProgressTests.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Tests</p>
           </div>
 
           <div className="card">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">Completed</h3>
-              <span className="text-2xl">✅</span>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="text-4xl">✅</div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.attendanceRate > 0 ? `${stats.attendanceRate.toFixed(1)}%` : 'N/A'}
+                </p>
+              </div>
             </div>
-            <p className="text-3xl font-bold text-green-600">{completedTests.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Tests</p>
           </div>
         </div>
 
-        {/* My Tests */}
-        <div className="card">
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-2xl">📊</span>
-            <h2 className="text-xl font-bold text-gray-900">My Tests</h2>
-          </div>
+        {/* Main Actions */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <button
+            onClick={() => router.push('/student/tests')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📝</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Tests</h3>
+            <p className="text-gray-600 text-sm">
+              View and take assigned tests
+            </p>
+          </button>
 
-          {tests.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
-              <p className="text-gray-500 text-lg mb-2">No tests taken yet</p>
-              <p className="text-gray-400 text-sm">Available tests will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {tests.map((test) => (
-                <div
-                  key={test.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{test.title}</h3>
-                      <p className="text-sm text-gray-600">{test.subject}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      test.status === 'RELEASED' ? 'bg-green-100 text-green-800' :
-                      test.status === 'IN_PROGRESS' ? 'bg-orange-100 text-orange-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {test.status === 'RELEASED' ? 'Graded' :
-                       test.status === 'IN_PROGRESS' ? 'In Progress' :
-                       'Available'}
-                    </span>
-                  </div>
+          <button
+            onClick={() => router.push('/student/results')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📈</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Test Results</h3>
+            <p className="text-gray-600 text-sm">
+              View your test scores and feedback
+            </p>
+          </button>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                    <span>📝 {test.questionCount} questions</span>
-                    {test.totalScore !== null && (
-                      <span className="font-semibold text-primary-600">
-                        Score: {test.totalScore}/{test.maxScore}
-                      </span>
-                    )}
-                  </div>
+          <button
+            onClick={() => router.push('/student/attendance')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📋</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Attendance</h3>
+            <p className="text-gray-600 text-sm">
+              View your attendance record
+            </p>
+          </button>
 
-                  <div className="flex gap-2">
-                    {test.status === 'NOT_STARTED' && (
-                      <button
-                        onClick={() => router.push(`/student/test/${test.id}`)}
-                        className="btn-primary text-sm"
-                      >
-                        Start Test
-                      </button>
-                    )}
-                    {test.status === 'IN_PROGRESS' && (
-                      <button
-                        onClick={() => router.push(`/student/test/${test.id}`)}
-                        className="btn-primary text-sm"
-                      >
-                        Continue Test
-                      </button>
-                    )}
-                    {test.status === 'RELEASED' && (
-                      <button
-                        onClick={() => router.push(`/student/results/${test.id}`)}
-                        className="btn-primary text-sm"
-                      >
-                        View Results
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          <button
+            onClick={() => router.push('/student/schedule')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📅</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Schedule</h3>
+            <p className="text-gray-600 text-sm">
+              View your weekly class schedule
+            </p>
+          </button>
 
-        {/* My Schedule */}
-        <div className="card mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📅</span>
-              <h2 className="text-xl font-bold text-gray-900">My Schedule</h2>
-            </div>
-            <button
-              onClick={() => router.push('/student/schedule')}
-              className="btn-primary text-sm"
-            >
-              View Full Schedule
-            </button>
-          </div>
-          <p className="text-gray-600 text-sm">View your weekly class timetable</p>
+          <button
+            onClick={() => router.push('/student/grades')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200"
+          >
+            <div className="text-4xl mb-3">📊</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Grades</h3>
+            <p className="text-gray-600 text-sm">
+              View your grades and academic progress
+            </p>
+          </button>
+
+          <button
+            onClick={() => router.push('/student/analytics')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
+            <div className="text-4xl mb-3">📊</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Analytics</h3>
+            <p className="text-gray-600 text-sm">
+              Track your academic performance
+            </p>
+          </button>
         </div>
       </div>
     </div>
