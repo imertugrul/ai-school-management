@@ -48,9 +48,15 @@ export async function POST(request: NextRequest) {
       errors: [] as string[]
     }
 
-    // Auto-assign logic: Match course name with teacher subject
+    // Auto-assign logic: Match course name with teacher subject AND grade
     for (const course of courses) {
       for (const cls of classes) {
+        // GRADE MATCHING: Skip if course grade doesn't match class grade
+        if (course.grade && cls.grade && course.grade !== cls.grade) {
+          results.skipped++
+          continue
+        }
+        
         // Find matching teacher
         const matchingTeacher = teachers.find(t => 
           course.name.toLowerCase().includes(t.subject?.toLowerCase() || '')
