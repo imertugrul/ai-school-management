@@ -3,6 +3,50 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
+// GET - Class detail with students and assignments
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email! } })
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
+    const cls = await prisma.class.findUnique({
+      where: { id: params.id },
+      include: {
+        students: {
+          select: { id: true, name: true, email: true },
+          orderBy: { name: 'asc' }
+        },
+        courseAssignments: {
+          include: {
+            course: { select: { code: true, name: true } },
+            teacher: { select: { name: true } }
+          }
+        }
+      }
+    })
+
+    if (!cls) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, class: cls })
+
+  } catch (error: any) {
+    console.error('Get class error:', error)
+    return NextResponse.json({ error: 'Failed to get class' }, { status: 500 })
+  }
+}
+
 // PUT - Update class
 export async function PUT(
   request: NextRequest,

@@ -265,28 +265,21 @@ export default function AdminClassesPage() {
                     </h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       {gradeClasses.map((cls) => (
-                        <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div
+                          key={cls.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-primary-300 transition-all cursor-pointer"
+                          onClick={() => router.push(`/admin/classes/${cls.id}`)}
+                        >
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEdit(cls)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(cls.id)}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium"
-                              >
-                                Delete
-                              </button>
+                            <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                              <button onClick={() => handleEdit(cls)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                              <button onClick={() => handleDelete(cls.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
                             </div>
                           </div>
                           {cls.section && <p className="text-sm text-gray-600">Section: {cls.section}</p>}
-                          <p className="text-sm text-gray-600">
-                            👥 {cls._count.students} students
-                          </p>
+                          <p className="text-sm text-gray-600">👥 {cls._count.students} students</p>
+                          <p className="text-xs text-primary-400 mt-2">View details →</p>
                         </div>
                       ))}
                     </div>
@@ -312,27 +305,20 @@ export default function AdminClassesPage() {
                     </h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       {noGradeClasses.map((cls) => (
-                        <div key={cls.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div
+                          key={cls.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-primary-300 transition-all cursor-pointer"
+                          onClick={() => router.push(`/admin/classes/${cls.id}`)}
+                        >
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="text-2xl font-bold text-primary-600">{cls.name}</h3>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEdit(cls)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(cls.id)}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium"
-                              >
-                                Delete
-                              </button>
+                            <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                              <button onClick={() => handleEdit(cls)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                              <button onClick={() => handleDelete(cls.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">
-                            👥 {cls._count.students} students
-                          </p>
+                          <p className="text-sm text-gray-600">👥 {cls._count.students} students</p>
+                          <p className="text-xs text-primary-400 mt-2">View details →</p>
                         </div>
                       ))}
                     </div>
