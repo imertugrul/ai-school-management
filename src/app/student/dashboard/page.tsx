@@ -10,25 +10,16 @@ export default function StudentDashboard() {
   const [stats, setStats] = useState({
     coursesEnrolled: 0,
     averageGrade: 0,
-    attendanceRate: 0
+    attendanceRate: 0,
+    pendingTests: 0
   })
 
   useEffect(() => {
-    // Fetch student stats
-    fetchStats()
+    fetch('/api/student/stats')
+      .then(r => r.json())
+      .then(data => { if (data.success) setStats(data.stats) })
+      .catch(console.error)
   }, [])
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/student/stats')
-      const data = await response.json()
-      if (data.success) {
-        setStats(data.stats)
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,46 +46,21 @@ export default function StudentDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">📚</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Courses Enrolled</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.coursesEnrolled}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">📊</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Grade</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.averageGrade > 0 ? `${stats.averageGrade.toFixed(1)}%` : 'N/A'}
-                </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { icon: '📚', label: 'Courses',        value: stats.coursesEnrolled },
+            { icon: '📊', label: 'Average Grade',   value: stats.averageGrade > 0 ? `${stats.averageGrade}%` : 'N/A' },
+            { icon: '✅', label: 'Attendance',      value: stats.attendanceRate > 0 ? `${stats.attendanceRate}%` : 'N/A' },
+            { icon: '📝', label: 'Pending Tests',   value: stats.pendingTests },
+          ].map(s => (
+            <div key={s.label} className="card flex items-center gap-3">
+              <div className="text-3xl">{s.icon}</div>
+              <div>
+                <p className="text-xs text-gray-500">{s.label}</p>
+                <p className="text-xl font-bold text-gray-900">{s.value}</p>
               </div>
             </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">✅</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.attendanceRate > 0 ? `${stats.attendanceRate.toFixed(1)}%` : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Main Actions */}
@@ -106,7 +72,7 @@ export default function StudentDashboard() {
             <div className="text-4xl mb-3">📝</div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">My Tests</h3>
             <p className="text-gray-600 text-sm">
-              View and take assigned tests
+              View and take your assigned tests
             </p>
           </button>
 
@@ -117,18 +83,18 @@ export default function StudentDashboard() {
             <div className="text-4xl mb-3">📈</div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Test Results</h3>
             <p className="text-gray-600 text-sm">
-              View your test scores and feedback
+              View your graded test scores and feedback
             </p>
           </button>
 
           <button
-            onClick={() => router.push('/student/attendance')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+            onClick={() => router.push('/student/grades')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200"
           >
-            <div className="text-4xl mb-3">📋</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Attendance</h3>
+            <div className="text-4xl mb-3">🎓</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Grades</h3>
             <p className="text-gray-600 text-sm">
-              View your attendance record
+              View course grades and weighted averages
             </p>
           </button>
 
@@ -144,13 +110,13 @@ export default function StudentDashboard() {
           </button>
 
           <button
-            onClick={() => router.push('/student/grades')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200"
+            onClick={() => router.push('/student/attendance')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
-            <div className="text-4xl mb-3">📊</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">My Grades</h3>
+            <div className="text-4xl mb-3">📋</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Attendance</h3>
             <p className="text-gray-600 text-sm">
-              View your grades and academic progress
+              View your attendance record
             </p>
           </button>
 
@@ -159,9 +125,9 @@ export default function StudentDashboard() {
             className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
             <div className="text-4xl mb-3">📊</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">My Analytics</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Analytics</h3>
             <p className="text-gray-600 text-sm">
-              Track your academic performance
+              Track your overall academic performance
             </p>
           </button>
         </div>
