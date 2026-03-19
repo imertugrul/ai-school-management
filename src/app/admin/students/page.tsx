@@ -26,20 +26,17 @@ export default function AdminStudentsPage() {
   const [classes, setClasses] = useState<Class[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('list')
-  
-  // Add Student Form
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     classId: ''
   })
-  
-  // CSV Import
+
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [importResults, setImportResults] = useState<any>(null)
-  
-  // Edit
+
   const [editingStudent, setEditingStudent] = useState<string | null>(null)
   const [editClassId, setEditClassId] = useState<string>('')
 
@@ -67,7 +64,6 @@ export default function AdminStudentsPage() {
     }
   }
 
-  // Add Student
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -95,7 +91,6 @@ export default function AdminStudentsPage() {
     }
   }
 
-  // Assign Class
   const handleAssignClass = async (studentId: string, classId: string) => {
     try {
       const response = await fetch('/api/admin/students/assign-class', {
@@ -113,7 +108,6 @@ export default function AdminStudentsPage() {
     }
   }
 
-  // Delete Student
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this student?')) return
 
@@ -131,11 +125,10 @@ export default function AdminStudentsPage() {
     }
   }
 
-  // CSV Import
   const parseCSV = (text: string) => {
     const lines = text.trim().split('\n')
     const headers = lines[0].split(',').map(h => h.trim())
-    
+
     return lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.trim())
       const user: any = {}
@@ -181,12 +174,14 @@ export default function AdminStudentsPage() {
     a.click()
   }
 
+  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
         </div>
       </div>
     )
@@ -194,65 +189,63 @@ export default function AdminStudentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Student Management</h1>
-            <p className="text-gray-600 mt-1">Manage students, assign to classes</p>
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">👨‍🎓</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Student Management</h1>
+                <p className="text-xs text-gray-500">Manage students, assign to classes</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/admin')}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              ← Back
+            </button>
           </div>
-          <button
-            onClick={() => router.push('/admin')}
-            className="btn-secondary"
-          >
-            ← Back
-          </button>
         </div>
+      </nav>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <nav className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'list'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              All Students ({students.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('add')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'add'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              ➕ Add Student
-            </button>
-            <button
-              onClick={() => setActiveTab('import')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'import'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              📥 Import CSV
-            </button>
+            {([
+              { key: 'list', label: `All Students (${students.length})` },
+              { key: 'add', label: '+ Add Student' },
+              { key: 'import', label: 'Import CSV' },
+            ] as { key: TabType; label: string }[]).map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === tab.key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'list' && (
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">All Students</h2>
-            
+          <div className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden bg-white">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">All Students</h2>
+            </div>
+
             {students.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-16">
                 <div className="text-6xl mb-4">👨‍🎓</div>
-                <p className="text-gray-500 mb-4">No students yet</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No students yet</h3>
+                <p className="text-gray-500 text-sm mb-6">Add your first student or import from CSV</p>
                 <div className="flex gap-3 justify-center">
                   <button onClick={() => setActiveTab('add')} className="btn-primary">
                     Add First Student
@@ -264,20 +257,25 @@ export default function AdminStudentsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Name</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Email</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Class</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-100">
                     {students.map((student) => (
-                      <tr key={student.id} className="hover:bg-gray-50">
+                      <tr key={student.id} className="hover:bg-blue-50/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{student.name}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center shrink-0">
+                              <span className="text-white text-xs font-semibold">{getInitials(student.name)}</span>
+                            </div>
+                            <div className="font-medium text-gray-900">{student.name}</div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {student.email}
@@ -285,7 +283,7 @@ export default function AdminStudentsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {editingStudent === student.id ? (
                             <select
-                              className="input-field text-sm"
+                              className="input-field text-sm py-1.5"
                               value={editClassId}
                               onChange={(e) => setEditClassId(e.target.value)}
                               autoFocus
@@ -299,8 +297,8 @@ export default function AdminStudentsPage() {
                             </select>
                           ) : (
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              student.class 
-                                ? 'bg-blue-100 text-blue-800' 
+                              student.class
+                                ? 'bg-blue-100 text-blue-800'
                                 : 'bg-gray-100 text-gray-600'
                             }`}>
                               {student.class?.name || 'Not assigned'}
@@ -312,13 +310,13 @@ export default function AdminStudentsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleAssignClass(student.id, editClassId)}
-                                className="text-green-600 hover:text-green-800 font-medium"
+                                className="text-emerald-600 hover:text-emerald-800 font-semibold"
                               >
                                 Save
                               </button>
                               <button
                                 onClick={() => setEditingStudent(null)}
-                                className="text-gray-600 hover:text-gray-800 font-medium"
+                                className="text-gray-500 hover:text-gray-700 font-medium"
                               >
                                 Cancel
                               </button>
@@ -330,13 +328,13 @@ export default function AdminStudentsPage() {
                                   setEditingStudent(student.id)
                                   setEditClassId(student.class?.id || '')
                                 }}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
+                                className="text-blue-600 hover:text-blue-800 font-semibold"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDelete(student.id)}
-                                className="text-red-600 hover:text-red-800 font-medium"
+                                className="text-red-500 hover:text-red-700 font-semibold"
                               >
                                 Delete
                               </button>
@@ -354,7 +352,7 @@ export default function AdminStudentsPage() {
 
         {activeTab === 'add' && (
           <div className="card max-w-2xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Student</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Add New Student</h2>
             <form onSubmit={handleAddStudent} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -430,21 +428,20 @@ export default function AdminStudentsPage() {
 
         {activeTab === 'import' && (
           <div className="card max-w-2xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Import Students from CSV</h2>
-            
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-blue-800 mb-2">
-                <strong>CSV Format:</strong> name, email, password, role, className, subject
-              </p>
-              <p className="text-sm text-blue-800 mb-2">
-                For students, leave subject empty
-              </p>
-              <button
-                onClick={downloadTemplate}
-                className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
-              >
-                📄 Download Template
-              </button>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Import Students from CSV</h2>
+
+            <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800 mb-6">
+              <span className="text-blue-500 text-base mt-0.5">ℹ</span>
+              <div>
+                <p className="font-semibold mb-1">CSV Format: name, email, password, role, className, subject</p>
+                <p>For students, leave subject empty</p>
+                <button
+                  onClick={downloadTemplate}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-semibold"
+                >
+                  Download Template →
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleCSVImport} className="space-y-4">
@@ -461,22 +458,26 @@ export default function AdminStudentsPage() {
               </div>
 
               {importResults && (
-                <div className={`border rounded-lg p-4 ${
-                  importResults.failed === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+                <div className={`flex items-start gap-3 p-4 border rounded-xl text-sm ${
+                  importResults.failed === 0
+                    ? 'bg-green-50 border-green-200 text-green-700'
+                    : 'bg-amber-50 border-amber-200 text-amber-700'
                 }`}>
-                  <p className="font-semibold mb-2">Import Results:</p>
-                  <p className="text-sm">✅ Success: {importResults.success}</p>
-                  <p className="text-sm">❌ Failed: {importResults.failed}</p>
-                  {importResults.errors?.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-sm font-semibold">Errors:</p>
-                      <ul className="text-xs list-disc list-inside">
-                        {importResults.errors.map((err: string, i: number) => (
-                          <li key={i}>{err}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <div>
+                    <p className="font-semibold mb-1">Import Results:</p>
+                    <p>✓ Success: {importResults.success}</p>
+                    <p>✗ Failed: {importResults.failed}</p>
+                    {importResults.errors?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="font-semibold">Errors:</p>
+                        <ul className="text-xs list-disc list-inside mt-1">
+                          {importResults.errors.map((err: string, i: number) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

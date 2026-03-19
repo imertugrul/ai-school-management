@@ -57,7 +57,6 @@ export default function CourseAssignmentsPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  // CSV import
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ success: number; skipped: number; errors: string[] } | null>(null)
@@ -201,12 +200,14 @@ export default function CourseAssignmentsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
       </div>
     )
   }
 
-  // Group assignments by teacher
   const groupedByTeacher = assignments.reduce((acc, assignment) => {
     const tid = assignment.teacher.id
     if (!acc[tid]) acc[tid] = { teacher: assignment.teacher, assignments: [] }
@@ -216,32 +217,43 @@ export default function CourseAssignmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Header */}
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Course Assignments</h1>
-            <p className="text-gray-600 mt-1">Assign courses and classes to teachers</p>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => router.push('/admin')} className="btn-secondary">
-              ← Back
-            </button>
-            <button onClick={() => { setShowForm(true); setError('') }} className="btn-primary">
-              + New Assignment
-            </button>
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">📋</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Course Assignments</h1>
+                <p className="text-xs text-gray-500">Assign courses and classes to teachers</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/admin')}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button onClick={() => { setShowForm(true); setError('') }} className="btn-primary">
+                + New Assignment
+              </button>
+            </div>
           </div>
         </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* CSV Import */}
         <div className="card mb-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Bulk Import via CSV</h2>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-sm text-gray-500 mt-1">
                 Upload a CSV to assign multiple courses at once.
-                Columns: <code className="bg-gray-100 px-1 rounded text-xs">teacher_email, course_code, class_name, weekly_hours</code>
+                Columns: <code className="bg-gray-100 px-1.5 py-0.5 rounded-lg text-xs font-mono">teacher_email, course_code, class_name, weekly_hours</code>
               </p>
             </div>
             <button onClick={downloadTemplate} className="btn-secondary text-sm whitespace-nowrap">
@@ -250,7 +262,7 @@ export default function CourseAssignmentsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="flex-1 flex items-center gap-3 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-primary-400 transition-colors">
+            <label className="flex-1 flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:border-blue-400 transition-colors">
               <span className="text-2xl">📂</span>
               <span className="text-sm text-gray-600">
                 {csvFile ? csvFile.name : 'Click to select CSV file...'}
@@ -272,16 +284,18 @@ export default function CourseAssignmentsPage() {
           </div>
 
           {importResult && (
-            <div className={`mt-4 p-3 rounded-lg text-sm ${importResult.success > 0 ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-              <p className="font-medium mb-1">
-                ✅ {importResult.success} imported &nbsp;·&nbsp; ⏭️ {importResult.skipped} skipped
-              </p>
-              {importResult.errors.length > 0 && (
-                <ul className="text-xs text-red-600 space-y-0.5 mt-2">
-                  {importResult.errors.slice(0, 10).map((e, i) => <li key={i}>• {e}</li>)}
-                  {importResult.errors.length > 10 && <li>...and {importResult.errors.length - 10} more</li>}
-                </ul>
-              )}
+            <div className={`mt-4 flex items-start gap-3 p-4 rounded-xl border text-sm ${importResult.success > 0 ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+              <div>
+                <p className="font-semibold mb-1">
+                  ✓ {importResult.success} imported &nbsp;·&nbsp; ⏭ {importResult.skipped} skipped
+                </p>
+                {importResult.errors.length > 0 && (
+                  <ul className="text-xs text-red-600 space-y-0.5 mt-2">
+                    {importResult.errors.slice(0, 10).map((e, i) => <li key={i}>• {e}</li>)}
+                    {importResult.errors.length > 10 && <li>...and {importResult.errors.length - 10} more</li>}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -292,8 +306,9 @@ export default function CourseAssignmentsPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-4">New Assignment</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {error}
+                <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  <span className="text-red-500 text-base mt-0.5">⚠</span>
+                  <span>{error}</span>
                 </div>
               )}
 
@@ -382,17 +397,18 @@ export default function CourseAssignmentsPage() {
 
         {/* Assignments List */}
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">
               All Assignments
-              <span className="ml-2 text-sm font-normal text-gray-500">({assignments.length})</span>
+              <span className="ml-2 text-sm font-normal text-gray-400">({assignments.length})</span>
             </h2>
           </div>
 
           {assignments.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
-              <p className="text-gray-500 mb-4">No course assignments yet.</p>
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No course assignments yet</h3>
+              <p className="text-gray-500 text-sm mb-6">Create your first assignment to get started</p>
               <button onClick={() => setShowForm(true)} className="btn-primary">
                 + Create First Assignment
               </button>
@@ -400,43 +416,52 @@ export default function CourseAssignmentsPage() {
           ) : (
             <div className="space-y-4">
               {Object.values(groupedByTeacher).map(({ teacher, assignments: teacherAssignments }) => (
-                <div key={teacher.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                  {/* Teacher Header */}
-                  <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold text-gray-900">{teacher.name}</span>
-                      {teacher.subject && (
-                        <span className="ml-2 text-sm text-gray-500">({teacher.subject})</span>
-                      )}
-                      <span className="ml-2 text-xs text-gray-400">
+                <div key={teacher.id} className="border border-gray-200 rounded-2xl overflow-hidden">
+                  <div className="bg-gray-50 px-5 py-3 flex justify-between items-center border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">
+                          {teacher.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-900">{teacher.name}</span>
+                        {teacher.subject && (
+                          <span className="ml-2 text-xs text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                            {teacher.subject}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400">
                         {teacherAssignments.length} assignment{teacherAssignments.length !== 1 ? 's' : ''}
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeleteAllForTeacher(teacher.id, teacher.name)}
-                      className="text-xs text-red-500 hover:text-red-700"
+                      className="text-xs text-red-400 hover:text-red-600 font-semibold"
                     >
                       Delete All
                     </button>
                   </div>
 
-                  {/* Assignment Rows */}
                   <div className="divide-y divide-gray-100">
                     {teacherAssignments.map(a => (
-                      <div key={a.id} className="px-4 py-3 flex justify-between items-center">
+                      <div key={a.id} className="px-5 py-3 flex justify-between items-center hover:bg-gray-50/50 transition-colors">
                         <div className="flex items-center gap-3 text-sm">
-                          <span className="font-medium text-gray-900">{a.course.code}</span>
-                          <span className="text-gray-600">{a.course.name}</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            {a.course.code}
+                          </span>
+                          <span className="font-medium text-gray-700">{a.course.name}</span>
                           {a.class && (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                            <span className="px-2 py-0.5 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">
                               {a.class.name}
                             </span>
                           )}
-                          <span className="text-gray-400">{a.weeklyHours}h/week</span>
+                          <span className="text-gray-400 text-xs">{a.weeklyHours}h/week</span>
                         </div>
                         <button
                           onClick={() => handleDeleteAssignment(a.id)}
-                          className="text-xs text-red-400 hover:text-red-600"
+                          className="text-xs text-red-400 hover:text-red-600 font-semibold"
                         >
                           Delete
                         </button>

@@ -35,7 +35,7 @@ export default function TestsListPage() {
     try {
       const response = await fetch('/api/tests')
       const data = await response.json()
-      
+
       if (data.success) {
         setTests(data.tests)
       }
@@ -46,26 +46,54 @@ export default function TestsListPage() {
     }
   }
 
+  const getStatusBadge = (test: Test) => {
+    const now = new Date()
+    const startDate = test.startDate ? new Date(test.startDate) : null
+    const endDate = test.endDate ? new Date(test.endDate) : null
+    const isScheduled = startDate && now < startDate
+    const isExpired = endDate && now > endDate
+
+    if (test.isActive) return { label: 'Active', className: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' }
+    if (isScheduled) return { label: 'Scheduled', className: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' }
+    if (isExpired) return { label: 'Expired', className: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' }
+    return { label: 'Inactive', className: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' }
+  }
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">My Tests</h1>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => router.push('/teacher/tests/create')} 
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">📝</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">My Tests</h1>
+                <p className="text-xs text-gray-500">{tests.length} tests total</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/teacher/tests/create')}
                 className="btn-primary"
               >
                 + New Test
               </button>
-              <button 
-                onClick={() => router.push('/teacher/dashboard')} 
-                className="btn-secondary"
+              <button
+                onClick={() => router.push('/teacher/dashboard')}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 ← Dashboard
               </button>
@@ -76,10 +104,12 @@ export default function TestsListPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {tests.length === 0 ? (
-          <div className="card text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">You haven't created any tests yet</p>
-            <button 
-              onClick={() => router.push('/teacher/tests/create')} 
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tests yet</h3>
+            <p className="text-gray-500 text-sm mb-6">Create your first test to get started</p>
+            <button
+              onClick={() => router.push('/teacher/tests/create')}
               className="btn-primary"
             >
               Create Your First Test
@@ -91,99 +121,89 @@ export default function TestsListPage() {
               const now = new Date()
               const startDate = test.startDate ? new Date(test.startDate) : null
               const endDate = test.endDate ? new Date(test.endDate) : null
-              
+
               const isScheduled = startDate && now < startDate
               const isExpired = endDate && now > endDate
               const canStart = !isScheduled && !isExpired
 
+              const statusBadge = getStatusBadge(test)
+
               return (
                 <div key={test.id} className="card hover:shadow-lg transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex justify-between items-start mb-5">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="text-xl font-bold text-gray-900">
                           {test.title}
                         </h3>
-                        
-                        {test.isActive ? (
-                          <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                            🟢 Active
-                          </span>
-                        ) : isScheduled ? (
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                            🕐 Scheduled
-                          </span>
-                        ) : isExpired ? (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
-                            ⏹️ Expired
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
-                            ⏸️ Inactive
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusBadge.className}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
+                          {statusBadge.label}
+                        </span>
                       </div>
 
                       {test.subject && (
-                        <span className="inline-block bg-primary-100 text-primary-800 text-sm px-3 py-1 rounded-full mb-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 mb-3">
                           {test.subject}
                         </span>
                       )}
-                      
+
                       {test.description && (
-                        <p className="text-gray-600 mb-4">{test.description}</p>
+                        <p className="text-gray-600 text-sm mb-4">{test.description}</p>
                       )}
-                      
-                      <div className="flex gap-6 text-sm text-gray-500 mb-3">
-                        <span>📝 {test.questions.length} Questions</span>
-                        <span>📊 {test._count.submissions} Submissions</span>
-                        <span>📅 {new Date(test.createdAt).toLocaleDateString('en-US')}</span>
+
+                      <div className="flex gap-5 text-sm text-gray-500 mb-4 flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <span>📝</span> {test.questions.length} Questions
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>📊</span> {test._count.submissions} Submissions
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>📅</span> {new Date(test.createdAt).toLocaleDateString('en-US')}
+                        </span>
                       </div>
 
                       {(startDate || endDate) && (
-                        <div className="text-sm text-gray-600 space-y-1 mb-3">
+                        <div className="text-sm text-gray-500 space-y-1 mb-4">
                           {startDate && (
-                            <div>
-                              🕐 Start: {startDate.toLocaleDateString('en-US')} {startDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}
-                            </div>
+                            <div>Start: {startDate.toLocaleDateString('en-US')} {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
                           )}
                           {endDate && (
-                            <div>
-                              🕐 End: {endDate.toLocaleDateString('en-US')} {endDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}
-                            </div>
+                            <div>End: {endDate.toLocaleDateString('en-US')} {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
                           )}
                         </div>
                       )}
 
                       {/* Access Code */}
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-sm font-medium text-blue-900">Test Code:</span>
-                            <code className="ml-2 text-2xl font-bold text-blue-600">{test.accessCode}</code>
+                            <span className="text-sm font-semibold text-blue-900">Test Code:</span>
+                            <code className="ml-2 text-2xl font-bold text-blue-600 tracking-wider">{test.accessCode}</code>
                           </div>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(test.accessCode)
                               alert('Code copied!')
                             }}
-                            className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                           >
-                            📋 Copy Code
+                            Copy Code
                           </button>
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t border-blue-200">
-                          <div className="text-sm text-blue-700">
-                            🔗 <code className="text-xs bg-blue-100 px-2 py-1 rounded">localhost:3000/join/{test.accessCode}</code>
-                          </div>
+                          <code className="text-xs bg-white border border-blue-200 px-2 py-1 rounded-lg text-blue-700">
+                            {typeof window !== 'undefined' ? window.location.origin : 'localhost:3000'}/join/{test.accessCode}
+                          </code>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(`${window.location.origin}/join/${test.accessCode}`)
                               alert('Link copied!')
                             }}
-                            className="text-sm px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            className="text-sm px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                           >
-                            🔗 Copy Link
+                            Copy Link
                           </button>
                         </div>
                         <p className="text-xs text-blue-600">
@@ -193,10 +213,10 @@ export default function TestsListPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap pt-2 border-t border-gray-100">
                     {canStart && (
                       test.isActive ? (
-                        <button 
+                        <button
                           onClick={async () => {
                             await fetch(`/api/tests/${test.id}/toggle-status`, {
                               method: 'POST',
@@ -205,12 +225,12 @@ export default function TestsListPage() {
                             })
                             fetchTests()
                           }}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 text-sm font-semibold transition-colors"
                         >
-                          ⏸️ Stop
+                          Stop
                         </button>
                       ) : (
-                        <button 
+                        <button
                           onClick={async () => {
                             await fetch(`/api/tests/${test.id}/toggle-status`, {
                               method: 'POST',
@@ -219,37 +239,37 @@ export default function TestsListPage() {
                             })
                             fetchTests()
                           }}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-sm font-semibold transition-colors"
                         >
-                          ▶️ Start
+                          Start
                         </button>
                       )
                     )}
 
-                    <button 
+                    <button
                       onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
-                      className="btn-primary"
+                      className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 text-sm font-semibold transition-colors"
                     >
                       🔴 Live Monitor
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={() => router.push(`/teacher/tests/${test.id}/results`)}
-                      className="btn-primary"
+                      className="btn-primary text-sm"
                     >
-                      📊 Results
+                      Results
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => router.push(`/teacher/tests/${test.id}`)}
-                      className="btn-primary"
+                      className="btn-secondary text-sm"
                     >
-                      📋 Details
+                      Details
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={() => router.push(`/teacher/tests/${test.id}/edit`)}
-                      className="btn-secondary"
+                      className="btn-secondary text-sm"
                     >
                       Edit
                     </button>

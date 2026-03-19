@@ -43,11 +43,29 @@ export default function ClassDetailPage() {
   }, [classId])
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!cls) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500">Class not found</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center py-16">
+          <div className="text-6xl mb-4">🏫</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Class not found</h3>
+          <p className="text-gray-500 text-sm mb-6">This class may have been deleted</p>
+          <button onClick={() => router.push('/admin/classes')} className="btn-primary">
+            Back to Classes
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const filteredStudents = cls.students.filter(s =>
@@ -55,22 +73,30 @@ export default function ClassDetailPage() {
     s.email.toLowerCase().includes(search.toLowerCase())
   )
 
+  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <button onClick={() => router.push('/admin/classes')} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => router.push('/admin/classes')}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+              >
                 ← Classes
               </button>
               <span className="text-gray-300">/</span>
-              <h1 className="text-2xl font-bold text-primary-600">Class {cls.name}</h1>
-              {cls.grade && (
-                <span className="text-sm bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
-                  Grade {cls.grade}
-                </span>
-              )}
+              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-base">{cls.name[0]}</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Class {cls.name}</h1>
+                {cls.grade && (
+                  <p className="text-xs text-gray-500">Grade {cls.grade}{cls.section ? ` · Section ${cls.section}` : ''}</p>
+                )}
+              </div>
             </div>
             <button onClick={() => router.push('/admin')} className="btn-secondary text-sm">
               ← Panel
@@ -83,18 +109,28 @@ export default function ClassDetailPage() {
 
         {/* Stats */}
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="card flex items-center gap-4">
-            <div className="text-4xl">👥</div>
-            <div>
-              <p className="text-sm text-gray-500">Students</p>
-              <p className="text-3xl font-bold text-gray-900">{cls.students.length}</p>
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-blue-200 transition-all duration-300">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-full group-hover:scale-150 transition-transform duration-500 opacity-60" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                  <span className="text-2xl">👥</span>
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 tracking-tight">{cls.students.length}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Students Enrolled</p>
             </div>
           </div>
-          <div className="card flex items-center gap-4">
-            <div className="text-4xl">📚</div>
-            <div>
-              <p className="text-sm text-gray-500">Courses</p>
-              <p className="text-3xl font-bold text-gray-900">{cls.courseAssignments.length}</p>
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-purple-200 transition-all duration-300">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-purple-50 to-transparent rounded-full group-hover:scale-150 transition-transform duration-500 opacity-60" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
+                  <span className="text-2xl">📚</span>
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 tracking-tight">{cls.courseAssignments.length}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Assigned Courses</p>
             </div>
           </div>
         </div>
@@ -102,17 +138,22 @@ export default function ClassDetailPage() {
         {/* Course Assignments */}
         {cls.courseAssignments.length > 0 && (
           <div className="card">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Assigned Courses</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4 border-l-4 border-purple-500 pl-4">Assigned Courses</h2>
             <div className="divide-y divide-gray-100">
               {cls.courseAssignments.map(a => (
-                <div key={a.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-gray-900">{a.course.code}</span>
-                    <span className="text-gray-500 ml-2">{a.course.name}</span>
+                <div key={a.id} className="py-3 flex items-center justify-between hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                      {a.course.code}
+                    </span>
+                    <span className="font-medium text-gray-700">{a.course.name}</span>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>👨‍🏫 {a.teacher.name}</span>
-                    <span>{a.weeklyHours}h/week</span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center text-xs">👨‍🏫</span>
+                      {a.teacher.name}
+                    </span>
+                    <span className="text-xs bg-gray-100 px-2 py-1 rounded-lg">{a.weeklyHours}h/week</span>
                   </div>
                 </div>
               ))}
@@ -122,8 +163,8 @@ export default function ClassDetailPage() {
 
         {/* Students List */}
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-gray-900">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900 border-l-4 border-blue-500 pl-4">
               Students
               <span className="ml-2 text-sm font-normal text-gray-400">({cls.students.length})</span>
             </h2>
@@ -132,17 +173,18 @@ export default function ClassDetailPage() {
               placeholder="Search student..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input-field w-48 text-sm py-1.5"
+              className="input-field w-48 text-sm py-2"
             />
           </div>
 
           {cls.students.length === 0 ? (
-            <div className="text-center py-10 text-gray-400">
-              <p className="text-4xl mb-2">👤</p>
-              <p>No students in this class yet.</p>
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">👤</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No students yet</h3>
+              <p className="text-gray-500 text-sm mb-6">Assign students to this class from the Students page</p>
               <button
                 onClick={() => router.push('/admin/students')}
-                className="btn-primary text-sm mt-4"
+                className="btn-primary text-sm"
               >
                 Go to Students
               </button>
@@ -152,8 +194,11 @@ export default function ClassDetailPage() {
           ) : (
             <div className="divide-y divide-gray-100">
               {filteredStudents.map((student, i) => (
-                <div key={student.id} className="py-3 flex items-center gap-4">
-                  <span className="text-sm text-gray-300 w-6 text-right">{i + 1}</span>
+                <div key={student.id} className="py-3 flex items-center gap-4 hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
+                  <span className="text-sm text-gray-300 w-6 text-right font-medium">{i + 1}</span>
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center shrink-0">
+                    <span className="text-white text-xs font-semibold">{getInitials(student.name)}</span>
+                  </div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{student.name}</p>
                     <p className="text-sm text-gray-400">{student.email}</p>

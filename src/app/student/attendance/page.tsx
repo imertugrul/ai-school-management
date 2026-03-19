@@ -21,9 +21,9 @@ interface Stats {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  PRESENT: 'bg-green-100 text-green-800',
+  PRESENT: 'bg-emerald-100 text-emerald-800',
   ABSENT:  'bg-red-100 text-red-800',
-  LATE:    'bg-yellow-100 text-yellow-800',
+  LATE:    'bg-amber-100 text-amber-800',
   EXCUSED: 'bg-blue-100 text-blue-800',
 }
 
@@ -32,6 +32,13 @@ const STATUS_LABEL: Record<string, string> = {
   ABSENT:  'Absent',
   LATE:    'Late',
   EXCUSED: 'Excused',
+}
+
+const STATUS_DOT: Record<string, string> = {
+  PRESENT: 'bg-emerald-500',
+  ABSENT:  'bg-red-500',
+  LATE:    'bg-amber-500',
+  EXCUSED: 'bg-blue-500',
 }
 
 export default function StudentAttendancePage() {
@@ -54,16 +61,42 @@ export default function StudentAttendancePage() {
   }, [])
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
+      </div>
+    )
   }
+
+  const rateColor = stats
+    ? stats.rate >= 90 ? 'text-emerald-600' : stats.rate >= 75 ? 'text-amber-600' : 'text-red-600'
+    : 'text-gray-600'
+
+  const rateBarColor = stats
+    ? stats.rate >= 90 ? 'bg-emerald-500' : stats.rate >= 75 ? 'bg-amber-500' : 'bg-red-500'
+    : 'bg-gray-400'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">My Attendance</h1>
-            <button onClick={() => router.push('/student/dashboard')} className="btn-secondary">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">📋</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">My Attendance</h1>
+                <p className="text-xs text-gray-500">{records.length} records</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/student/dashboard')}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+            >
               ← Dashboard
             </button>
           </div>
@@ -76,14 +109,17 @@ export default function StudentAttendancePage() {
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Attendance Rate', value: `${stats.rate}%`, color: stats.rate >= 90 ? 'text-green-600' : stats.rate >= 75 ? 'text-yellow-600' : 'text-red-600' },
-              { label: 'Present', value: stats.present, color: 'text-green-600' },
-              { label: 'Absent',  value: stats.absent,  color: 'text-red-600' },
-              { label: 'Late',    value: stats.late,    color: 'text-yellow-600' },
+              { label: 'Attendance Rate', value: `${stats.rate}%`, color: rateColor, bg: 'from-gray-50' },
+              { label: 'Present', value: stats.present, color: 'text-emerald-600', bg: 'from-emerald-50' },
+              { label: 'Absent',  value: stats.absent,  color: 'text-red-600',     bg: 'from-red-50' },
+              { label: 'Late',    value: stats.late,    color: 'text-amber-600',   bg: 'from-amber-50' },
             ].map(s => (
-              <div key={s.label} className="card text-center">
-                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+              <div key={s.label} className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                <div className={`absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br ${s.bg} to-transparent rounded-full group-hover:scale-150 transition-transform duration-500 opacity-60`} />
+                <div className="relative">
+                  <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-xs text-gray-500 mt-1 font-medium">{s.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -92,19 +128,21 @@ export default function StudentAttendancePage() {
         {/* Attendance rate bar */}
         {stats && (
           <div className="card">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium text-gray-700">Overall Attendance Rate</span>
-              <span className="font-bold">{stats.rate}%</span>
+            <div className="flex justify-between text-sm mb-3">
+              <span className="font-semibold text-gray-700">Overall Attendance Rate</span>
+              <span className={`font-bold text-lg ${rateColor}`}>{stats.rate}%</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${stats.rate >= 90 ? 'bg-green-500' : stats.rate >= 75 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                className={`h-full rounded-full transition-all ${rateBarColor}`}
                 style={{ width: `${stats.rate}%` }}
               />
             </div>
             {stats.rate < 90 && (
               <p className="text-xs text-gray-400 mt-2">
-                {stats.rate >= 75 ? 'Attendance below recommended 90%.' : 'Low attendance — please contact your school.'}
+                {stats.rate >= 75
+                  ? 'Attendance is below the recommended 90%. Try to attend more classes.'
+                  : 'Low attendance rate — please contact your school.'}
               </p>
             )}
           </div>
@@ -112,24 +150,29 @@ export default function StudentAttendancePage() {
 
         {/* Records */}
         <div className="card">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-5 border-l-4 border-orange-500 pl-4">
             Attendance Records
             <span className="ml-2 text-sm font-normal text-gray-400">({records.length})</span>
           </h2>
 
           {records.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">No attendance records yet.</p>
+            <div className="text-center py-12">
+              <div className="text-5xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No attendance records yet</h3>
+              <p className="text-gray-500 text-sm">Your attendance will appear here once recorded</p>
+            </div>
           ) : (
             <div className="divide-y divide-gray-100">
               {records.map(r => (
-                <div key={r.id} className="py-3 flex items-center justify-between">
+                <div key={r.id} className="py-3.5 flex items-center justify-between hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-semibold text-gray-900">
                       {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
-                    <p className="text-xs text-gray-400">{r.class.name}{r.notes ? ` · ${r.notes}` : ''}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{r.class.name}{r.notes ? ` · ${r.notes}` : ''}</p>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_STYLE[r.status]}`}>
+                  <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_STYLE[r.status]}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[r.status]}`} />
                     {STATUS_LABEL[r.status]}
                   </span>
                 </div>
