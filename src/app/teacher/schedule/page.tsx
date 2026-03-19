@@ -61,7 +61,10 @@ export default function TeacherSchedulePage() {
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold text-primary-600">My Schedule</h1>
             <div className="flex gap-2">
-              <button onClick={() => router.push('/teacher/schedule/add')} className="btn-primary text-sm">
+              <button onClick={() => router.push('/teacher/schedule/upload')} className="btn-primary text-sm">
+                AI Upload
+              </button>
+              <button onClick={() => router.push('/teacher/schedule/add')} className="btn-secondary text-sm">
                 + Add Entry
               </button>
               <button onClick={() => router.push('/teacher/dashboard')} className="btn-secondary text-sm">
