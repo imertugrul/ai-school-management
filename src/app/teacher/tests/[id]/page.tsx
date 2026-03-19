@@ -31,7 +31,7 @@ export default function TestDetailPage() {
       const testRes = await fetch(`/api/tests/${testId}`)
       const testData = await testRes.json()
       
-      const classesRes = await fetch('/api/admin/classes')
+      const classesRes = await fetch('/api/teacher/classes')
       const classesData = await classesRes.json()
       
       if (testData.success) setTest(testData.test)
@@ -151,7 +151,7 @@ export default function TestDetailPage() {
           {classes.length === 0 && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
-                ⚠️ No classes created yet. Create classes in the admin panel first.
+                ⚠️ No classes assigned yet. Please ask the admin to add course assignments for your account.
               </p>
             </div>
           )}
