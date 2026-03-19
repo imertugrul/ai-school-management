@@ -109,7 +109,7 @@ export default function TeacherDashboard() {
           </button>
 
           <button
-            onClick={() => router.push('/teacher/grade')}
+            onClick={() => router.push('/teacher/gradebook')}
             className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
             <div className="text-4xl mb-3">✅</div>

@@ -77,15 +77,15 @@ export default function AdminPage() {
             </p>
           </button>
 
-          {/* Course Assignments (AI) */}
+          {/* Course Assignments */}
           <button
             onClick={() => router.push('/admin/course-assignments')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200"
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
-            <div className="text-4xl mb-3">🤖</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Course Assignments (AI)</h3>
+            <div className="text-4xl mb-3">📋</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Course Assignments</h3>
             <p className="text-gray-600 text-sm">
-              Auto-assign courses to teachers with AI
+              Assign courses and classes to teachers
             </p>
           </button>
 
