@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       let totalWeighted = 0
       let totalWeight = 0
 
-      components.forEach(component => {
+      components.forEach((component: any) => {
         if (component.grade && component.grade.score !== null) {
           const percentage = (component.grade.score / component.maxScore) * 100
           totalWeighted += percentage * component.weight
