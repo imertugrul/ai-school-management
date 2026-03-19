@@ -10,25 +10,16 @@ export default function TeacherDashboard() {
   const [stats, setStats] = useState({
     testsCreated: 0,
     studentsGraded: 0,
-    averageScore: 0
+    averageScore: 0,
+    classesCount: 0
   })
 
   useEffect(() => {
-    // Fetch teacher stats
-    fetchStats()
+    fetch('/api/teacher/stats')
+      .then(r => r.json())
+      .then(data => { if (data.success) setStats(data.stats) })
+      .catch(console.error)
   }, [])
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/teacher/stats')
-      const data = await response.json()
-      if (data.success) {
-        setStats(data.stats)
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,44 +46,21 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">📝</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tests Created</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.testsCreated}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">👥</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Students Graded</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.studentsGraded}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { icon: '📝', label: 'Tests Created',    value: stats.testsCreated },
+            { icon: '👥', label: 'Submissions',       value: stats.studentsGraded },
+            { icon: '🎓', label: 'Classes',           value: stats.classesCount },
+            { icon: '📊', label: 'Average Score',     value: stats.averageScore > 0 ? `${stats.averageScore}%` : 'N/A' },
+          ].map(s => (
+            <div key={s.label} className="card flex items-center gap-3">
+              <div className="text-3xl">{s.icon}</div>
+              <div>
+                <p className="text-xs text-gray-500">{s.label}</p>
+                <p className="text-xl font-bold text-gray-900">{s.value}</p>
               </div>
             </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-4xl">📊</div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}%` : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Main Actions */}
@@ -102,20 +70,31 @@ export default function TeacherDashboard() {
             className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
             <div className="text-4xl mb-3">📝</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Create Test</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Tests</h3>
             <p className="text-gray-600 text-sm">
-              Create new tests with AI-powered grading
+              Create tests, assign to classes and review submissions
             </p>
           </button>
 
           <button
             onClick={() => router.push('/teacher/gradebook')}
+            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200"
+          >
+            <div className="text-4xl mb-3">📚</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Grade Book</h3>
+            <p className="text-gray-600 text-sm">
+              Manage grade components and enter student scores
+            </p>
+          </button>
+
+          <button
+            onClick={() => router.push('/teacher/schedule')}
             className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
           >
-            <div className="text-4xl mb-3">✅</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Grade Tests</h3>
+            <div className="text-4xl mb-3">📅</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">My Schedule</h3>
             <p className="text-gray-600 text-sm">
-              Review and grade student submissions
+              View your weekly teaching schedule
             </p>
           </button>
 
@@ -138,28 +117,6 @@ export default function TeacherDashboard() {
             <h3 className="text-xl font-bold text-gray-900 mb-2">Analytics</h3>
             <p className="text-gray-600 text-sm">
               View class performance and insights
-            </p>
-          </button>
-
-          <button
-            onClick={() => router.push('/teacher/schedule')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
-          >
-            <div className="text-4xl mb-3">📅</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">My Schedule</h3>
-            <p className="text-gray-600 text-sm">
-              View your weekly teaching schedule
-            </p>
-          </button>
-
-          <button
-            onClick={() => router.push('/teacher/gradebook')}
-            className="card hover:shadow-lg transition-shadow cursor-pointer text-left bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200"
-          >
-            <div className="text-4xl mb-3">📚</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Grade Book</h3>
-            <p className="text-gray-600 text-sm">
-              Manage student grades and assessments
             </p>
           </button>
         </div>
