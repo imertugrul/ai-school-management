@@ -57,6 +57,11 @@ export default function CourseAssignmentsPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // CSV import
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ success: number; skipped: number; errors: string[] } | null>(null)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -128,6 +133,55 @@ export default function CourseAssignmentsPage() {
     }
   }
 
+  const downloadTemplate = () => {
+    const csv = 'teacher_email,course_code,class_name,weekly_hours\nteacher@school.com,MATH9,9A,4\nteacher2@school.com,PHY10,10B,3'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'course-assignments-template.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const parseCSV = (text: string) => {
+    const lines = text.trim().split('\n').filter(l => l.trim())
+    const headers = lines[0].split(',').map(h => h.trim())
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim())
+      const row: any = {}
+      headers.forEach((h, i) => { row[h] = values[i] || '' })
+      return row
+    }).filter(r => r.teacher_email || r.course_code)
+  }
+
+  const handleImport = async () => {
+    if (!csvFile) return
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const text = await csvFile.text()
+      const rows = parseCSV(text)
+      const response = await fetch('/api/admin/course-assignments/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      })
+      const data = await response.json()
+      if (data.success) {
+        setImportResult(data.results)
+        setCsvFile(null)
+        fetchData()
+      } else {
+        setImportResult({ success: 0, skipped: 0, errors: [data.error] })
+      }
+    } catch (err) {
+      setImportResult({ success: 0, skipped: 0, errors: ['Failed to import'] })
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const handleDeleteAllForTeacher = async (teacherId: string, teacherName: string) => {
     const count = assignments.filter(a => a.teacher.id === teacherId).length
     if (!confirm(`Delete all ${count} assignments for ${teacherName}?`)) return
@@ -178,6 +232,58 @@ export default function CourseAssignmentsPage() {
               + New Assignment
             </button>
           </div>
+        </div>
+
+        {/* CSV Import */}
+        <div className="card mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Bulk Import via CSV</h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Upload a CSV to assign multiple courses at once.
+                Columns: <code className="bg-gray-100 px-1 rounded text-xs">teacher_email, course_code, class_name, weekly_hours</code>
+              </p>
+            </div>
+            <button onClick={downloadTemplate} className="btn-secondary text-sm whitespace-nowrap">
+              Download Template
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex-1 flex items-center gap-3 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-primary-400 transition-colors">
+              <span className="text-2xl">📂</span>
+              <span className="text-sm text-gray-600">
+                {csvFile ? csvFile.name : 'Click to select CSV file...'}
+              </span>
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={e => { setCsvFile(e.target.files?.[0] || null); setImportResult(null) }}
+              />
+            </label>
+            <button
+              onClick={handleImport}
+              disabled={!csvFile || importing}
+              className="btn-primary disabled:opacity-50 whitespace-nowrap"
+            >
+              {importing ? 'Importing...' : 'Import'}
+            </button>
+          </div>
+
+          {importResult && (
+            <div className={`mt-4 p-3 rounded-lg text-sm ${importResult.success > 0 ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+              <p className="font-medium mb-1">
+                ✅ {importResult.success} imported &nbsp;·&nbsp; ⏭️ {importResult.skipped} skipped
+              </p>
+              {importResult.errors.length > 0 && (
+                <ul className="text-xs text-red-600 space-y-0.5 mt-2">
+                  {importResult.errors.slice(0, 10).map((e, i) => <li key={i}>• {e}</li>)}
+                  {importResult.errors.length > 10 && <li>...and {importResult.errors.length - 10} more</li>}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
         {/* New Assignment Form */}
