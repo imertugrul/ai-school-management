@@ -3,68 +3,79 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface Schedule {
-  id: string
-  dayOfWeek: number
-  startTime: string
-  endTime: string
-  room: string | null
-  course: {
-    code: string
-    name: string
-  }
-  class: {
-    name: string
-  } | null
+interface Assignment {
+  courseId: string
+  classId: string
+  course: { code: string; name: string }
+  class: { name: string }
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
-export default function TeacherSchedulePage() {
+export default function AddScheduleEntryPage() {
   const router = useRouter()
-  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    totalClasses: 0,
-    uniqueCourses: 0,
-    teachingHours: 0
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const [form, setForm] = useState({
+    courseId: '',
+    dayOfWeek: '0',
+    startTime: '08:00',
+    endTime: '08:45',
+    room: ''
   })
 
   useEffect(() => {
-    fetchSchedule()
+    fetch('/api/teacher/assignments')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setAssignments(data.assignments)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
-  const fetchSchedule = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!form.courseId) {
+      setError('Please select a course.')
+      return
+    }
+
+    setSaving(true)
     try {
-      const response = await fetch('/api/teacher/schedule')
-      const data = await response.json()
-      
+      const res = await fetch('/api/teacher/schedule/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: form.courseId,
+          dayOfWeek: parseInt(form.dayOfWeek),
+          startTime: form.startTime,
+          endTime: form.endTime,
+          room: form.room || null
+        })
+      })
+
+      const data = await res.json()
+
       if (data.success) {
-        setSchedules(data.schedules)
-        setStats(data.stats)
+        router.push('/teacher/schedule')
+      } else {
+        setError(data.error || 'Failed to add entry.')
       }
-    } catch (error) {
-      console.error('Error:', error)
+    } catch (err) {
+      setError('An error occurred.')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  const getScheduleForDay = (dayIndex: number) => {
-    return schedules
-      .filter(s => s.dayOfWeek === dayIndex)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-  }
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading schedule...</p>
-        </div>
-      </div>
-    )
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
   return (
@@ -72,126 +83,104 @@ export default function TeacherSchedulePage() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">My Schedule</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => router.push('/teacher/schedule/add')}
-                className="btn-primary text-sm"
-              >
-                ➕ Add Entry
-              </button>
-              <button
-                onClick={() => router.push('/teacher/dashboard')}
-                className="btn-secondary text-sm"
-              >
-                ← Dashboard
-              </button>
-            </div>
+            <h1 className="text-2xl font-bold text-primary-600">Add Schedule Entry</h1>
+            <button onClick={() => router.push('/teacher/schedule')} className="btn-secondary">
+              ← Back
+            </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="text-4xl mr-4">📚</div>
-              <div>
-                <p className="text-sm text-gray-600">Total Classes</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalClasses}</p>
-              </div>
-            </div>
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {assignments.length === 0 ? (
+          <div className="card text-center py-12">
+            <p className="text-5xl mb-4">📋</p>
+            <p className="text-gray-700 font-medium mb-2">No course assignments found.</p>
+            <p className="text-gray-400 text-sm">Ask your admin to assign courses to you first.</p>
           </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="text-4xl mr-4">🎓</div>
-              <div>
-                <p className="text-sm text-gray-600">Unique Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.uniqueCourses}</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="card space-y-5">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                {error}
               </div>
-            </div>
-          </div>
+            )}
 
-          <div className="card">
-            <div className="flex items-center">
-              <div className="text-4xl mr-4">⏰</div>
-              <div>
-                <p className="text-sm text-gray-600">Teaching Hours/Week</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.teachingHours}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Weekly Schedule */}
-        <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Weekly Schedule</h2>
-          
-          {schedules.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📅</div>
-              <p className="text-gray-500 mb-4">No schedule entries yet</p>
-              <button
-                onClick={() => router.push('/teacher/schedule/add')}
-                className="btn-primary"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Course & Class *
+              </label>
+              <select
+                className="input-field"
+                value={form.courseId}
+                onChange={e => setForm({ ...form, courseId: e.target.value })}
+                required
               >
-                ➕ Add First Entry
-              </button>
+                <option value="">Select a course...</option>
+                {assignments.map(a => (
+                  <option key={`${a.courseId}-${a.classId}`} value={a.courseId}>
+                    {a.course.code} – {a.course.name} ({a.class.name})
+                  </option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {DAYS.map((day, index) => {
-                const daySchedule = getScheduleForDay(index)
-                
-                return (
-                  <div key={day} className="border-b border-gray-200 pb-6 last:border-0">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                      {day}
-                    </h3>
-                    
-                    {daySchedule.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No classes scheduled</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {daySchedule.map((schedule) => (
-                          <div
-                            key={schedule.id}
-                            className="bg-blue-50 border border-blue-200 rounded-lg p-4"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-semibold text-gray-900">
-                                    {schedule.startTime} - {schedule.endTime}
-                                  </span>
-                                  {schedule.room && (
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                      Room {schedule.room}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {schedule.course.code} - {schedule.course.name}
-                                </p>
-                                {schedule.class && (
-                                  <p className="text-sm text-gray-600">
-                                    Class: {schedule.class.name}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Day *</label>
+              <select
+                className="input-field"
+                value={form.dayOfWeek}
+                onChange={e => setForm({ ...form, dayOfWeek: e.target.value })}
+              >
+                {DAYS.map((d, i) => (
+                  <option key={i} value={i}>{d}</option>
+                ))}
+              </select>
             </div>
-          )}
-        </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Time *</label>
+                <input
+                  type="time"
+                  className="input-field"
+                  value={form.startTime}
+                  onChange={e => setForm({ ...form, startTime: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Time *</label>
+                <input
+                  type="time"
+                  className="input-field"
+                  value={form.endTime}
+                  onChange={e => setForm({ ...form, endTime: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Room (optional)</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="e.g. A101"
+                value={form.room}
+                onChange={e => setForm({ ...form, room: e.target.value })}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-primary w-full disabled:opacity-50"
+            >
+              {saving ? 'Adding...' : 'Add to Schedule'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )

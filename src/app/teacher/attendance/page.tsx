@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Class {
   id: string
@@ -16,11 +16,12 @@ interface Student {
   notes: string | null
 }
 
-export default function AttendancePage() {
+function AttendanceContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [classes, setClasses] = useState<Class[]>([])
-  const [selectedClass, setSelectedClass] = useState<string>('')
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [selectedClass, setSelectedClass] = useState<string>(searchParams.get('classId') || '')
+  const [selectedDate, setSelectedDate] = useState<string>(searchParams.get('date') || new Date().toISOString().split('T')[0])
   const [attendance, setAttendance] = useState<Student[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -37,12 +38,12 @@ export default function AttendancePage() {
 
   const fetchClasses = async () => {
     try {
-      const response = await fetch('/api/admin/classes')
+      const response = await fetch('/api/teacher/classes')
       const data = await response.json()
-      
+
       if (data.success) {
         setClasses(data.classes)
-        if (data.classes.length > 0) {
+        if (data.classes.length > 0 && !searchParams.get('classId')) {
           setSelectedClass(data.classes[0].id)
         }
       }
@@ -303,5 +304,13 @@ export default function AttendancePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <AttendanceContent />
+    </Suspense>
   )
 }
