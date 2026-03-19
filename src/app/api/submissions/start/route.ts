@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
           studentId: user.id,
           testId
         }
+      },
+      include: {
+        answers: true
       }
     })
 
@@ -38,13 +41,16 @@ export async function POST(request: NextRequest) {
           studentId: user.id,
           status: 'IN_PROGRESS',
           currentQuestionIndex: 0
+        },
+        include: {
+          answers: true
         }
       })
     }
 
     return NextResponse.json({
       success: true,
-      submissionId: submission.id
+      submission
     })
 
   } catch (error: any) {
