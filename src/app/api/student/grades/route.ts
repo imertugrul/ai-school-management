@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate grades for each course
     const courseGrades = courses.map(course => {
-      const components = course.gradeComponents.map(component => ({
+      const components = course.gradeComponents.map((component: any) => ({
         id: component.id,
         name: component.name,
         type: component.type,
