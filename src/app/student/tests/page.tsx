@@ -15,6 +15,7 @@ interface Test {
   assignedAt: string
   _count: { questions: number }
   submission: {
+    id: string
     status: string
     totalScore: number | null
     maxScore: number | null
@@ -40,6 +41,7 @@ export default function StudentTestsPage() {
     const start = test.startDate ? new Date(test.startDate) : null
     const end = test.endDate ? new Date(test.endDate) : null
 
+    if (test.submission?.status === 'RELEASED') return { label: 'Graded', color: 'bg-green-100 text-green-800' }
     if (test.submission?.status === 'GRADED') return { label: 'Graded', color: 'bg-green-100 text-green-800' }
     if (test.submission?.status === 'SUBMITTED') return { label: 'Submitted', color: 'bg-blue-100 text-blue-800' }
     if (test.submission?.status === 'IN_PROGRESS') return { label: 'In Progress', color: 'bg-yellow-100 text-yellow-800' }
@@ -53,7 +55,7 @@ export default function StudentTestsPage() {
     const now = new Date()
     const start = test.startDate ? new Date(test.startDate) : null
     const end = test.endDate ? new Date(test.endDate) : null
-    const submitted = test.submission?.status === 'SUBMITTED' || test.submission?.status === 'GRADED'
+    const submitted = ['SUBMITTED', 'GRADED', 'RELEASED'].includes(test.submission?.status || '')
     return (
       test.isActive &&
       !submitted &&
@@ -124,7 +126,7 @@ export default function StudentTestsPage() {
                     )}
                   </div>
 
-                  {test.submission?.status === 'GRADED' && score != null && max != null && (
+                  {(test.submission?.status === 'RELEASED' || test.submission?.status === 'GRADED') && score != null && max != null && (
                     <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm font-medium text-green-800">
                         Score: {score} / {max} ({Math.round((score / max) * 100)}%)
@@ -141,9 +143,9 @@ export default function StudentTestsPage() {
                         {test.submission?.status === 'IN_PROGRESS' ? 'Continue Test' : 'Start Test'}
                       </button>
                     )}
-                    {(test.submission?.status === 'SUBMITTED' || test.submission?.status === 'GRADED') && (
+                    {(test.submission?.status === 'RELEASED' || test.submission?.status === 'GRADED') && (
                       <button
-                        onClick={() => router.push(`/student/results/${test.submission ? test.id : ''}`)}
+                        onClick={() => router.push(`/student/results/${test.submission!.id}`)}
                         className="btn-secondary"
                       >
                         View Results

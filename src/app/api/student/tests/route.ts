@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     const submissions = await prisma.submission.findMany({
       where: { studentId: user.id },
       select: {
+        id: true,
         testId: true,
         status: true,
         totalScore: true,
