@@ -116,6 +116,18 @@ export default function TeacherDashboard() {
       link: 'text-amber-600',
     },
     {
+      href: '/teacher/library',
+      icon: '📚',
+      title: 'Question Library',
+      description: 'Browse and reuse your saved questions',
+      gradient: 'from-blue-500 to-indigo-600',
+      shadow: 'shadow-blue-500/30',
+      hover: 'hover:border-blue-300',
+      bg: 'from-blue-50/0 to-indigo-50/80',
+      text: 'hover:text-blue-700',
+      link: 'text-blue-600',
+    },
+    {
       href: '/announcements',
       icon: '📢',
       title: 'Announcements',

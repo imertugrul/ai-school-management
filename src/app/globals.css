@@ -93,3 +93,12 @@ body {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800;
   }
 }
+
+@media print {
+  @page { margin: 1.5cm; }
+  body { background: white !important; }
+  nav, .print\:hidden { display: none !important; }
+  .print\:block { display: block !important; }
+  .rounded-2xl { border-radius: 8px !important; }
+  .shadow-sm, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+}

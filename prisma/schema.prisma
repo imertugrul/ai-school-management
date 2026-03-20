@@ -74,6 +74,7 @@ model User {
   notesAboutMe          TeachingNote[] @relation("StudentNotes")
   parentLinks           ParentStudent[] @relation("ParentLinks")
   childLinks            ParentStudent[] @relation("ChildLinks")
+  libraryQuestions      LibraryQuestion[] @relation("TeacherLibrary")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -152,10 +153,11 @@ model Test {
   createdById String
   createdBy   User     @relation("CreatedTests", fields: [createdById], references: [id])
   
-  questions   Question[]
-  submissions Submission[]
+  questions      Question[]
+  contentBlocks  ContentBlock[]
+  submissions    Submission[]
   testAssignments TestAssignment[]
-  scannedTests ScannedTest[]
+  scannedTests   ScannedTest[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -164,27 +166,89 @@ model Test {
 model Question {
   id            String       @id @default(cuid())
   type          QuestionType
-  content       String
+  content       String       @db.Text
   points        Int          @default(1)
   options       Json?
-  correctAnswer String?
+  correctAnswer String?      @db.Text
   rubric        Json?
+  config        Json?
+  tags          String[]     @default([])
   orderIndex    Int
-  
+
   testId        String
   test          Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
-  
+
   answers       Answer[]
-  
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
 
 enum QuestionType {
+  // Legacy
   MULTIPLE_CHOICE
   SHORT_ANSWER
   ESSAY
   CODE
+  // New
+  MCQ_MULTIPLE
+  TRUE_FALSE
+  FILL_TEXT
+  FILL_DROPDOWN
+  MATCH
+  SORT
+  CLASSIFY
+  TABLE
+  DRAWING
+  LABEL_DRAG
+  LABEL_FILL
+  HOTSPOT
+  GEOGEBRA
+  DESMOS
+  AUDIO_RESPONSE
+  GROUP
+}
+
+enum ContentBlockType {
+  TEXT
+  ACCORDION
+  IMAGE
+  PDF
+  VIDEO
+  AUDIO
+  SIMULATION
+  DOCUMENT
+  PPT
+  EMBED
+}
+
+model ContentBlock {
+  id         String           @id @default(cuid())
+  testId     String
+  test       Test             @relation(fields: [testId], references: [id], onDelete: Cascade)
+  type       ContentBlockType
+  content    Json
+  orderIndex Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model LibraryQuestion {
+  id            String       @id @default(cuid())
+  teacherId     String
+  teacher       User         @relation("TeacherLibrary", fields: [teacherId], references: [id], onDelete: Cascade)
+  type          QuestionType
+  content       String       @db.Text
+  points        Int          @default(1)
+  options       Json?
+  correctAnswer String?      @db.Text
+  rubric        Json?
+  config        Json?
+  tags          String[]     @default([])
+  subject       String?
+  timesUsed     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Submission {
@@ -553,6 +617,14 @@ model EventRSVP {
 }
 
 // ─── Lesson Plans ───
+enum CurriculumType {
+  IB
+  AP
+  NATIONAL
+  IGCSE
+  COMMON_CORE
+}
+
 model LessonPlan {
   id          String    @id @default(cuid())
   teacherId   String
@@ -561,15 +633,31 @@ model LessonPlan {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   classId     String?
   class       Class?    @relation(fields: [classId], references: [id], onDelete: SetNull)
-  title       String
-  date        DateTime
-  duration    Int       @default(45)
-  objectives  String    @db.Text
+
+  // Manual plan fields (existing)
+  title       String    @default("")
+  date        DateTime  @default(now())
+  objectives  String    @db.Text @default("")
   materials   String?   @db.Text
-  activities  String    @db.Text
+  activities  String    @db.Text @default("")
   assessment  String?   @db.Text
   homework    String?   @db.Text
   notes       String?   @db.Text
+
+  // AI-powered fields
+  curriculumType     CurriculumType?
+  unitName           String?
+  learningObjectives String?  @db.Text  // JSON array
+  materialsNeeded    String?  @db.Text  // JSON array
+  slideOutline       String?  @db.Text  // JSON array
+  aiActivities       String?  @db.Text  // JSON array
+  aiAssessment       String?  @db.Text  // JSON object
+  teacherNotes       String?  @db.Text
+  isAIGenerated      Boolean  @default(false)
+  wasEdited          Boolean  @default(false)
+  schoolId           String?
+
+  duration    Int       @default(45)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
