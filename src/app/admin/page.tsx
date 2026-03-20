@@ -148,6 +148,18 @@ const ACTION_CARDS = [
     text: 'hover:text-teal-700',
     link: 'text-teal-600',
   },
+  {
+    href: '/admin/lesson-plans',
+    icon: '📋',
+    title: 'Lesson Plans',
+    description: "View and review all teachers' lesson plans",
+    gradient: 'from-violet-600 to-purple-700',
+    shadow: 'shadow-violet-500/30',
+    hover: 'hover:border-violet-300',
+    bg: 'from-violet-50/0 to-purple-50/80',
+    text: 'hover:text-violet-700',
+    link: 'text-violet-600',
+  },
 ]
 
 export default function AdminPage() {
