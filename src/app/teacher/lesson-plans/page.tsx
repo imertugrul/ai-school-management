@@ -145,7 +145,6 @@ export default function LessonPlansPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowForm(true)} className="btn-primary text-sm">+ New Plan</button>
               <button onClick={() => router.push('/teacher/dashboard')} className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors">
                 ← Dashboard
               </button>
@@ -155,6 +154,38 @@ export default function LessonPlansPage() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+
+        {/* Create Plan Options */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className={`group relative overflow-hidden text-left rounded-2xl bg-white p-6 shadow-sm border-2 transition-all duration-300 ${showForm ? 'border-indigo-400 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-3 shadow group-hover:scale-110 transition-transform duration-300">
+              <span className="text-white text-xl">✏️</span>
+            </div>
+            <h3 className="text-base font-bold text-gray-900 mb-1">Manual Plan</h3>
+            <p className="text-sm text-gray-500">Write your lesson plan from scratch with your own content</p>
+          </button>
+
+          <button
+            onClick={() => router.push('/teacher/lesson-planner')}
+            className="group relative overflow-hidden text-left rounded-2xl bg-white p-6 shadow-sm border-2 border-violet-200 hover:border-violet-400 hover:shadow-md transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-50/0 to-purple-50/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white text-xl">🤖</span>
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-bold text-gray-900">AI Lesson Plan</h3>
+                <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">Recommended</span>
+              </div>
+              <p className="text-sm text-gray-500">Let Claude AI generate a complete, ready-to-use lesson plan in seconds</p>
+            </div>
+          </button>
+        </div>
+
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-6">
           <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-gray-200 transition-colors text-gray-600">←</button>
@@ -239,8 +270,7 @@ export default function LessonPlansPage() {
           <div className="card text-center py-16">
             <div className="text-6xl mb-4">📋</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No lesson plans yet</h3>
-            <p className="text-gray-500 text-sm mb-6">Create your first plan for {monthLabel}</p>
-            <button onClick={() => setShowForm(true)} className="btn-primary">+ Create Plan</button>
+            <p className="text-gray-500 text-sm mb-6">Create your first plan for {monthLabel} — manually or with AI</p>
           </div>
         ) : (
           <div className="space-y-4">
