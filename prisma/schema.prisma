@@ -66,6 +66,14 @@ model User {
   studentEnrollments Enrollment[] @relation("StudentEnrollments")
   teacherCourseAssignments CourseAssignment[] @relation("TeacherCourseAssignments")
 
+  authoredAnnouncements Announcement[] @relation("AuthorAnnouncements")
+  organizedEvents       Event[]        @relation("EventOrganizer")
+  eventRSVPs            EventRSVP[]    @relation("UserEventRSVP")
+  lessonPlans           LessonPlan[]   @relation("TeacherLessonPlans")
+  teachingNotes         TeachingNote[] @relation("TeacherNotes")
+  notesAboutMe          TeachingNote[] @relation("StudentNotes")
+  parentLinks           ParentStudent[] @relation("ParentLinks")
+  childLinks            ParentStudent[] @relation("ChildLinks")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -89,7 +97,7 @@ enum UserRole {
 model School {
   id        String   @id @default(cuid())
   name      String
-  
+
   // Schedule Settings
   schoolStartTime    String?  @default("08:00")  // School starts
   schoolEndTime      String?  @default("16:00")  // School ends
@@ -97,11 +105,13 @@ model School {
   breakDuration      Int?     @default(10)       // Minutes between lessons
   lunchBreakStart    String?  @default("12:00")
   lunchBreakEnd      String?  @default("13:00")
-  
+
   users     User[]
   classes   Class[]
   courses   Course[]
-  
+  announcements Announcement[]
+  events        Event[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -111,16 +121,19 @@ model Class {
   name        String
   grade       String?
   section     String?
-  
+
   schoolId    String
   school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
+
   students    User[]   @relation("ClassStudents")
   attendanceRecords AttendanceRecord[]
-  schedules   Schedule[]  
-  courseAssignments CourseAssignment[]  
+  schedules   Schedule[]
+  courseAssignments CourseAssignment[]
+  announcements    Announcement[]
+  eventTargets     Event[]
+  lessonPlanClasses LessonPlan[]
+  teachingNoteClasses TeachingNote[]
 
-  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -340,9 +353,9 @@ model Course {
   
   schedules   Schedule[]
   enrollments Enrollment[]
-  assignments CourseAssignment[]  
+  assignments CourseAssignment[]
+  lessonPlans LessonPlan[]
 
-  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -465,4 +478,125 @@ enum EnrollmentStatus {
   COMPLETED
   DROPPED
   WITHDRAWN
+}
+
+// ─── Priority Enum ───
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─── NoteType Enum ───
+enum NoteType {
+  GENERAL
+  STUDENT_BEHAVIOR
+  STUDENT_PROGRESS
+  CLASS_OBSERVATION
+  MEETING
+}
+
+// ─── Announcements ───
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  content     String    @db.Text
+  authorId    String
+  author      User      @relation("AuthorAnnouncements", fields: [authorId], references: [id], onDelete: Cascade)
+  priority    Priority  @default(MEDIUM)
+  category    String    @default("General")
+  targetRoles String[]  @default([])
+  targetClassId String?
+  targetClass   Class?  @relation(fields: [targetClassId], references: [id], onDelete: SetNull)
+  isPinned    Boolean   @default(false)
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Events ───
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  location    String?
+  startDate   DateTime
+  endDate     DateTime
+  isAllDay    Boolean   @default(false)
+  category    String    @default("General")
+  color       String?
+  targetRoles String[]  @default([])
+  targetClassId String?
+  targetClass   Class?  @relation(fields: [targetClassId], references: [id], onDelete: SetNull)
+  organizerId String
+  organizer   User      @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  rsvps       EventRSVP[]
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model EventRSVP {
+  id        String     @id @default(cuid())
+  eventId   String
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation("UserEventRSVP", fields: [userId], references: [id], onDelete: Cascade)
+  status    String
+  createdAt DateTime   @default(now())
+  @@unique([eventId, userId])
+}
+
+// ─── Lesson Plans ───
+model LessonPlan {
+  id          String    @id @default(cuid())
+  teacherId   String
+  teacher     User      @relation("TeacherLessonPlans", fields: [teacherId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  classId     String?
+  class       Class?    @relation(fields: [classId], references: [id], onDelete: SetNull)
+  title       String
+  date        DateTime
+  duration    Int       @default(45)
+  objectives  String    @db.Text
+  materials   String?   @db.Text
+  activities  String    @db.Text
+  assessment  String?   @db.Text
+  homework    String?   @db.Text
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Teaching Notes ───
+model TeachingNote {
+  id          String    @id @default(cuid())
+  teacherId   String
+  teacher     User      @relation("TeacherNotes", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId   String?
+  student     User?     @relation("StudentNotes", fields: [studentId], references: [id], onDelete: Cascade)
+  classId     String?
+  class       Class?    @relation(fields: [classId], references: [id], onDelete: SetNull)
+  title       String
+  content     String    @db.Text
+  type        NoteType  @default(GENERAL)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Parent–Student Link ───
+model ParentStudent {
+  id           String  @id @default(cuid())
+  parentId     String
+  parent       User    @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User    @relation("ChildLinks", fields: [studentId], references: [id], onDelete: Cascade)
+  relationship String  @default("Guardian")
+  @@unique([parentId, studentId])
 }

@@ -103,6 +103,30 @@ export default function StudentDashboard() {
       text: 'hover:text-indigo-700',
       link: 'text-indigo-600',
     },
+    {
+      href: '/announcements',
+      icon: '📢',
+      title: 'Announcements',
+      description: 'School news, updates and notices',
+      gradient: 'from-orange-500 to-amber-500',
+      shadow: 'shadow-orange-500/30',
+      hover: 'hover:border-orange-300',
+      bg: 'from-orange-50/0 to-orange-50/80',
+      text: 'hover:text-orange-700',
+      link: 'text-orange-600',
+    },
+    {
+      href: '/events',
+      icon: '🗓️',
+      title: 'Events',
+      description: 'Upcoming school events and activities',
+      gradient: 'from-rose-500 to-pink-600',
+      shadow: 'shadow-rose-500/30',
+      hover: 'hover:border-rose-300',
+      bg: 'from-rose-50/0 to-rose-50/80',
+      text: 'hover:text-rose-700',
+      link: 'text-rose-600',
+    },
   ]
 
   return (

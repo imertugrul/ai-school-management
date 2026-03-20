@@ -56,6 +56,22 @@ export async function middleware(request: NextRequest) {
       if (token.role === 'ADMIN') {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
+      if (token.role === 'PARENT') {
+        return NextResponse.redirect(new URL('/parent/dashboard', request.url))
+      }
+    }
+  }
+
+  // Parent routes protection
+  if (pathname.startsWith('/parent')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    if (token.role !== 'PARENT' && token.role !== 'ADMIN') {
+      if (token.role === 'TEACHER') {
+        return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
+      }
+      return NextResponse.redirect(new URL('/student/dashboard', request.url))
     }
   }
 
@@ -66,6 +82,7 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/teacher/:path*',
-    '/student/:path*'
+    '/student/:path*',
+    '/parent/:path*'
   ]
 }
