@@ -911,6 +911,100 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (t:string[])=
   )
 }
 
+// ─── URL or Upload input ──────────────────────────────────────────────────────
+const ACCEPT_MAP: Record<string, string> = {
+  image:    'image/*',
+  pdf:      'application/pdf',
+  audio:    'audio/*',
+  video:    'video/*',
+  document: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ppt:      '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+}
+
+function UrlOrUpload({ label, blockType, url, fileName, onSet }: {
+  label: string
+  blockType: string
+  url: string
+  fileName?: string
+  onSet: (url: string, name?: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadError('')
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('blockType', blockType)
+    try {
+      const res  = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.success) {
+        onSet(data.url, data.name)
+      } else {
+        setUploadError(data.error ?? 'Upload failed')
+      }
+    } catch {
+      setUploadError('Upload failed — check your connection')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const accept = ACCEPT_MAP[blockType] ?? '*/*'
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</label>
+
+      {/* URL input */}
+      <input
+        className="input-field text-sm"
+        placeholder="Paste a URL…"
+        value={url}
+        onChange={e => onSet(e.target.value)}
+      />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs text-gray-400 font-medium">or upload from computer</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
+      {/* File upload button */}
+      <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border-2 border-dashed cursor-pointer transition-all text-sm font-medium
+        ${uploading ? 'border-blue-300 bg-blue-50 text-blue-500' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-500 hover:text-blue-600'}`}>
+        {uploading ? (
+          <>
+            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            Uploading…
+          </>
+        ) : (
+          <>⬆ Choose file</>
+        )}
+        <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
+      </label>
+
+      {/* Current file */}
+      {url && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600">
+          <span className="flex-1 truncate">{fileName || url}</span>
+          <button onClick={() => onSet('', '')} className="text-gray-400 hover:text-red-500 shrink-0">✕</button>
+        </div>
+      )}
+
+      {uploadError && (
+        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{uploadError}</p>
+      )}
+    </div>
+  )
+}
+
 // ─── Block Editor ─────────────────────────────────────────────────────────────
 function BlockEditor({ item, onUpdate }: { item: BItem; onUpdate:(p:any)=>void }) {
   const c = item.content
@@ -944,42 +1038,99 @@ function BlockEditor({ item, onUpdate }: { item: BItem; onUpdate:(p:any)=>void }
 
   if (item.blockType === 'IMAGE') return (
     <div className="pt-4 space-y-3">
-      <div><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Image URL</label>
-        <input className="input-field text-sm" placeholder="https://…" value={c.url??''} onChange={e=>set({url:e.target.value})} /></div>
-      <div><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Caption</label>
-        <input className="input-field text-sm" placeholder="Optional caption" value={c.caption??''} onChange={e=>set({caption:e.target.value})} /></div>
-      {c.url && <img src={c.url} alt={c.alt??''} className="rounded-xl max-h-48 object-contain border border-gray-200" />}
+      <UrlOrUpload
+        label="Image" blockType="image"
+        url={c.url ?? ''} fileName={c.fileName}
+        onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+      />
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Caption</label>
+        <input className="input-field text-sm" placeholder="Optional caption" value={c.caption??''} onChange={e=>set({caption:e.target.value})} />
+      </div>
+      {c.url && (
+        <img src={c.url} alt={c.alt??''} className="rounded-xl max-h-48 object-contain border border-gray-200" />
+      )}
     </div>
   )
 
   if (item.blockType === 'VIDEO') return (
     <div className="pt-4 space-y-3">
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Video</label>
       <div className="flex gap-3">
         {['youtube','upload'].map(v=>(
           <label key={v} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all ${c.videoType===v?'border-blue-400 bg-blue-50 text-blue-700':'border-gray-200 text-gray-600'}`}>
-            <input type="radio" name={`vt-${item.tempId}`} value={v} checked={c.videoType===v} onChange={()=>set({videoType:v})} className="accent-blue-600" />
-            {v === 'youtube' ? '▶ YouTube URL' : '⬆ Upload URL'}
+            <input type="radio" name={`vt-${item.tempId}`} value={v} checked={c.videoType===v} onChange={()=>set({videoType:v, url:''})} className="accent-blue-600" />
+            {v === 'youtube' ? '▶ YouTube URL' : '⬆ Upload video'}
           </label>
         ))}
       </div>
-      <input className="input-field text-sm" placeholder={c.videoType==='youtube'?'https://youtube.com/watch?v=…':'https://…'} value={c.url??''} onChange={e=>set({url:e.target.value})} />
+      {c.videoType === 'youtube' ? (
+        <input className="input-field text-sm" placeholder="https://youtube.com/watch?v=…" value={c.url??''} onChange={e=>set({url:e.target.value})} />
+      ) : (
+        <UrlOrUpload
+          label="Video file" blockType="video"
+          url={c.url ?? ''} fileName={c.fileName}
+          onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+        />
+      )}
     </div>
   )
 
   if (item.blockType === 'PDF') return (
     <div className="pt-4 space-y-3">
-      <div><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">PDF URL</label>
-        <input className="input-field text-sm" placeholder="https://…/document.pdf" value={c.url??''} onChange={e=>set({url:e.target.value})} /></div>
-      <div><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Title</label>
-        <input className="input-field text-sm" placeholder="Document title" value={c.title??''} onChange={e=>set({title:e.target.value})} /></div>
+      <UrlOrUpload
+        label="PDF file" blockType="pdf"
+        url={c.url ?? ''} fileName={c.fileName}
+        onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+      />
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Display Title</label>
+        <input className="input-field text-sm" placeholder="Document title shown to students" value={c.title??''} onChange={e=>set({title:e.target.value})} />
+      </div>
+    </div>
+  )
+
+  if (item.blockType === 'AUDIO') return (
+    <div className="pt-4">
+      <UrlOrUpload
+        label="Audio file" blockType="audio"
+        url={c.url ?? ''} fileName={c.fileName}
+        onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+      />
+    </div>
+  )
+
+  if (item.blockType === 'DOCUMENT') return (
+    <div className="pt-4 space-y-3">
+      <UrlOrUpload
+        label="Word document (.doc / .docx)" blockType="document"
+        url={c.url ?? ''} fileName={c.fileName}
+        onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+      />
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Display Title</label>
+        <input className="input-field text-sm" placeholder="Document title" value={c.title??''} onChange={e=>set({title:e.target.value})} />
+      </div>
+    </div>
+  )
+
+  if (item.blockType === 'PPT') return (
+    <div className="pt-4">
+      <UrlOrUpload
+        label="PowerPoint (.ppt / .pptx)" blockType="ppt"
+        url={c.url ?? ''} fileName={c.fileName}
+        onSet={(url, name) => set({ url, ...(name ? { fileName: name } : {}) })}
+      />
     </div>
   )
 
   if (item.blockType === 'EMBED') return (
     <div className="pt-4 space-y-3">
-      <div><label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Embed HTML / iframe</label>
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Embed HTML / iframe</label>
         <textarea rows={4} className="input-field text-sm font-mono resize-y" placeholder='<iframe src="…" …></iframe>'
-          value={c.html??''} onChange={e=>set({html:e.target.value})} /></div>
+          value={c.html??''} onChange={e=>set({html:e.target.value})} />
+      </div>
       <div className="flex items-center gap-2">
         <label className="text-xs font-semibold text-gray-500">Height (px)</label>
         <input type="number" className="input-field w-24 text-sm" value={c.height??400} onChange={e=>set({height:Number(e.target.value)})} />
@@ -987,7 +1138,7 @@ function BlockEditor({ item, onUpdate }: { item: BItem; onUpdate:(p:any)=>void }
     </div>
   )
 
-  // Generic fallback for AUDIO, SIMULATION, DOCUMENT, PPT
+  // SIMULATION fallback
   return (
     <div className="pt-4">
       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">URL</label>
