@@ -57,7 +57,7 @@ export default function LessonPlannerPage() {
   const [step, setStep] = useState<'input' | 'generating' | 'result'>('input')
 
   // Form
-  const [form, setForm] = useState({ curriculumType: '', courseId: '', classId: '', unitName: '', duration: '45' })
+  const [form, setForm] = useState({ curriculumType: '', courseId: '', classId: '', unitName: '', topicDescription: '', duration: '45' })
   const [courses, setCourses] = useState<Course[]>([])
   const [classes, setClasses]  = useState<ClassItem[]>([])
   const [error, setError] = useState('')
@@ -547,10 +547,10 @@ export default function LessonPlannerPage() {
               </select>
             </div>
 
-            {/* 3. Unit / Topic */}
+            {/* 3. Unit Name */}
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-2">
-                3. Unit / Topic Name <span className="text-red-500">*</span>
+                3. Unit Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -560,20 +560,36 @@ export default function LessonPlannerPage() {
                 value={form.unitName}
                 onChange={e => setForm(f => ({ ...f, unitName: e.target.value }))}
               />
-              <p className="text-xs text-gray-400 mt-1.5">Be specific — better topic = better lesson plan</p>
+              <p className="text-xs text-gray-400 mt-1.5">The name of the unit this lesson belongs to</p>
             </div>
 
-            {/* 4 & 5 in a row */}
+            {/* 4. Topic / Lesson Focus */}
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-2">
+                4. Topic & Lesson Focus <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                required
+                rows={4}
+                className="input-field resize-y"
+                placeholder={`Describe what you want to cover in this specific lesson.\n\ne.g. "Introduction to solving quadratic equations by factoring. Students should understand the zero-product property and practice 3–4 examples independently. I also want to connect this to real-world projectile motion."`}
+                value={form.topicDescription}
+                onChange={e => setForm(f => ({ ...f, topicDescription: e.target.value }))}
+              />
+              <p className="text-xs text-gray-400 mt-1.5">The more detail you give, the better the AI plan will be</p>
+            </div>
+
+            {/* 5 & 6 in a row */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-bold text-gray-800 mb-2">4. Class <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">5. Class <span className="text-gray-400 font-normal">(optional)</span></label>
                 <select className="input-field" value={form.classId} onChange={e => setForm(f => ({ ...f, classId: e.target.value }))}>
                   <option value="">No specific class</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-800 mb-2">5. Duration <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">6. Duration <span className="text-gray-400 font-normal">(optional)</span></label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -590,7 +606,7 @@ export default function LessonPlannerPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!form.curriculumType || !form.courseId || !form.unitName}
+              disabled={!form.curriculumType || !form.courseId || !form.unitName || !form.topicDescription}
               className="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-700 text-white font-bold text-base rounded-2xl shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
             >
               <span className="text-xl">🤖</span>
