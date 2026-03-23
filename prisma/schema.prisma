@@ -68,6 +68,11 @@ model User {
 
   department            String?
 
+  // 2FA fields
+  twoFactorEnabled      Boolean  @default(false)
+  twoFactorSecret       String?
+  twoFactorVerified     Boolean  @default(false)
+
   authoredAnnouncements Announcement[] @relation("AuthorAnnouncements")
   organizedEvents       Event[]        @relation("EventOrganizer")
   eventRSVPs            EventRSVP[]    @relation("UserEventRSVP")

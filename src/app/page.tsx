@@ -19,7 +19,7 @@ export default function HomePage() {
           const data = await response.json()
           
           if (data.user?.role === 'ADMIN') {
-            router.push('/admin')
+            router.push('/manage-panel')
           } else if (data.user?.role === 'TEACHER') {
             router.push('/teacher/dashboard')
           } else if (data.user?.role === 'STUDENT') {

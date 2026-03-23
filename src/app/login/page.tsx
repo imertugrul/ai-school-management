@@ -23,7 +23,7 @@ export default function LoginPage() {
           const data = await response.json()
           
           if (data.user?.role === 'ADMIN') {
-            router.push('/admin')
+            router.push('/manage-panel')
           } else if (data.user?.role === 'TEACHER') {
             router.push('/teacher/dashboard')
           } else if (data.user?.role === 'SOCIAL_MEDIA_MANAGER') {
@@ -64,7 +64,7 @@ export default function LoginPage() {
         const meData = await meResponse.json()
         
         if (meData.user?.role === 'ADMIN') {
-          router.push('/admin')
+          router.push('/manage-panel')
         } else if (meData.user?.role === 'TEACHER') {
           router.push('/teacher/dashboard')
         } else if (meData.user?.role === 'SOCIAL_MEDIA_MANAGER') {
