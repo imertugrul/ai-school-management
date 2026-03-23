@@ -14,6 +14,7 @@ interface Student {
   studentEmail: string
   status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | null
   notes: string | null
+  notificationStatus: string | null
 }
 
 function AttendanceContent() {
@@ -119,7 +120,6 @@ function AttendanceContent() {
       const data = await response.json()
 
       if (data.success) {
-        alert('Attendance marked successfully! Parents notified.')
         fetchAttendance()
       } else {
         alert('Error: ' + (data.error || 'Failed to save attendance'))
@@ -140,6 +140,20 @@ function AttendanceContent() {
   }
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+  const notifIcon = (s: string | null) => {
+    if (!s) return null
+    const map: Record<string, { icon: string; title: string; cls: string }> = {
+      PENDING:   { icon: '⏳', title: 'Onay bekliyor',    cls: 'text-amber-500' },
+      APPROVED:  { icon: '✅', title: 'Onaylandı',         cls: 'text-blue-500'  },
+      CORRECTED: { icon: '✏️', title: 'Düzeltildi',        cls: 'text-purple-500' },
+      SENT:      { icon: '📨', title: 'Bildirim gönderildi', cls: 'text-green-500' },
+      FAILED:    { icon: '❌', title: 'Gönderim başarısız', cls: 'text-red-500'   },
+    }
+    const m = map[s]
+    if (!m) return null
+    return <span title={m.title} className={`text-base ${m.cls}`}>{m.icon}</span>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -259,7 +273,10 @@ function AttendanceContent() {
                         <span className="text-white text-xs font-bold">{getInitials(student.studentName)}</span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{student.studentName}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900">{student.studentName}</h3>
+                          {notifIcon(student.notificationStatus)}
+                        </div>
                         <p className="text-xs text-gray-400">{student.studentEmail}</p>
                       </div>
                     </div>
@@ -311,7 +328,7 @@ function AttendanceContent() {
                 disabled={saving}
                 className="btn-primary text-base px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? 'Saving...' : '💾 Save Attendance & Notify Parents'}
+                {saving ? 'Kaydediliyor…' : '💾 Yoklamayı Kaydet'}
               </button>
             </div>
           </>

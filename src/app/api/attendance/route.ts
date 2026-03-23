@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
-import { generateAttendanceMessage, sendAttendanceNotification } from '@/lib/notifications/attendance'
 
 // GET - Get attendance for a class on a specific date
 export async function GET(request: NextRequest) {
@@ -63,6 +62,17 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Fetch absence notification statuses for these records
+    const recordIds = records.map(r => r.id)
+    const notifMap: Record<string, string> = {}
+    if (recordIds.length > 0) {
+      const notifs = await prisma.absenceNotification.findMany({
+        where: { attendanceId: { in: recordIds } },
+        select: { attendanceId: true, status: true },
+      })
+      notifs.forEach(n => { notifMap[n.attendanceId] = n.status })
+    }
+
     const attendanceData = classData.students.map(student => {
       const record = records.find(r => r.studentId === student.id)
       return {
@@ -71,7 +81,8 @@ export async function GET(request: NextRequest) {
         studentEmail: student.email,
         status: record?.status || null,
         notes: record?.notes || null,
-        recordId: record?.id || null
+        recordId: record?.id || null,
+        notificationStatus: record ? (notifMap[record.id] ?? null) : null,
       }
     })
 
@@ -159,29 +170,47 @@ export async function POST(request: NextRequest) {
 
         if (item.status === 'ABSENT' || item.status === 'LATE') {
           try {
-            const message = await generateAttendanceMessage({
-              studentName: record.student.name,
-              date: attendanceDate.toLocaleDateString('en-US'),
-              status: item.status,
-              className: classData?.name
+            // Check if notification already exists for this attendance record
+            const existing = await prisma.absenceNotification.findUnique({
+              where: { attendanceId: record.id },
             })
-
-            await sendAttendanceNotification(
-              record.student.email,
-              message,
-              'EMAIL'
-            )
-
-            await prisma.attendanceNotification.create({
-              data: {
-                type: 'EMAIL',
-                message,
-                studentId: record.student.id,
-                recordId: record.id
+            if (existing) {
+              // If correcting back to ABSENT/LATE on a CORRECTED notification, reset to PENDING
+              if (existing.status === 'CORRECTED') {
+                await prisma.absenceNotification.update({
+                  where: { id: existing.id },
+                  data: { status: 'PENDING', correctedTo: null, reviewedById: null, reviewedAt: null },
+                })
               }
-            })
+            } else {
+              await prisma.absenceNotification.create({
+                data: {
+                  studentId: item.studentId,
+                  classId,
+                  attendanceId: record.id,
+                  markedById: teacher.id,
+                  date: attendanceDate,
+                  status: 'PENDING',
+                },
+              })
+            }
           } catch (notifError) {
-            console.error('Notification error:', notifError)
+            console.error('AbsenceNotification create error:', notifError)
+          }
+        } else {
+          // Status changed to PRESENT/EXCUSED — cancel any pending notification
+          try {
+            const existing = await prisma.absenceNotification.findUnique({
+              where: { attendanceId: record.id },
+            })
+            if (existing && existing.status === 'PENDING') {
+              await prisma.absenceNotification.update({
+                where: { id: existing.id },
+                data: { status: 'CORRECTED', correctedTo: item.status, originalStatus: existing.status },
+              })
+            }
+          } catch (e) {
+            console.error('AbsenceNotification correction error:', e)
           }
         }
 
@@ -192,7 +221,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Attendance marked successfully',
-      records: records.length
+      records: records.length,
     })
 
   } catch (error: any) {

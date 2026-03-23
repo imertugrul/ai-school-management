@@ -174,6 +174,18 @@ const ACTION_CARDS = [
     link: 'text-pink-600',
   },
   {
+    href: '/manage-panel/attendance-review',
+    icon: '📋',
+    title: 'Devamsızlık Onayı',
+    description: 'Devamsızlık bildirimlerini incele ve velilere gönder',
+    gradient: 'from-red-500 to-rose-600',
+    shadow: 'shadow-red-500/30',
+    hover: 'hover:border-red-300',
+    bg: 'from-red-50/0 to-rose-50/80',
+    text: 'hover:text-red-700',
+    link: 'text-red-600',
+  },
+  {
     href: '/manage-panel/gdpr',
     icon: '🛡️',
     title: 'KVKK & Gizlilik',
@@ -202,6 +214,7 @@ const ACTION_CARDS = [
 export default function AdminPage() {
   const router = useRouter()
   const [missingGuardians, setMissingGuardians] = useState<number | null>(null)
+  const [pendingAbsences, setPendingAbsences]   = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/guardians')
@@ -210,6 +223,11 @@ export default function AdminPage() {
         const students = data.students ?? []
         setMissingGuardians(students.filter((s: any) => s.guardians.length === 0).length)
       })
+      .catch(() => {})
+
+    fetch('/api/admin/attendance-review?status=PENDING')
+      .then(r => r.json())
+      .then(data => setPendingAbsences(data.summary?.pending ?? 0))
       .catch(() => {})
   }, [])
 
@@ -247,6 +265,22 @@ export default function AdminPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Admin Dashboard</h2>
           <p className="text-gray-500">Manage your school operations from one place</p>
         </div>
+
+        {/* Absence notifications alert banner */}
+        {pendingAbsences !== null && pendingAbsences > 0 && (
+          <button
+            onClick={() => router.push('/manage-panel/attendance-review')}
+            className="w-full mb-4 flex items-center gap-3 bg-red-50 border border-red-300 rounded-2xl px-5 py-4 text-left hover:bg-red-100 transition-colors"
+          >
+            <span className="text-2xl">⏳</span>
+            <div className="flex-1">
+              <p className="font-semibold text-red-800 text-sm">
+                {pendingAbsences} devamsızlık bildirimi onay bekliyor
+              </p>
+              <p className="text-xs text-red-600">Devamsızlık Onay Paneline git →</p>
+            </div>
+          </button>
+        )}
 
         {/* Guardian alert banner */}
         {missingGuardians !== null && missingGuardians > 0 && (
