@@ -82,6 +82,8 @@ model User {
   parentLinks           ParentStudent[] @relation("ParentLinks")
   childLinks            ParentStudent[] @relation("ChildLinks")
   guardians             Guardian[]      @relation("StudentGuardians")
+  teacherBulletins      PerformanceBulletin[] @relation("TeacherBulletins")
+  studentBulletins      PerformanceBulletin[] @relation("StudentBulletins")
   guardianProfile       Guardian[]      @relation("GuardianUser")
   libraryQuestions      LibraryQuestion[] @relation("TeacherLibrary")
   socialPosts           SocialPost[]   @relation("AuthorPosts")
@@ -149,6 +151,7 @@ model Class {
   courseAssignments CourseAssignment[]
   announcements    Announcement[]
   eventTargets     Event[]
+  bulletins         PerformanceBulletin[]
   lessonPlanClasses LessonPlan[]
   teachingNoteClasses TeachingNote[]
 
@@ -842,4 +845,45 @@ model Guardian {
 
   @@index([studentId])
   @@index([userId])
+}
+
+// ─── Performance Bulletin ─────────────────────────────────────────────────────
+enum BulletinStatus {
+  DRAFT
+  READY
+  SENT
+}
+
+model PerformanceBulletin {
+  id          String  @id @default(cuid())
+  teacherId   String
+  teacher     User    @relation("TeacherBulletins", fields: [teacherId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User    @relation("StudentBulletins", fields: [studentId], references: [id], onDelete: Cascade)
+  classId     String
+  class       Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  month       String  // "2026-03"
+
+  attendancePresent Int    @default(0)
+  attendanceAbsent  Int    @default(0)
+  attendanceLate    Int    @default(0)
+  gradeAverage      Float?
+  gradeDetails      Json?  // [{ courseId, courseName, average }]
+
+  participationRating Int?
+  behaviorRating      Int?
+  homeworkRating      Int?
+  strengthAreas       String?
+  improvementAreas    String?
+  teacherComment      String? @db.Text
+
+  status      BulletinStatus @default(DRAFT)
+  sentAt      DateTime?
+  sentToCount Int            @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([teacherId, studentId, month])
+  @@index([classId, month])
 }

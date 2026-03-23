@@ -139,6 +139,18 @@ export default function TeacherDashboard() {
       text: 'hover:text-orange-700',
       link: 'text-orange-600',
     },
+    {
+      href: '/teacher/bulletins',
+      icon: '📨',
+      title: 'Performance Bulletins',
+      description: 'Create and send monthly performance reports to parents',
+      gradient: 'from-teal-500 to-cyan-600',
+      shadow: 'shadow-teal-500/30',
+      hover: 'hover:border-teal-300',
+      bg: 'from-teal-50/0 to-cyan-50/80',
+      text: 'hover:text-teal-700',
+      link: 'text-teal-600',
+    },
   ]
 
   return (
