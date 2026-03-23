@@ -172,6 +172,18 @@ const ACTION_CARDS = [
     text: 'hover:text-pink-700',
     link: 'text-pink-600',
   },
+  {
+    href: '/admin/gdpr',
+    icon: '🛡️',
+    title: 'KVKK & Gizlilik',
+    description: 'Veri silme günlükleri ve yapay zeka denetim izi',
+    gradient: 'from-slate-500 to-slate-700',
+    shadow: 'shadow-slate-500/30',
+    hover: 'hover:border-slate-300',
+    bg: 'from-slate-50/0 to-slate-50/80',
+    text: 'hover:text-slate-700',
+    link: 'text-slate-600',
+  },
 ]
 
 export default function AdminPage() {
