@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { gradeAnswer } from '@/lib/grading'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
+import { logAiCall } from '@/lib/aiLogger'
 
 export async function POST(
   request: NextRequest,
@@ -107,8 +108,9 @@ export async function POST(
       console.log(`Question ${question.id}: ${gradingResult.score}/${gradingResult.maxScore}`)
     }
 
-    // ── Consume credits ──
+    // ── Consume credits + audit log ──
     await consumeAiCredits(user?.schoolId ?? null, totalTokensUsed)
+    await logAiCall({ endpoint: '/api/submissions/[id]/grade', tokensUsed: totalTokensUsed, hasPersonalData: false })
 
     await prisma.submission.update({
       where: { id: params.id },

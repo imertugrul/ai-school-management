@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
+import { logAiCall } from '@/lib/aiLogger'
 import Anthropic from '@anthropic-ai/sdk'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -115,9 +116,10 @@ Return ONLY valid JSON (no markdown, no explanation, just JSON):
       system: 'You are an expert educator and curriculum designer. Return ONLY valid JSON with no markdown code blocks, no explanations. Just the raw JSON object.'
     })
 
-    // ── Consume credits (Anthropic: input + output tokens) ──
+    // ── Consume credits + audit log (Anthropic: input + output tokens) ──
     const tokensUsed = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
     await consumeAiCredits(user.schoolId ?? null, tokensUsed)
+    await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, hasPersonalData: false })
 
     const content = response.content[0]
     if (content.type !== 'text') throw new Error('Unexpected response type')

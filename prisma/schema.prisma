@@ -748,6 +748,18 @@ model SocialPost {
   @@index([scheduledFor])
 }
 
+// ─── AI Audit Log (KVKK/GDPR) ───
+model AiLog {
+  id              String   @id @default(cuid())
+  endpoint        String
+  tokensUsed      Int      @default(0)
+  hasPersonalData Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([endpoint])
+}
+
 model MediaLibraryItem {
   id        String   @id @default(cuid())
   authorId  String

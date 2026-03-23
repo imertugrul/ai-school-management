@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
+import { logAiCall } from '@/lib/aiLogger'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -128,9 +129,10 @@ Times must be in HH:MM format and aligned to school settings.`
       max_tokens: 1500
     })
 
-    // ── Consume credits ──
+    // ── Consume credits + audit log ──
     const tokensUsed = completion.usage?.total_tokens ?? 0
     await consumeAiCredits(user.schoolId, tokensUsed)
+    await logAiCall({ endpoint: '/api/admin/generate-schedule', tokensUsed, hasPersonalData: false })
 
     const aiResponse = completion.choices[0].message.content || '[]'
 

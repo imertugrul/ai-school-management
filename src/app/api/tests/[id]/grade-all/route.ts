@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { batchGradeQuestion } from '@/lib/grading'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
+import { logAiCall } from '@/lib/aiLogger'
 
 /**
  * POST /api/tests/[id]/grade-all
@@ -152,8 +153,9 @@ export async function POST(
       )
     )
 
-    // ── Consume credits ──
+    // ── Consume credits + audit log ──
     await consumeAiCredits(user.schoolId ?? null, totalTokensUsed)
+    await logAiCall({ endpoint: '/api/tests/[id]/grade-all', tokensUsed: totalTokensUsed, hasPersonalData: false })
 
     return NextResponse.json({
       success: true,
