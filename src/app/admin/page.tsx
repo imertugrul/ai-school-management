@@ -160,6 +160,18 @@ const ACTION_CARDS = [
     text: 'hover:text-violet-700',
     link: 'text-violet-600',
   },
+  {
+    href: '/admin/social-media-managers',
+    icon: '📱',
+    title: 'Social Media',
+    description: 'Manage social media managers and their access',
+    gradient: 'from-pink-500 to-purple-600',
+    shadow: 'shadow-pink-500/30',
+    hover: 'hover:border-pink-300',
+    bg: 'from-pink-50/0 to-purple-50/80',
+    text: 'hover:text-pink-700',
+    link: 'text-pink-600',
+  },
 ]
 
 export default function AdminPage() {

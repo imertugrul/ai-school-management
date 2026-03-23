@@ -75,6 +75,19 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Social Media Hub routes protection
+  if (pathname.startsWith('/social-media-hub')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    if (token.role !== 'SOCIAL_MEDIA_MANAGER' && token.role !== 'ADMIN') {
+      if (token.role === 'TEACHER') {
+        return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
+      }
+      return NextResponse.redirect(new URL('/student/dashboard', request.url))
+    }
+  }
+
   return NextResponse.next()
 }
 
@@ -83,6 +96,7 @@ export const config = {
     '/admin/:path*',
     '/teacher/:path*',
     '/student/:path*',
-    '/parent/:path*'
+    '/parent/:path*',
+    '/social-media-hub/:path*'
   ]
 }

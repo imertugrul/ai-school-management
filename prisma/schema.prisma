@@ -66,6 +66,8 @@ model User {
   studentEnrollments Enrollment[] @relation("StudentEnrollments")
   teacherCourseAssignments CourseAssignment[] @relation("TeacherCourseAssignments")
 
+  department            String?
+
   authoredAnnouncements Announcement[] @relation("AuthorAnnouncements")
   organizedEvents       Event[]        @relation("EventOrganizer")
   eventRSVPs            EventRSVP[]    @relation("UserEventRSVP")
@@ -75,6 +77,8 @@ model User {
   parentLinks           ParentStudent[] @relation("ParentLinks")
   childLinks            ParentStudent[] @relation("ChildLinks")
   libraryQuestions      LibraryQuestion[] @relation("TeacherLibrary")
+  socialPosts           SocialPost[]   @relation("AuthorPosts")
+  mediaLibrary          MediaLibraryItem[] @relation("MediaLibrary")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -93,6 +97,7 @@ enum UserRole {
   TEACHER
   ADMIN
   PARENT
+  SOCIAL_MEDIA_MANAGER
 }
 
 model School {
@@ -687,4 +692,90 @@ model ParentStudent {
   student      User    @relation("ChildLinks", fields: [studentId], references: [id], onDelete: Cascade)
   relationship String  @default("Guardian")
   @@unique([parentId, studentId])
+}
+
+// ─── Social Media Hub ───
+
+enum SocialPlatform {
+  INSTAGRAM
+  TWITTER
+  FACEBOOK
+  LINKEDIN
+  YOUTUBE
+  TIKTOK
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum VoiceTone {
+  PROFESSIONAL
+  CASUAL
+  EDUCATIONAL
+  INSPIRATIONAL
+}
+
+model SocialPost {
+  id           String          @id @default(cuid())
+  title        String?
+  content      String          @db.Text
+  platforms    SocialPlatform[]
+  mediaUrls    Json?           // array of { url, type, name }
+  status       PostStatus      @default(DRAFT)
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  tags         String[]        @default([])
+  analytics    Json?           // { platform: { views, likes, shares, comments } }
+  notes        String?         @db.Text
+
+  authorId     String
+  author       User            @relation("AuthorPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([authorId])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model MediaLibraryItem {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation("MediaLibrary", fields: [authorId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  type      String   // image, video, audio, document
+  size      Int
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  @@index([authorId])
+}
+
+model BrandSettings {
+  id              String     @id @default(cuid())
+  schoolId        String     @unique
+  primaryColor    String     @default("#3B82F6")
+  secondaryColor  String     @default("#8B5CF6")
+  accentColor     String     @default("#10B981")
+  logoUrl         String?
+  coverUrl        String?
+  organizationName String    @default("")
+  tagline         String?
+  voiceTone       VoiceTone  @default(PROFESSIONAL)
+  hashtags        String[]   @default([])
+  forbiddenWords  String[]   @default([])
+  instagramHandle String?
+  twitterHandle   String?
+  facebookPage    String?
+  linkedinPage    String?
+  youtubeChannel  String?
+  tiktokHandle    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 }

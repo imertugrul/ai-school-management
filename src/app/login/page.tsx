@@ -26,6 +26,8 @@ export default function LoginPage() {
             router.push('/admin')
           } else if (data.user?.role === 'TEACHER') {
             router.push('/teacher/dashboard')
+          } else if (data.user?.role === 'SOCIAL_MEDIA_MANAGER') {
+            router.push('/social-media-hub/dashboard')
           } else {
             router.push('/student/dashboard')
           }
@@ -65,6 +67,8 @@ export default function LoginPage() {
           router.push('/admin')
         } else if (meData.user?.role === 'TEACHER') {
           router.push('/teacher/dashboard')
+        } else if (meData.user?.role === 'SOCIAL_MEDIA_MANAGER') {
+          router.push('/social-media-hub/dashboard')
         } else {
           router.push('/student/dashboard')
         }
