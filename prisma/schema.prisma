@@ -81,6 +81,8 @@ model User {
   notesAboutMe          TeachingNote[] @relation("StudentNotes")
   parentLinks           ParentStudent[] @relation("ParentLinks")
   childLinks            ParentStudent[] @relation("ChildLinks")
+  guardians             Guardian[]      @relation("StudentGuardians")
+  guardianProfile       Guardian[]      @relation("GuardianUser")
   libraryQuestions      LibraryQuestion[] @relation("TeacherLibrary")
   socialPosts           SocialPost[]   @relation("AuthorPosts")
   mediaLibrary          MediaLibraryItem[] @relation("MediaLibrary")
@@ -813,4 +815,31 @@ model BrandSettings {
   tiktokHandle    String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+}
+// ─── Guardian (Veli Bilgileri) ─────────────────────────────────────────────
+model Guardian {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       User     @relation("StudentGuardians", fields: [studentId], references: [id], onDelete: Cascade)
+
+  name          String
+  relationship  String   // "Anne", "Baba", "Vasi", "Diğer"
+  email         String?
+  phone         String?
+
+  isPrimary     Boolean  @default(false)
+  receivesEmail Boolean  @default(true)
+  receivesSMS   Boolean  @default(false)
+
+  note          String?  @db.Text   // Sadece admin görebilir
+
+  // Eğer bu velinin sistem hesabı varsa bağla (opsiyonel)
+  userId        String?
+  user          User?    @relation("GuardianUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([userId])
 }

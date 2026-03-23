@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const ACTION_CARDS = [
   {
@@ -200,6 +201,17 @@ const ACTION_CARDS = [
 
 export default function AdminPage() {
   const router = useRouter()
+  const [missingGuardians, setMissingGuardians] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/guardians')
+      .then(r => r.json())
+      .then(data => {
+        const students = data.students ?? []
+        setMissingGuardians(students.filter((s: any) => s.guardians.length === 0).length)
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -235,6 +247,22 @@ export default function AdminPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Admin Dashboard</h2>
           <p className="text-gray-500">Manage your school operations from one place</p>
         </div>
+
+        {/* Guardian alert banner */}
+        {missingGuardians !== null && missingGuardians > 0 && (
+          <button
+            onClick={() => router.push('/manage-panel/parents')}
+            className="w-full mb-6 flex items-center gap-3 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-4 text-left hover:bg-amber-100 transition-colors"
+          >
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800 text-sm">
+                {missingGuardians} öğrencinin veli bilgisi eksik
+              </p>
+              <p className="text-xs text-amber-600">Veli Yönetimi sayfasına git →</p>
+            </div>
+          </button>
+        )}
 
         <div className="grid md:grid-cols-3 gap-6">
           {ACTION_CARDS.map((card) => (
