@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
-// ── Admin panel path — change ADMIN_PATH env var to rename the panel URL ──
 const ADMIN_PATH = process.env.ADMIN_PATH || 'manage-panel'
+
+const STAFF_ROLES = ['VICE_PRINCIPAL', 'COUNSELOR', 'SECRETARY']
 
 // ── Rate limiting (Upstash — only active when env vars are set) ──
 let adminRatelimit: any = null
@@ -44,22 +45,26 @@ export async function middleware(request: NextRequest) {
     }
 
     if (token.role !== 'ADMIN') {
+      // Staff members get redirected to staff-panel
+      if (STAFF_ROLES.includes(token.role as string)) {
+        return NextResponse.redirect(new URL('/staff-panel', request.url))
+      }
       if (token.role === 'TEACHER') return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
       return NextResponse.redirect(new URL('/student/dashboard', request.url))
     }
 
-    // 2FA gate: if admin has 2FA enabled and hasn't passed it yet in this session
+    // 2FA gate
     if (token.twoFactorEnabled && !token.twoFactorPassed) {
       if (!pathname.startsWith('/auth/2fa-verify')) {
         return NextResponse.redirect(new URL('/auth/2fa-verify', request.url))
       }
     }
 
-    // Rate limiting (requires Upstash Redis)
+    // Rate limiting
     const limiter = await getAdminRatelimit()
     if (limiter) {
-      const ip  = getIP(request)
-      const { success, remaining } = await limiter.limit(`admin:${ip}`)
+      const ip = getIP(request)
+      const { success } = await limiter.limit(`admin:${ip}`)
       if (!success) {
         return new NextResponse(
           JSON.stringify({ error: 'Çok fazla deneme. Lütfen 1 dakika sonra tekrar deneyin.' }),
@@ -69,12 +74,22 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── Old /admin path → 404 (security: don't reveal the new path) ─────────
+  // ── Old /admin path → 404 ────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
     return new NextResponse(null, { status: 404 })
   }
 
-  // ── Teacher routes ──────────────────────────────────────────────────────
+  // ── Staff panel routes ───────────────────────────────────────────────────
+  if (pathname.startsWith('/staff-panel')) {
+    if (!token) return NextResponse.redirect(new URL('/login', request.url))
+    // ADMIN can also access staff-panel (for inspection)
+    if (token.role !== 'ADMIN' && !STAFF_ROLES.includes(token.role as string)) {
+      if (token.role === 'TEACHER') return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
+      return NextResponse.redirect(new URL('/student/dashboard', request.url))
+    }
+  }
+
+  // ── Teacher routes ───────────────────────────────────────────────────────
   if (pathname.startsWith('/teacher')) {
     if (!token) return NextResponse.redirect(new URL('/login', request.url))
     if (token.role !== 'TEACHER' && token.role !== 'ADMIN') {
@@ -82,17 +97,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── Student routes ──────────────────────────────────────────────────────
+  // ── Student routes ───────────────────────────────────────────────────────
   if (pathname.startsWith('/student')) {
     if (!token) return NextResponse.redirect(new URL('/login', request.url))
     if (token.role !== 'STUDENT') {
-      if (token.role === 'TEACHER') return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
-      if (token.role === 'ADMIN')   return NextResponse.redirect(new URL(`/${ADMIN_PATH}`, request.url))
-      if (token.role === 'PARENT')  return NextResponse.redirect(new URL('/parent/dashboard', request.url))
+      if (token.role === 'TEACHER')              return NextResponse.redirect(new URL('/teacher/dashboard', request.url))
+      if (token.role === 'ADMIN')                return NextResponse.redirect(new URL(`/${ADMIN_PATH}`, request.url))
+      if (token.role === 'PARENT')               return NextResponse.redirect(new URL('/parent/dashboard', request.url))
+      if (STAFF_ROLES.includes(token.role as string)) return NextResponse.redirect(new URL('/staff-panel', request.url))
     }
   }
 
-  // ── Parent routes ───────────────────────────────────────────────────────
+  // ── Parent routes ────────────────────────────────────────────────────────
   if (pathname.startsWith('/parent')) {
     if (!token) return NextResponse.redirect(new URL('/login', request.url))
     if (token.role !== 'PARENT' && token.role !== 'ADMIN') {
@@ -101,7 +117,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── Social Media Hub routes ─────────────────────────────────────────────
+  // ── Social Media Hub routes ──────────────────────────────────────────────
   if (pathname.startsWith('/social-media-hub')) {
     if (!token) return NextResponse.redirect(new URL('/login', request.url))
     if (token.role !== 'SOCIAL_MEDIA_MANAGER' && token.role !== 'ADMIN') {
@@ -117,6 +133,7 @@ export const config = {
   matcher: [
     '/manage-panel/:path*',
     '/admin/:path*',
+    '/staff-panel/:path*',
     '/teacher/:path*',
     '/student/:path*',
     '/parent/:path*',

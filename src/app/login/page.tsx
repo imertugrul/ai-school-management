@@ -13,24 +13,24 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  function roleRedirect(role: string) {
+    if (role === 'ADMIN') return '/manage-panel'
+    if (role === 'TEACHER') return '/teacher/dashboard'
+    if (role === 'SOCIAL_MEDIA_MANAGER') return '/social-media-hub/dashboard'
+    if (role === 'PARENT') return '/parent/dashboard'
+    if (['VICE_PRINCIPAL', 'COUNSELOR', 'SECRETARY'].includes(role)) return '/staff-panel'
+    return '/student/dashboard'
+  }
+
   useEffect(() => {
     const checkSession = async () => {
       if (status === 'loading') return
-      
+
       if (session) {
         try {
           const response = await fetch('/api/auth/me')
           const data = await response.json()
-          
-          if (data.user?.role === 'ADMIN') {
-            router.push('/manage-panel')
-          } else if (data.user?.role === 'TEACHER') {
-            router.push('/teacher/dashboard')
-          } else if (data.user?.role === 'SOCIAL_MEDIA_MANAGER') {
-            router.push('/social-media-hub/dashboard')
-          } else {
-            router.push('/student/dashboard')
-          }
+          router.push(roleRedirect(data.user?.role ?? ''))
         } catch (error) {
           console.error('Error checking session:', error)
         }
@@ -59,19 +59,9 @@ export default function LoginPage() {
       }
 
       if (result?.ok) {
-        // Get user role
         const meResponse = await fetch('/api/auth/me')
         const meData = await meResponse.json()
-        
-        if (meData.user?.role === 'ADMIN') {
-          router.push('/manage-panel')
-        } else if (meData.user?.role === 'TEACHER') {
-          router.push('/teacher/dashboard')
-        } else if (meData.user?.role === 'SOCIAL_MEDIA_MANAGER') {
-          router.push('/social-media-hub/dashboard')
-        } else {
-          router.push('/student/dashboard')
-        }
+        router.push(roleRedirect(meData.user?.role ?? ''))
       }
     } catch (err) {
       setError('Something went wrong. Please try again.')

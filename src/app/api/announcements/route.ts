@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (user.role !== 'ADMIN' && user.role !== 'TEACHER') {
+    const canCreate = ['ADMIN', 'TEACHER', 'VICE_PRINCIPAL', 'COUNSELOR', 'SECRETARY']
+    if (!canCreate.includes(user.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

@@ -110,6 +110,9 @@ enum UserRole {
   ADMIN
   PARENT
   SOCIAL_MEDIA_MANAGER
+  VICE_PRINCIPAL
+  COUNSELOR
+  SECRETARY
 }
 
 model School {

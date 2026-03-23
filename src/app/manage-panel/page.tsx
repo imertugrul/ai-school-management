@@ -174,6 +174,18 @@ const ACTION_CARDS = [
     link: 'text-pink-600',
   },
   {
+    href: '/manage-panel/staff',
+    icon: '👔',
+    title: 'Personel Yönetimi',
+    description: 'Müdür yardımcısı, rehber öğretmen ve sekreter hesapları',
+    gradient: 'from-indigo-500 to-violet-600',
+    shadow: 'shadow-indigo-500/30',
+    hover: 'hover:border-indigo-300',
+    bg: 'from-indigo-50/0 to-violet-50/80',
+    text: 'hover:text-indigo-700',
+    link: 'text-indigo-600',
+  },
+  {
     href: '/manage-panel/attendance-review',
     icon: '📋',
     title: 'Devamsızlık Onayı',
