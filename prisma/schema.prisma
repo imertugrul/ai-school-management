@@ -748,6 +748,19 @@ model SocialPost {
   @@index([scheduledFor])
 }
 
+// ─── KVKK / GDPR Deletion Log ───
+model GdprLog {
+  id            String   @id @default(cuid())
+  studentName   String
+  studentEmail  String
+  deletedBy     String   // admin email
+  parentEmailed Boolean  @default(false)
+  parentEmail   String?
+  deletedAt     DateTime @default(now())
+
+  @@index([deletedAt])
+}
+
 // ─── AI Audit Log (KVKK/GDPR) ───
 model AiLog {
   id              String   @id @default(cuid())
