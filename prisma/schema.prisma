@@ -112,6 +112,11 @@ model School {
   lunchBreakStart    String?  @default("12:00")
   lunchBreakEnd      String?  @default("13:00")
 
+  // AI Credits
+  aiCreditsUsed      Int      @default(0)
+  aiCreditsLimit     Int      @default(500)
+  aiCreditsResetAt   DateTime?
+
   users     User[]
   classes   Class[]
   courses   Course[]

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
+import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -11,7 +12,7 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -29,22 +30,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'School not found' }, { status: 404 })
     }
 
+    // ── Credit check ──
+    const creditCheck = await checkAiCredits(user.schoolId)
+    if (!creditCheck.allowed) {
+      return NextResponse.json(
+        { error: 'AI credit limit reached', creditsUsed: creditCheck.creditsUsed, creditsLimit: creditCheck.creditsLimit },
+        { status: 429 }
+      )
+    }
+
     const { assignmentId } = await request.json()
 
-    // Get assignment details
     const assignment = await prisma.courseAssignment.findUnique({
       where: { id: assignmentId },
       include: {
         course: true,
         teacher: {
-          include: {
-            teacherSchedules: true
-          }
+          include: { teacherSchedules: true }
         },
         class: {
-          include: {
-            schedules: true
-          }
+          include: { schedules: true }
         }
       }
     })
@@ -53,7 +58,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
-    // Get all existing schedules for conflict detection
     const existingSchedules = await prisma.schedule.findMany({
       where: {
         OR: [
@@ -63,14 +67,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Get school settings
     const schoolSettings = user.school
-
-    // Calculate required number of slots
     const lessonDurationHours = (schoolSettings.lessonDuration || 45) / 60
     const requiredSlots = Math.ceil(assignment.weeklyHours / lessonDurationHours)
 
-    // Prepare AI prompt with school settings
     const prompt = `You are a school schedule optimizer. Generate a weekly schedule for the following:
 
 Course: ${assignment.course.name} (${assignment.course.code})
@@ -93,7 +93,7 @@ CONSTRAINTS:
 6. Add ${schoolSettings.breakDuration || 10} minutes break between lessons
 
 EXISTING SCHEDULES (CONFLICTS TO AVOID):
-${existingSchedules.map(s => 
+${existingSchedules.map(s =>
   `Day ${s.dayOfWeek}: ${s.startTime}-${s.endTime}`
 ).join('\n')}
 
@@ -112,9 +112,8 @@ Return ONLY a JSON array with this format:
 Days: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday
 Times must be in HH:MM format and aligned to school settings.`
 
-    // Call OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -129,37 +128,26 @@ Times must be in HH:MM format and aligned to school settings.`
       max_tokens: 1500
     })
 
+    // ── Consume credits ──
+    const tokensUsed = completion.usage?.total_tokens ?? 0
+    await consumeAiCredits(user.schoolId, tokensUsed)
+
     const aiResponse = completion.choices[0].message.content || '[]'
-    
-    // Parse AI response
+
     let suggestedSlots
     try {
-      // Remove markdown code blocks if present
       const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim()
       suggestedSlots = JSON.parse(cleanedResponse)
-      
-      // LIMIT TO REQUIRED NUMBER OF SLOTS
       suggestedSlots = suggestedSlots.slice(0, requiredSlots)
-      
-      console.log(`AI suggested ${suggestedSlots.length} slots for ${assignment.weeklyHours}h (${requiredSlots} required)`)
-      
     } catch (error) {
       console.error('Failed to parse AI response:', aiResponse)
-      return NextResponse.json({ 
-        error: 'Failed to generate schedule' 
-      }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to generate schedule' }, { status: 500 })
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      suggestedSlots,
-      assignment 
-    })
+    return NextResponse.json({ success: true, suggestedSlots, assignment })
 
   } catch (error: any) {
     console.error('Generate schedule error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to generate schedule' 
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate schedule' }, { status: 500 })
   }
 }
