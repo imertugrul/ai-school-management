@@ -13,10 +13,12 @@ const LANG_OPTIONS: { code: Language; flag: string; label: string }[] = [
 
 export default function LandingNavbar() {
   const { t, lang, setLang } = useLanguage()
-  const [scrolled, setScrolled]   = useState(false)
+  const [scrolled, setScrolled]     = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [langOpen, setLangOpen]   = useState(false)
+  const [langOpen, setLangOpen]     = useState(false)
+  const [featOpen, setFeatOpen]     = useState(false)
   const langRef = useRef<HTMLDivElement>(null)
+  const featRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -24,21 +26,34 @@ export default function LandingNavbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close lang dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false)
+      if (featRef.current && !featRef.current.contains(e.target as Node)) setFeatOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const navLinks = [
-    { label: t.nav.features,    href: '#features' },
     { label: t.nav.howItWorks,  href: '#how-it-works' },
     { label: t.nav.pricing,     href: '#pricing' },
     { label: t.nav.faq,         href: '#faq' },
   ]
+
+  const featureModules = [
+    { icon: '👩‍🏫', label: t.nav.modTeacher,       href: '/features/teacher' },
+    { icon: '👨‍🎓', label: t.nav.modStudent,       href: '/features/student' },
+    { icon: '👨‍👩‍👧', label: t.nav.modParent,        href: '/features/parent' },
+    { divider: true },
+    { icon: '🤖', label: t.nav.modAiPlanner,     href: '/features/ai-planner' },
+    { icon: '📝', label: t.nav.modTests,         href: '/features/test-system' },
+    { icon: '📊', label: t.nav.modGradebook,     href: '/features/gradebook' },
+    { icon: '📅', label: t.nav.modAttendance,    href: '/features/attendance' },
+    { icon: '📈', label: t.nav.modAnalytics,     href: '/features/analytics' },
+    { icon: '💬', label: t.nav.modCommunication, href: '/features/communication' },
+  ] as ({ icon: string; label: string; href: string } | { divider: true })[]
 
   const textColor = scrolled ? 'var(--text-muted)' : 'rgba(15,23,42,0.7)'
   const textHover = scrolled ? 'var(--primary)' : 'var(--primary)'
@@ -66,6 +81,45 @@ export default function LandingNavbar() {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-7">
+            {/* Features dropdown */}
+            <div ref={featRef} className="relative">
+              <button
+                onClick={() => setFeatOpen(v => !v)}
+                className="flex items-center gap-1 font-body text-sm font-medium transition-colors"
+                style={{ color: textColor }}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+              >
+                {t.nav.features}
+                <span className="text-[10px] opacity-60 ml-0.5">{featOpen ? '▲' : '▼'}</span>
+              </button>
+              {featOpen && (
+                <div
+                  className="absolute left-0 top-full mt-2 rounded-2xl shadow-2xl overflow-hidden z-50 py-2"
+                  style={{ backgroundColor: '#fff', border: '1px solid var(--gray-200)', width: '220px' }}
+                >
+                  {featureModules.map((item, idx) => {
+                    if ('divider' in item) {
+                      return <div key={idx} className="my-1.5 mx-4 h-px" style={{ backgroundColor: 'var(--gray-200)' }} />
+                    }
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setFeatOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 font-body text-sm transition-colors hover:bg-gray-50"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
             {navLinks.map(({ label, href }) => (
               <a key={href} href={href}
                 className="font-body text-sm font-medium transition-colors"
@@ -136,6 +190,24 @@ export default function LandingNavbar() {
         {mobileOpen && (
           <div className="md:hidden border-t py-4 space-y-1 font-body bg-white"
             style={{ borderColor: 'var(--gray-200)' }}>
+            {/* Features section */}
+            <div className="px-4 pt-1 pb-1">
+              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--accent)' }}>
+                {t.nav.features}
+              </p>
+            </div>
+            {featureModules.map((item, idx) => {
+              if ('divider' in item) return <div key={idx} className="mx-4 my-1 h-px" style={{ backgroundColor: 'var(--gray-200)' }} />
+              return (
+                <a key={item.href} href={item.href}
+                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-medium rounded-xl hover:bg-gray-50"
+                  style={{ color: 'var(--text-muted)' }}
+                  onClick={() => setMobileOpen(false)}>
+                  <span>{item.icon}</span> {item.label}
+                </a>
+              )
+            })}
+            <div className="mx-4 my-2 h-px" style={{ backgroundColor: 'var(--gray-200)' }} />
             {navLinks.map(({ label, href }) => (
               <a key={href} href={href}
                 className="block px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-gray-50"

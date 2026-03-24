@@ -28,10 +28,10 @@ export default function LandingFeatures() {
   }, [])
 
   const features = [
-    { icon: ICONS[0], tag: t.features.f1tag, title: t.features.f1title, desc: t.features.f1desc, img: IMAGES[0] },
-    { icon: ICONS[1], tag: t.features.f2tag, title: t.features.f2title, desc: t.features.f2desc, img: IMAGES[1] },
-    { icon: ICONS[2], tag: t.features.f3tag, title: t.features.f3title, desc: t.features.f3desc, img: IMAGES[2] },
-    { icon: ICONS[3], tag: t.features.f4tag, title: t.features.f4title, desc: t.features.f4desc, img: IMAGES[3] },
+    { icon: ICONS[0], tag: t.features.f1tag, title: t.features.f1title, desc: t.features.f1desc, img: IMAGES[0], href: '/features/ai-planner' },
+    { icon: ICONS[1], tag: t.features.f2tag, title: t.features.f2title, desc: t.features.f2desc, img: IMAGES[1], href: '/features/test-system' },
+    { icon: ICONS[2], tag: t.features.f3tag, title: t.features.f3title, desc: t.features.f3desc, img: IMAGES[2], href: '/features/communication' },
+    { icon: ICONS[3], tag: t.features.f4tag, title: t.features.f4title, desc: t.features.f4desc, img: IMAGES[3], href: '/features/analytics' },
   ]
 
   return (
@@ -73,7 +73,7 @@ export default function LandingFeatures() {
                   <p className="font-body text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                     {f.desc}
                   </p>
-                  <a href="#contact"
+                  <a href={f.href}
                     className="inline-flex items-center gap-1.5 font-body text-sm font-semibold transition-all hover:gap-3"
                     style={{ color: 'var(--accent)' }}>
                     {t.features.more}

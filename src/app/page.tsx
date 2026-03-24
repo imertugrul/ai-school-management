@@ -8,6 +8,7 @@ import { LanguageProvider } from '@/context/LanguageContext'
 import LandingNavbar       from '@/components/landing/LandingNavbar'
 import LandingHero         from '@/components/landing/LandingHero'
 import LandingStats        from '@/components/landing/LandingStats'
+import LandingRoles        from '@/components/landing/LandingRoles'
 import LandingFeatures     from '@/components/landing/LandingFeatures'
 import LandingHowItWorks   from '@/components/landing/LandingHowItWorks'
 import LandingTestimonials from '@/components/landing/LandingTestimonials'
@@ -49,6 +50,7 @@ export default function HomePage() {
         <LandingNavbar />
         <LandingHero />
         <LandingStats />
+        <LandingRoles />
         <LandingFeatures />
         <LandingHowItWorks />
         <LandingTestimonials />
