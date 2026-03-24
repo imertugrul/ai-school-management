@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { href: '/staff-panel/announcements',     icon: '📢', label: 'Duyurular'          },
   { href: '/staff-panel/events',            icon: '📅', label: 'Etkinlikler'        },
   { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Program'            },
-  { href: '/staff-panel/reports',           icon: '📊', label: 'Raporlar'           },
+  { href: '/staff-panel/analytics',         icon: '📊', label: 'Raporlar'           },
 ]
 
 export default function StaffPanelLayout({ children }: { children: React.ReactNode }) {
