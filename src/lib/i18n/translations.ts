@@ -9,7 +9,7 @@ export const translations = {
       demo: 'Demo Talep Et',
     },
     hero: {
-      badge: '✦ Yapay Zeka Destekli Eğitim Platformu',
+      badge: '✦ Yapay Zeka Destekli Okul Yönetim Sistemi',
       title: 'Okulunuzu\nGeleceğe Taşıyın.',
       subtitle: 'Yapay zeka ile ders planla, otomatik not ver, velilerle anlık iletişim kur. Tek platform, sonsuz imkan.',
       cta: 'Demo Talep Et',
@@ -151,7 +151,7 @@ export const translations = {
       demo: 'Request Demo',
     },
     hero: {
-      badge: '✦ AI-Powered Education Platform',
+      badge: '✦ AI-Powered School Management System',
       title: 'Take Your School\ninto the Future.',
       subtitle: 'Plan lessons with AI, grade automatically, communicate with parents instantly. One platform, endless possibilities.',
       cta: 'Request Demo',
@@ -293,7 +293,7 @@ export const translations = {
       demo: 'Demo anfragen',
     },
     hero: {
-      badge: '✦ KI-gestützte Bildungsplattform',
+      badge: '✦ KI-gestütztes Schulverwaltungssystem',
       title: 'Bringen Sie Ihre\nSchule in die Zukunft.',
       subtitle: 'Unterrichtspläne mit KI erstellen, automatisch benoten, sofort mit Eltern kommunizieren. Eine Plattform, endlose Möglichkeiten.',
       cta: 'Demo anfragen',
