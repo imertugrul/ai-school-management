@@ -1,93 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const parent = await prisma.user.findUnique({
-      where: { email: session.user.email! }
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, role: true },
     })
-
-    if (!parent || parent.role !== 'PARENT') {
-      return NextResponse.json({ error: 'Parent access required' }, { status: 403 })
+    if (!user || !['PARENT', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const links = await prisma.parentStudent.findMany({
-      where: { parentId: parent.id },
+    // Via Guardian.userId
+    const guardianLinks = await prisma.guardian.findMany({
+      where: { userId: user.id },
       include: {
-        student: {
-          include: {
-            class: { select: { id: true, name: true } },
-            attendanceRecords: {
-              select: { status: true }
-            },
-            studentEnrollments: {
-              where: { status: 'ACTIVE' },
-              include: {
-                course: {
-                  include: {
-                    gradeComponents: {
-                      include: {
-                        grades: {
-                          where: { studentId: { not: '' } },
-                          select: { score: true, studentId: true }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+        student: { select: { id: true, name: true, classId: true, class: { select: { id: true, name: true } } } },
+      },
     })
 
-    const children = links.map(link => {
-      const student = link.student
-      const totalRecords = student.attendanceRecords.length
-      const presentRecords = student.attendanceRecords.filter(
-        (r: { status: string }) => r.status === 'PRESENT' || r.status === 'LATE'
-      ).length
-      const attendanceRate = totalRecords > 0
-        ? Math.round((presentRecords / totalRecords) * 100)
-        : 0
-
-      // Calculate GPA from grade components
-      let totalWeighted = 0
-      let totalWeight = 0
-      for (const enrollment of student.studentEnrollments) {
-        for (const component of enrollment.course.gradeComponents) {
-          const studentGrade = component.grades.find((g: { studentId: string; score: number }) => g.studentId === student.id)
-          if (studentGrade && component.maxScore > 0) {
-            const pct = (studentGrade.score / component.maxScore) * 100
-            totalWeighted += pct * component.weight
-            totalWeight += component.weight
-          }
-        }
-      }
-      const gpa = totalWeight > 0 ? Math.round((totalWeighted / totalWeight) * 10) / 10 : 0
-
-      return {
-        id: student.id,
-        name: student.name,
-        email: student.email,
-        class: student.class,
-        gpa,
-        attendanceRate,
-        relationship: link.relationship
-      }
+    // Via ParentStudent.parentId (legacy)
+    const parentLinks = await prisma.parentStudent.findMany({
+      where: { parentId: user.id },
+      include: {
+        student: { select: { id: true, name: true, classId: true, class: { select: { id: true, name: true } } } },
+      },
     })
 
-    return NextResponse.json({ success: true, children })
+    // Merge + dedup
+    const seen = new Set<string>()
+    const children: { id: string; name: string; className: string; classId: string | null }[] = []
+
+    for (const g of guardianLinks) {
+      if (!seen.has(g.student.id)) {
+        seen.add(g.student.id)
+        children.push({
+          id: g.student.id,
+          name: g.student.name,
+          className: g.student.class?.name ?? '',
+          classId: g.student.classId,
+        })
+      }
+    }
+    for (const p of parentLinks) {
+      if (!seen.has(p.student.id)) {
+        seen.add(p.student.id)
+        children.push({
+          id: p.student.id,
+          name: p.student.name,
+          className: p.student.class?.name ?? '',
+          classId: p.student.classId,
+        })
+      }
+    }
+
+    return NextResponse.json({ children })
   } catch (error) {
-    console.error('Parent children GET error:', error)
+    console.error('parent/children GET error:', error)
     return NextResponse.json({ error: 'Failed to fetch children' }, { status: 500 })
   }
 }

@@ -1,169 +1,209 @@
 'use client'
 
-import { useSession, signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useChild } from '@/context/ChildContext'
 
-interface Child {
-  id: string
-  name: string
-  email: string
-  gpa: number
-  attendanceRate: number
-  class: { name: string } | null
-  relationship: string
+interface DashboardData {
+  student: { id: string; name: string; className: string; schoolName: string }
+  gradeAverage: number | null
+  attendanceSummary: { present: number; absent: number; late: number; excused: number }
+  upcomingTests: { id: string; title: string; subject: string; dueDate: string }[]
+  recentAbsences: { id: string; date: string; status: string; notifStatus: string }[]
+  recentBulletins: { id: string; month: string; sentAt: string; gradeAverage: number | null }[]
+  announcements: { id: string; title: string; content: string; publishedAt: string; isPinned: boolean; priority: string }[]
 }
 
+function gradeColor(avg: number | null) {
+  if (avg === null) return 'text-gray-400'
+  if (avg >= 85) return 'text-green-600'
+  if (avg >= 70) return 'text-amber-600'
+  return 'text-red-600'
+}
+
+const ABSENCE_ICON: Record<string, string> = { ABSENT: '🔴', LATE: '🟡', PRESENT: '🟢', EXCUSED: '🔵' }
+const ABSENCE_LABEL: Record<string, string> = { ABSENT: 'Devamsız', LATE: 'Geç Geldi', EXCUSED: 'Mazeretli', PRESENT: 'Mevcut' }
+
 export default function ParentDashboard() {
-  const { data: session } = useSession()
+  const { selectedChild, loading: childLoading } = useChild()
+  const [data, setData]     = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const [children, setChildren] = useState<Child[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/parent/children')
+    if (!selectedChild) return
+    setLoading(true)
+    setData(null)
+    fetch(`/api/parent/children/${selectedChild.id}/dashboard`)
       .then(r => r.json())
-      .then(data => { if (data.success) setChildren(data.children) })
+      .then(d => setData(d))
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedChild?.id])
 
-  const initials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-
-  const gradeColor = (gpa: number) => {
-    if (gpa >= 90) return 'text-emerald-600 bg-emerald-50'
-    if (gpa >= 75) return 'text-blue-600 bg-blue-50'
-    if (gpa >= 60) return 'text-yellow-600 bg-yellow-50'
-    return 'text-red-600 bg-red-50'
+  if (childLoading || loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Yükleniyor…</p>
+        </div>
+      </div>
+    )
   }
 
-  const sessionInitials = (session?.user?.name || 'P').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  if (!selectedChild || !data) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-5xl mb-4">👨‍👩‍👧</div>
+        <p className="text-gray-500 text-sm">Kayıtlı çocuk bulunamadı.</p>
+        <p className="text-gray-400 text-xs mt-2">Lütfen okul yöneticisiyle iletişime geçin.</p>
+      </div>
+    )
+  }
+
+  const total  = data.attendanceSummary.present + data.attendanceSummary.absent + data.attendanceSummary.late
+  const pctStr = total > 0 ? Math.round((data.attendanceSummary.present / total) * 100) : 100
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-base">S</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Parent Portal</h1>
-                <p className="text-xs text-gray-500">Monitor your children's progress</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-secondary text-sm">Logout</button>
-              <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">{sessionInitials}</span>
-              </div>
-            </div>
+    <div className="space-y-4">
+      {/* Student card */}
+      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+            {data.student.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
           </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold">{data.student.name}</h2>
+            <p className="text-blue-100 text-sm">{data.student.className} — {data.student.schoolName}</p>
+          </div>
+          {data.gradeAverage !== null && (
+            <div className="text-right">
+              <p className="text-3xl font-bold">{data.gradeAverage}</p>
+              <p className="text-blue-100 text-xs">Genel Ort.</p>
+            </div>
+          )}
         </div>
-      </nav>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-1">Welcome, {session?.user?.name}!</h2>
-          <p className="text-gray-500">Here's an overview of your children's academic progress</p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
-          <button
-            onClick={() => router.push('/announcements')}
-            className="group relative overflow-hidden text-left rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-300 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-50/0 to-orange-50/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <span className="text-white text-xl">📢</span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900 group-hover:text-orange-700 transition-colors">Announcements</h3>
-                <p className="text-sm text-gray-500">School news and updates</p>
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => router.push('/events')}
-            className="group relative overflow-hidden text-left rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:border-rose-300 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-50/0 to-rose-50/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
-                <span className="text-white text-xl">🗓️</span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900 group-hover:text-rose-700 transition-colors">Events</h3>
-                <p className="text-sm text-gray-500">Upcoming school events</p>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Children */}
-        <h3 className="text-xl font-bold text-gray-900 mb-4 border-l-4 border-teal-500 pl-4">My Children</h3>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-10 h-10 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
-          </div>
-        ) : children.length === 0 ? (
-          <div className="card text-center py-16">
-            <div className="text-6xl mb-4">👨‍👩‍👧</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No children linked yet</h3>
-            <p className="text-gray-500 text-sm">Please contact the school admin to link your children to your account.</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {children.map(child => (
-              <div key={child.id} className="rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all p-6">
-                <div className="flex items-start gap-4 mb-5">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
-                    <span className="text-white text-lg font-bold">{initials(child.name)}</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{child.name}</h3>
-                    <p className="text-sm text-gray-500">{child.class?.name || 'No class assigned'} · {child.relationship}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="rounded-xl bg-gray-50 p-3 text-center">
-                    <p className={`text-2xl font-bold ${gradeColor(child.gpa).split(' ')[0]}`}>
-                      {child.gpa > 0 ? `${child.gpa}%` : 'N/A'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">Average Grade</p>
-                  </div>
-                  <div className="rounded-xl bg-gray-50 p-3 text-center">
-                    <p className={`text-2xl font-bold ${child.attendanceRate >= 90 ? 'text-emerald-600' : child.attendanceRate >= 75 ? 'text-yellow-600' : 'text-red-600'}`}>
-                      {child.attendanceRate > 0 ? `${child.attendanceRate}%` : 'N/A'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5 font-medium">Attendance</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => router.push(`/parent/grades?studentId=${child.id}`)}
-                    className="flex-1 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                  >
-                    View Grades
-                  </button>
-                  <button
-                    onClick={() => router.push(`/parent/attendance?studentId=${child.id}`)}
-                    className="flex-1 py-2 text-sm font-semibold bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
-                  >
-                    Attendance
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => router.push('/parent/grades')}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left active:scale-95 transition-transform"
+        >
+          <p className="text-2xl mb-1">📊</p>
+          <p className={`text-2xl font-bold ${gradeColor(data.gradeAverage)}`}>
+            {data.gradeAverage !== null ? `${data.gradeAverage}` : '—'}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Genel Ortalama</p>
+        </button>
+
+        <button
+          onClick={() => router.push('/parent/attendance')}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left active:scale-95 transition-transform"
+        >
+          <p className="text-2xl mb-1">📅</p>
+          <p className="text-2xl font-bold text-gray-900">%{pctStr}</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Bu Ay Devam — {data.attendanceSummary.absent} devamsız
+          </p>
+        </button>
+
+        <button
+          onClick={() => router.push('/parent/bulletins')}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left active:scale-95 transition-transform"
+        >
+          <p className="text-2xl mb-1">📋</p>
+          <p className="text-2xl font-bold text-gray-900">{data.recentBulletins.length}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Bülten</p>
+          {data.recentBulletins[0] && (
+            <p className="text-xs text-blue-500 mt-1">{data.recentBulletins[0].month} →</p>
+          )}
+        </button>
+
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <p className="text-2xl mb-1">📝</p>
+          <p className="text-2xl font-bold text-gray-900">{data.upcomingTests.length}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Yaklaşan Sınav</p>
+          {data.upcomingTests[0] && (
+            <p className="text-xs text-gray-400 mt-1 truncate">{data.upcomingTests[0].title}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Upcoming tests */}
+      {data.upcomingTests.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-50">
+            <h3 className="font-semibold text-gray-900 text-sm">Yaklaşan Sınavlar</h3>
+          </div>
+          {data.upcomingTests.map(t => (
+            <div key={t.id} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 last:border-0">
+              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">📝</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{t.title}</p>
+                <p className="text-xs text-gray-400">{t.subject}</p>
+              </div>
+              <p className="text-xs text-gray-500 shrink-0">
+                {new Date(t.dueDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent absences */}
+      {data.recentAbsences.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900 text-sm">Son Devamsızlıklar</h3>
+            <button onClick={() => router.push('/parent/attendance')} className="text-xs text-blue-500">
+              Tümü →
+            </button>
+          </div>
+          {data.recentAbsences.map(a => (
+            <div key={a.id} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 last:border-0">
+              <span className="text-lg">{ABSENCE_ICON[a.status] ?? '⚪'}</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{ABSENCE_LABEL[a.status] ?? a.status}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(a.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                </p>
+              </div>
+              {a.notifStatus === 'APPROVED' && (
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Bildirildi</span>
+              )}
+              {a.notifStatus === 'PENDING' && (
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Bekliyor</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Announcements */}
+      {data.announcements.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-50">
+            <h3 className="font-semibold text-gray-900 text-sm">Duyurular</h3>
+          </div>
+          {data.announcements.map(ann => (
+            <div key={ann.id} className="px-4 py-3 border-b border-gray-50 last:border-0">
+              <div className="flex items-start gap-2">
+                {ann.isPinned && <span className="text-sm shrink-0">📌</span>}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{ann.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{ann.content}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(ann.publishedAt).toLocaleDateString('tr-TR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
