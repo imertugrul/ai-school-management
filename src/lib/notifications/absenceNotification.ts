@@ -1,105 +1,117 @@
 /**
- * Absence notification delivery service.
- * Sends email (Resend) + WhatsApp (Twilio) to guardians.
+ * Absence notification delivery service
+ * Sends WhatsApp (Twilio) and Email (Resend) to student guardians
  */
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
 
-// ─── WhatsApp via Twilio ──────────────────────────────────────────────────────
+// Convert Turkish phone numbers to E.164 format
+function toE164(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('90') && digits.length === 12) return `+${digits}`
+  if (digits.startsWith('0') && digits.length === 11) return `+90${digits.slice(1)}`
+  if (digits.length === 10) return `+90${digits}`
+  if (digits.startsWith('9') && digits.length === 12) return `+${digits}`
+  return null
+}
+
 async function sendWhatsApp(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
-  const sid   = process.env.TWILIO_ACCOUNT_SID
-  const token = process.env.TWILIO_AUTH_TOKEN
-  const from  = process.env.TWILIO_WHATSAPP_FROM ?? 'whatsapp:+14155238886'
-
-  if (!sid || !token) {
-    return { ok: false, error: 'Twilio credentials not configured' }
-  }
-
   try {
-    const twilio = require('twilio')(sid, token)
-    await twilio.messages.create({
-      from,
-      to: `whatsapp:${to.startsWith('+') ? to : '+' + to}`,
+    const sid   = process.env.TWILIO_ACCOUNT_SID
+    const token = process.env.TWILIO_AUTH_TOKEN
+    const from  = process.env.TWILIO_WHATSAPP_FROM
+    if (!sid || !token || !from) return { ok: false, error: 'Twilio credentials not configured' }
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const client = require('twilio')(sid, token)
+    const e164 = toE164(to)
+    if (!e164) return { ok: false, error: `Invalid phone number: ${to}` }
+
+    await client.messages.create({
+      from: `whatsapp:${from}`,
+      to:   `whatsapp:${e164}`,
       body,
     })
     return { ok: true }
-  } catch (err: any) {
-    return { ok: false, error: err?.message ?? 'Twilio error' }
+  } catch (err: unknown) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
 
-function formatDate(d: Date): string {
-  return d.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+function buildWhatsAppMessage(opts: {
+  studentName: string
+  className: string
+  attendanceStatus: string
+  date: Date
+  schoolName: string
+  schoolPhone: string
+}): string {
+  const dateStr     = opts.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'devamsız' : 'geç gelmiş'
+  return [
+    `📢 *${opts.schoolName} — Devamsızlık Bildirimi*`,
+    ``,
+    `Sayın Veli,`,
+    ``,
+    `*${opts.studentName}* adlı öğrencinin ${dateStr} tarihinde *${statusLabel}* olduğu belirlenmiştir.`,
+    ``,
+    `Bilgi ve gereği için,`,
+    `📞 ${opts.schoolPhone}`,
+    `_${opts.schoolName}_`,
+  ].join('\n')
 }
 
-function statusLabel(status: string): string {
-  return status === 'ABSENT' ? 'DEVAMSIZ' : 'GEÇ'
-}
-
-// ─── Email HTML ───────────────────────────────────────────────────────────────
 function buildAbsenceEmailHtml(opts: {
-  guardianName: string
-  studentName:  string
-  className:    string
-  date:         Date
-  status:       string
-  schoolName:   string
-  schoolPhone?: string
-  schoolEmail?: string
+  studentName: string
+  className: string
+  attendanceStatus: string
+  date: Date
+  schoolName: string
+  schoolEmail: string
+  schoolPhone: string
 }): { subject: string; html: string } {
-  const dateStr  = formatDate(opts.date)
-  const label    = statusLabel(opts.status)
-  const badgeColor = opts.status === 'ABSENT' ? '#dc2626' : '#d97706'
-
-  const subject = `Devamsızlık Bildirimi — ${opts.studentName} | ${opts.date.toLocaleDateString('tr-TR')}`
+  const dateStr     = opts.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'Devamsız' : 'Geç Kaldı'
+  const subject     = `Devamsızlık Bildirimi — ${opts.studentName} — ${dateStr}`
 
   const html = `<!DOCTYPE html>
 <html lang="tr">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:32px 0;">
-    <tr><td align="center">
-      <table width="580" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
-        <tr>
-          <td style="background:${badgeColor};padding:28px 36px;text-align:center;">
-            <p style="margin:0 0 6px;font-size:13px;color:rgba(255,255,255,.8);letter-spacing:1px;text-transform:uppercase;">${opts.schoolName}</p>
-            <h1 style="margin:0;font-size:24px;font-weight:700;color:#fff;">Devamsızlık Bildirimi</h1>
-          </td>
-        </tr>
-        <tr><td style="padding:32px 36px;">
-          <p style="margin:0 0 20px;font-size:15px;color:#374151;">Sayın <strong>${opts.guardianName}</strong>,</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">
-            <strong>${opts.studentName}</strong> adlı öğrencimiz aşağıda belirtilen tarihte
-            <span style="display:inline-block;background:${badgeColor};color:#fff;font-weight:700;padding:2px 10px;border-radius:20px;font-size:13px;">${label}</span>
-            olarak işaretlenmiştir.
-          </p>
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:24px;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+        <tr><td style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:32px 40px;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:22px">📢 Devamsızlık Bildirimi</h1>
+          <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px">${opts.schoolName}</p>
+        </td></tr>
+        <tr><td style="padding:40px">
+          <p style="color:#374151;font-size:15px;margin:0 0 24px">Sayın Veli,</p>
+          <table width="100%" cellpadding="12" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:24px">
             <tr>
-              <td style="padding:14px 20px;border-bottom:1px solid #e5e7eb;font-size:14px;">
-                <span style="color:#6b7280;">Öğrenci:</span>
-                <strong style="margin-left:8px;">${opts.studentName}</strong>
-              </td>
+              <td style="color:#6b7280;font-size:13px;width:40%">Öğrenci</td>
+              <td style="color:#111827;font-size:14px;font-weight:600">${opts.studentName}</td>
             </tr>
             <tr>
-              <td style="padding:14px 20px;border-bottom:1px solid #e5e7eb;font-size:14px;">
-                <span style="color:#6b7280;">Sınıf:</span>
-                <strong style="margin-left:8px;">${opts.className}</strong>
-              </td>
+              <td style="color:#6b7280;font-size:13px">Sınıf</td>
+              <td style="color:#111827;font-size:14px">${opts.className}</td>
             </tr>
             <tr>
-              <td style="padding:14px 20px;font-size:14px;">
-                <span style="color:#6b7280;">Tarih:</span>
-                <strong style="margin-left:8px;">${dateStr}</strong>
-              </td>
+              <td style="color:#6b7280;font-size:13px">Tarih</td>
+              <td style="color:#111827;font-size:14px">${dateStr}</td>
+            </tr>
+            <tr>
+              <td style="color:#6b7280;font-size:13px">Durum</td>
+              <td style="color:#dc2626;font-size:14px;font-weight:600">${statusLabel}</td>
             </tr>
           </table>
-          <p style="font-size:14px;color:#374151;line-height:1.7;">
-            Bu durum ile ilgili bilgi almak için lütfen okul ile iletişime geçin.
+          <p style="color:#374151;font-size:14px;line-height:1.6">Herhangi bir sorunuz için lütfen okulumuzla iletişime geçiniz.</p>
+          <p style="color:#6b7280;font-size:13px;margin-top:24px">
+            📞 ${opts.schoolPhone}<br>
+            ✉️ ${opts.schoolEmail}
           </p>
-          ${opts.schoolPhone ? `<p style="font-size:14px;color:#374151;">📞 ${opts.schoolPhone}</p>` : ''}
-          ${opts.schoolEmail ? `<p style="font-size:14px;color:#374151;">📧 ${opts.schoolEmail}</p>` : ''}
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${opts.schoolName} · Bu e-posta otomatik olarak oluşturulmuştur.</p>
+        </td></tr>
+        <tr><td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb">
+          <p style="color:#9ca3af;font-size:12px;margin:0">${opts.schoolName} — Otomatik Bildirim Sistemi</p>
         </td></tr>
       </table>
     </td></tr>
@@ -110,106 +122,113 @@ function buildAbsenceEmailHtml(opts: {
   return { subject, html }
 }
 
-// ─── WhatsApp message ─────────────────────────────────────────────────────────
-function buildWhatsAppMessage(opts: {
-  guardianName: string
-  studentName:  string
-  className:    string
-  date:         Date
-  status:       string
-  schoolName:   string
-  schoolPhone?: string
-}): string {
-  const label   = statusLabel(opts.status)
-  const dateStr = formatDate(opts.date)
-  return `🏫 ${opts.schoolName}
-
-Sayın ${opts.guardianName},
-
-${opts.studentName} bugün ${label} olarak işaretlenmiştir.
-
-📅 Tarih: ${dateStr}
-🏫 Sınıf: ${opts.className}
-
-Bilgi için lütfen okul ile iletişime geçin.${opts.schoolPhone ? '\n📞 ' + opts.schoolPhone : ''}`
-}
-
-// ─── Main send function ───────────────────────────────────────────────────────
-export async function sendAbsenceNotification(notificationId: string): Promise<void> {
+export async function sendAbsenceNotification(notificationId: string): Promise<{
+  whatsappSent: boolean
+  emailSent: boolean
+  whatsappError?: string
+  emailError?: string
+}> {
   const notif = await prisma.absenceNotification.findUnique({
     where: { id: notificationId },
     include: {
-      student: { select: { name: true } },
-      class:   { select: { name: true } },
+      student:  { select: { id: true, name: true } },
+      class:    { select: { name: true } },
       attendance: { select: { status: true } },
     },
   })
-  if (!notif) throw new Error('AbsenceNotification not found')
 
-  // Fetch school info
-  const student = await prisma.user.findUnique({
-    where: { id: notif.studentId },
-    select: { schoolId: true },
-  })
-  const school = student?.schoolId
-    ? await prisma.school.findUnique({
-        where: { id: student.schoolId },
-        select: { name: true },
-      })
-    : null
+  if (!notif) throw new Error(`AbsenceNotification ${notificationId} not found`)
 
-  // Fetch guardians
   const guardians = await prisma.guardian.findMany({
     where: { studentId: notif.studentId },
-    select: { name: true, email: true, phone: true, receivesEmail: true, receivesSMS: true },
   })
 
-  const schoolName  = school?.name ?? 'Okul'
-  const status      = notif.attendance.status as string
-  const emailOpts   = {
-    guardianName: '',
-    studentName:  notif.student.name,
-    className:    notif.class.name,
-    date:         notif.date,
-    status,
+  const schoolName  = process.env.SCHOOL_NAME  || 'Okul'
+  const schoolPhone = process.env.SCHOOL_PHONE  || ''
+  const schoolEmail = process.env.SCHOOL_EMAIL  || ''
+
+  // No guardians — mark FAILED
+  if (guardians.length === 0) {
+    await prisma.absenceNotification.update({
+      where: { id: notificationId },
+      data: {
+        status:        'FAILED',
+        emailError:    'Kayıtlı veli bulunamadı',
+        whatsappError: 'Kayıtlı veli bulunamadı',
+        sentAt:        new Date(),
+      },
+    })
+    return { whatsappSent: false, emailSent: false, whatsappError: 'No guardian', emailError: 'No guardian' }
+  }
+
+  const msgOpts = {
+    studentName:      notif.student.name || 'Öğrenci',
+    className:        notif.class.name,
+    attendanceStatus: notif.attendance.status,
+    date:             notif.date,
     schoolName,
+    schoolPhone,
   }
-  const whatsappOpts = { ...emailOpts }
 
-  let emailSent   = false
-  let whatsappSent = false
-  let emailError: string | undefined
+  let whatsappSent  = false
+  let emailSent     = false
   let whatsappError: string | undefined
+  let emailError:    string | undefined
 
-  for (const guardian of guardians) {
-    // Email
-    if (guardian.receivesEmail && guardian.email) {
-      const { subject, html } = buildAbsenceEmailHtml({ ...emailOpts, guardianName: guardian.name })
-      const ok = await sendEmail({ to: guardian.email, subject, html })
-      if (ok) emailSent = true
-      else emailError = 'Email delivery failed'
-    }
-    // WhatsApp
-    if (guardian.receivesSMS && guardian.phone) {
-      const body = buildWhatsAppMessage({ ...whatsappOpts, guardianName: guardian.name })
-      const result = await sendWhatsApp(guardian.phone, body)
-      if (result.ok) whatsappSent = true
-      else whatsappError = result.error
+  // --- WhatsApp ---
+  const smsGuardians = guardians.filter(g => g.receivesSMS && g.phone)
+  if (smsGuardians.length === 0) {
+    whatsappError = 'SMS alacak velisi yok'
+  } else {
+    const body    = buildWhatsAppMessage(msgOpts)
+    const results = await Promise.all(
+      smsGuardians.map(g => sendWhatsApp(g.phone!, body))
+    )
+    whatsappSent = results.some(r => r.ok)
+    if (!whatsappSent) {
+      whatsappError = results.map(r => r.error).filter(Boolean).join('; ')
     }
   }
 
-  const allFailed = !emailSent && !whatsappSent && guardians.length > 0
-  const newStatus = allFailed ? 'FAILED' : 'SENT'
+  // --- Email ---
+  const emailGuardians = guardians.filter(g => g.receivesEmail && g.email)
+  if (emailGuardians.length === 0) {
+    emailError = 'E-posta alacak velisi yok'
+  } else {
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const { subject, html } = buildAbsenceEmailHtml({ ...msgOpts, schoolEmail })
+      const toEmails = emailGuardians.map(g => g.email!).filter(Boolean)
+      const { error: resendErr } = await resend.emails.send({
+        from:    `${schoolName} <${schoolEmail || 'noreply@school.edu.tr'}>`,
+        to:      toEmails,
+        subject,
+        html,
+      })
+      if (resendErr) {
+        emailError = resendErr.message
+      } else {
+        emailSent = true
+      }
+    } catch (err: unknown) {
+      emailError = err instanceof Error ? err.message : String(err)
+    }
+  }
+
+  const newStatus = whatsappSent || emailSent ? 'APPROVED' : 'FAILED'
 
   await prisma.absenceNotification.update({
     where: { id: notificationId },
     data: {
-      status: newStatus,
-      sentAt: newStatus === 'SENT' ? new Date() : undefined,
-      emailSent,
+      status:        newStatus,
+      sentAt:        new Date(),
       whatsappSent,
-      emailError:    emailError    ?? null,
+      emailSent,
       whatsappError: whatsappError ?? null,
+      emailError:    emailError ?? null,
     },
   })
+
+  return { whatsappSent, emailSent, whatsappError, emailError }
 }

@@ -144,10 +144,9 @@ function AttendanceContent() {
   const notifIcon = (s: string | null) => {
     if (!s) return null
     const map: Record<string, { icon: string; title: string; cls: string }> = {
-      PENDING:   { icon: '⏳', title: 'Onay bekliyor',    cls: 'text-amber-500' },
-      APPROVED:  { icon: '✅', title: 'Onaylandı',         cls: 'text-blue-500'  },
-      CORRECTED: { icon: '✏️', title: 'Düzeltildi',        cls: 'text-purple-500' },
-      SENT:      { icon: '📨', title: 'Bildirim gönderildi', cls: 'text-green-500' },
+      PENDING:   { icon: '⏳', title: 'Onay bekliyor',    cls: 'text-amber-500'  },
+      APPROVED:  { icon: '✅', title: 'Gönderildi',        cls: 'text-green-500'  },
+      CORRECTED: { icon: '✏️', title: 'Düzeltildi',        cls: 'text-blue-500'   },
       FAILED:    { icon: '❌', title: 'Gönderim başarısız', cls: 'text-red-500'   },
     }
     const m = map[s]

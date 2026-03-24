@@ -2,16 +2,17 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { ROLE_LABELS } from '@/lib/permissions'
 
 const NAV_ITEMS = [
-  { href: '/staff-panel',                   icon: '🏠', label: 'Ana Sayfa'          },
-  { href: '/staff-panel/attendance-review', icon: '📋', label: 'Devamsızlık Onayı'  },
-  { href: '/staff-panel/students',          icon: '👥', label: 'Öğrenciler'          },
-  { href: '/staff-panel/announcements',     icon: '📢', label: 'Duyurular'           },
-  { href: '/staff-panel/events',            icon: '📅', label: 'Etkinlikler'         },
-  { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Program'             },
-  { href: '/staff-panel/reports',           icon: '📊', label: 'Raporlar'            },
+  { href: '/staff-panel',                   icon: '🏠', label: 'Ana Sayfa'         },
+  { href: '/staff-panel/attendance-review', icon: '📋', label: 'Devamsızlık Onayı', badgeKey: 'attendance' },
+  { href: '/staff-panel/students',          icon: '👥', label: 'Öğrenciler'         },
+  { href: '/staff-panel/announcements',     icon: '📢', label: 'Duyurular'          },
+  { href: '/staff-panel/events',            icon: '📅', label: 'Etkinlikler'        },
+  { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Program'            },
+  { href: '/staff-panel/reports',           icon: '📊', label: 'Raporlar'           },
 ]
 
 export default function StaffPanelLayout({ children }: { children: React.ReactNode }) {
@@ -19,9 +20,23 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
   const pathname = usePathname()
   const router   = useRouter()
 
-  const role      = (session?.user as any)?.role ?? ''
+  const role      = (session?.user as { role?: string })?.role ?? ''
   const roleLabel = ROLE_LABELS[role] ?? role
   const initials  = (session?.user?.name ?? 'S').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    function fetchPending() {
+      fetch('/api/admin/absence-notifications?status=PENDING')
+        .then(r => r.json())
+        .then(d => setPendingCount(d.summary?.pending ?? 0))
+        .catch(() => {})
+    }
+    fetchPending()
+    const interval = setInterval(fetchPending, 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -46,6 +61,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
             const active = item.href === '/staff-panel'
               ? pathname === '/staff-panel'
               : pathname.startsWith(item.href)
+            const badge = item.badgeKey === 'attendance' && pendingCount > 0 ? pendingCount : null
             return (
               <button
                 key={item.href}
@@ -57,7 +73,12 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
                 }`}
               >
                 <span className="text-base">{item.icon}</span>
-                {item.label}
+                <span className="flex-1 text-left">{item.label}</span>
+                {badge !== null && (
+                  <span className="bg-red-500 text-white text-xs font-bold min-w-[20px] h-5 flex items-center justify-center rounded-full px-1">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
               </button>
             )
           })}

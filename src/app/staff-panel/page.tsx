@@ -32,7 +32,7 @@ export default function StaffDashboard() {
 
   useEffect(() => {
     // Fetch pending absences
-    const pending = fetch('/api/admin/attendance-review?status=PENDING')
+    const pending = fetch('/api/admin/absence-notifications?status=PENDING')
       .then(r => r.json()).then(d => ({ pendingAbsences: d.summary?.pending ?? 0 })).catch(() => ({ pendingAbsences: 0 }))
 
     // Fetch student + guardian counts

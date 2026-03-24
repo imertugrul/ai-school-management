@@ -54,14 +54,13 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0)
     const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
 
-    const [pending, approvedToday, corrected, sent] = await Promise.all([
+    const [pending, approvedToday, corrected] = await Promise.all([
       prisma.absenceNotification.count({ where: { status: 'PENDING' } }),
       prisma.absenceNotification.count({ where: { status: 'APPROVED', reviewedAt: { gte: today, lte: todayEnd } } }),
       prisma.absenceNotification.count({ where: { status: 'CORRECTED', date: { gte: today, lte: todayEnd } } }),
-      prisma.absenceNotification.count({ where: { status: 'SENT', sentAt: { gte: today, lte: todayEnd } } }),
     ])
 
-    return NextResponse.json({ notifications, summary: { pending, approvedToday, corrected, sent } })
+    return NextResponse.json({ notifications, summary: { pending, approvedToday, corrected } })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

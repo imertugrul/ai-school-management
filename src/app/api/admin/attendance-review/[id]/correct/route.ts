@@ -29,10 +29,6 @@ export async function PUT(request: NextRequest, { params }: Ctx) {
       include: { attendance: { select: { status: true } } },
     })
     if (!notif) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    if (notif.status === 'SENT') {
-      return NextResponse.json({ error: 'Gönderilmiş bildirim düzeltilemez' }, { status: 400 })
-    }
-
     const originalStatus = notif.attendance.status as string
 
     // Update AttendanceRecord

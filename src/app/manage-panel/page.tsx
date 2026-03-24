@@ -237,7 +237,7 @@ export default function AdminPage() {
       })
       .catch(() => {})
 
-    fetch('/api/admin/attendance-review?status=PENDING')
+    fetch('/api/admin/absence-notifications?status=PENDING')
       .then(r => r.json())
       .then(data => setPendingAbsences(data.summary?.pending ?? 0))
       .catch(() => {})
