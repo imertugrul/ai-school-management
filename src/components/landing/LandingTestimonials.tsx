@@ -2,29 +2,10 @@
 
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-
-const TESTIMONIALS = [
-  {
-    text: '"AI ders planlayıcısı hayatımı değiştirdi. 2 saatlik işi 2 dakikada yapıyorum artık."',
-    name: 'Mehmet Öztürk',
-    role: 'Matematik Öğretmeni',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-  },
-  {
-    text: '"Velilerle iletişim artık çok kolay. Devamsızlık bildirimleri otomatik gidiyor, telefona bakmak zorunda kalmıyorum."',
-    name: 'Fatma Yıldız',
-    role: 'Sınıf Öğretmeni',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100',
-  },
-  {
-    text: '"18 farklı soru tipi ve AI puanlama sistemi gerçekten etkileyici. Sınav hazırlamak artık keyifli."',
-    name: 'Kemal Arslan',
-    role: 'Fizik Öğretmeni',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-  },
-]
+import { useLanguage } from '@/context/LanguageContext'
 
 export default function LandingTestimonials() {
+  const { t } = useLanguage()
   const ref = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -39,54 +20,45 @@ export default function LandingTestimonials() {
   }, [])
 
   return (
-    <section ref={ref} className="py-24 lg:py-32" style={{ backgroundColor: 'var(--navy)' }}>
+    <section ref={ref} className="py-24 lg:py-32" style={{ backgroundColor: 'var(--primary)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16 reveal">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 font-body text-xs font-semibold tracking-widest uppercase"
-            style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--gold)' }}>
-            Referanslar
-          </div>
-          <h2 className="font-display font-bold text-4xl md:text-5xl" style={{ color: '#ffffff' }}>
-            Öğretmenler Ne Diyor?
+          <h2 className="font-display font-bold text-4xl md:text-5xl text-white">
+            {t.testimonials.title}
           </h2>
         </div>
 
-        {/* Cards */}
+        {/* Cards — glassmorphism */}
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-          {TESTIMONIALS.map((t, i) => (
-            <div
-              key={t.name}
-              className={`reveal reveal-delay-${i + 1} flex flex-col justify-between p-8 rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl`}
+          {t.testimonials.items.map((item, i) => (
+            <div key={i}
+              className={`reveal reveal-delay-${i + 1} flex flex-col justify-between p-8 rounded-3xl transition-all duration-300 hover:-translate-y-1`}
               style={{
-                backgroundColor: '#ffffff',
-                boxShadow: '0 4px 32px rgba(0,0,0,0.12)',
-              }}
-            >
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(10px)',
+              }}>
               {/* Stars */}
               <div>
                 <div className="flex gap-1 mb-4">
-                  {[1,2,3,4,5].map(s => <span key={s} style={{ color: 'var(--gold)' }}>⭐</span>)}
+                  {[1,2,3,4,5].map(s => (
+                    <span key={s} style={{ color: '#fbbf24', fontSize: '14px' }}>★</span>
+                  ))}
                 </div>
-                {/* Quote */}
-                <p className="font-body text-base leading-relaxed italic mb-6" style={{ color: 'var(--text-dark)' }}>
-                  {t.text}
+                <p className="font-body text-base leading-relaxed italic mb-6 text-white/90">
+                  {item.text}
                 </p>
               </div>
               {/* Author */}
-              <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: '#f0f2f5' }}>
+              <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
                 <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0"
-                  style={{ border: '2px solid var(--gold-pale)' }}>
-                  <Image
-                    src={t.avatar}
-                    alt={t.name}
-                    fill
-                    className="object-cover"
-                  />
+                  style={{ border: '2px solid rgba(255,255,255,0.3)' }}>
+                  <Image src={item.avatar} alt={item.name} fill className="object-cover" />
                 </div>
                 <div>
-                  <p className="font-body font-semibold text-sm" style={{ color: 'var(--text-dark)' }}>{t.name}</p>
-                  <p className="font-body text-xs" style={{ color: 'var(--text-muted)' }}>{t.role}</p>
+                  <p className="font-body font-semibold text-sm text-white">{item.name}</p>
+                  <p className="font-body text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{item.role}</p>
                 </div>
               </div>
             </div>
