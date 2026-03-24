@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/context/LanguageContext'
 import type { Language } from '@/lib/i18n/translations'
+import { trackEvent } from '@/lib/analytics'
 
 const LANG_OPTIONS: { code: Language; flag: string; label: string }[] = [
   { code: 'tr', flag: '🇹🇷', label: 'Türkçe' },
@@ -153,7 +154,7 @@ export default function LandingNavbar() {
                   {LANG_OPTIONS.map(opt => (
                     <button
                       key={opt.code}
-                      onClick={() => { setLang(opt.code); setLangOpen(false) }}
+                      onClick={() => { setLang(opt.code); setLangOpen(false); trackEvent('language_change', 'engagement', opt.code) }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left font-body text-sm transition-colors hover:bg-gray-50"
                       style={{ fontWeight: lang === opt.code ? 700 : 400, color: lang === opt.code ? 'var(--primary)' : 'var(--text-muted)' }}
                     >

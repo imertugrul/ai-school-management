@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '@/context/LanguageContext'
+import { trackEvent } from '@/lib/analytics'
 
 interface FormState {
   name: string; school: string; email: string
@@ -42,6 +43,7 @@ export default function LandingContact() {
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setErrors({})
+    trackEvent('demo_request', 'conversion', form.studentCount || 'unknown')
     setSubmitted(true)
   }
 

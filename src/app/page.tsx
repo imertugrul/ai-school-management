@@ -16,6 +16,7 @@ import LandingPricing      from '@/components/landing/LandingPricing'
 import LandingFAQ          from '@/components/landing/LandingFAQ'
 import LandingContact      from '@/components/landing/LandingContact'
 import LandingFooter       from '@/components/landing/LandingFooter'
+import StructuredData      from '@/components/StructuredData'
 
 export default function HomePage() {
   const { data: session, status } = useSession()
@@ -46,6 +47,7 @@ export default function HomePage() {
 
   return (
     <LanguageProvider>
+      <StructuredData />
       <div className="font-body" style={{ overflowX: 'hidden' }}>
         <LandingNavbar />
         <LandingHero />
