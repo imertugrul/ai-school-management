@@ -72,7 +72,7 @@ export default function LandingPricing() {
         {/* Cards */}
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
           {plans.map((plan, i) => (
-            <div key={plan.name}
+            <div key={i}
               className={`reveal reveal-delay-${i + 1} relative flex flex-col rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1`}
               style={plan.featured ? {
                 backgroundColor: 'var(--primary)',
@@ -120,8 +120,8 @@ export default function LandingPricing() {
                 style={{ backgroundColor: plan.featured ? 'rgba(255,255,255,0.12)' : 'var(--gray-200)' }} />
 
               <ul className="space-y-3 flex-1 mb-8">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-start gap-3 font-body text-sm">
+                {plan.features.map((f, fi) => (
+                  <li key={fi} className="flex items-start gap-3 font-body text-sm">
                     <span style={{ color: plan.featured ? '#60a5fa' : 'var(--green)', flexShrink: 0, fontWeight: 700 }}>✓</span>
                     <span style={{ color: plan.featured ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>{f}</span>
                   </li>

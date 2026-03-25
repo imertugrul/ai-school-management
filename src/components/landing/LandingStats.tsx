@@ -63,8 +63,8 @@ export default function LandingStats() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap justify-center md:justify-between items-center divide-y md:divide-y-0 md:divide-x"
           style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-          {stats.map(s => (
-            <div key={s.label} className="flex-1 min-w-[180px]">
+          {stats.map((s, i) => (
+            <div key={i} className="flex-1 min-w-[180px]">
               <StatItem value={s.value} suffix={s.suffix} labelKey={s.label} decimal={s.decimal} active={active} />
             </div>
           ))}

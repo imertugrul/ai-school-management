@@ -20,8 +20,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Read from localStorage on mount (client only)
   useEffect(() => {
-    const stored = localStorage.getItem('schoolpro_lang') as Language | null
-    if (stored && (stored === 'tr' || stored === 'en' || stored === 'de')) {
+    const stored = localStorage.getItem('schoolpro_lang')
+    if (stored === 'tr' || stored === 'en' || stored === 'de') {
       setLangState(stored)
     }
   }, [])
@@ -32,7 +32,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
+    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] ?? translations.tr }}>
       {children}
     </LanguageContext.Provider>
   )

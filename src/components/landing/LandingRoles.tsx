@@ -99,8 +99,8 @@ export default function LandingRoles() {
 
                 {/* Feature list */}
                 <ul className="space-y-3 flex-1 mb-8">
-                  {data.features.map((feat: string) => (
-                    <li key={feat} className="flex items-start gap-3">
+                  {data.features.map((feat: string, fi: number) => (
+                    <li key={fi} className="flex items-start gap-3">
                       <span
                         className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                         style={{ backgroundColor: role.pale, color: role.accent }}
