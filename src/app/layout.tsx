@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/nextjs'
 
 const inter = Inter({ subsets: ['latin'] })
 
-const BASE = 'https://ai-school-management-omega.vercel.app'
+const BASE = 'https://www.schoolproai.com'
 
 export function generateMetadata(): Metadata {
   return {

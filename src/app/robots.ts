@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE = 'https://ai-school-management-omega.vercel.app'
+const BASE = 'https://www.schoolproai.com'
 
 export default function robots(): MetadataRoute.Robots {
   return {

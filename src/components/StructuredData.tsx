@@ -7,7 +7,7 @@ const softwareApp = {
   applicationCategory: 'EducationApplication',
   operatingSystem: 'Web',
   description: 'AI destekli okul yönetim sistemi. Ders planı oluşturma, otomatik puanlama, veli bildirimi.',
-  url: 'https://ai-school-management-omega.vercel.app',
+  url: 'https://www.schoolproai.com',
   offers: {
     '@type': 'Offer',
     price: '0',

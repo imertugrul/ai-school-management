@@ -67,7 +67,7 @@ export async function generateMetadata({
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://ai-school-management-omega.vercel.app/features/${params.module}`,
+      url: `https://www.schoolproai.com/features/${params.module}`,
       images: [{ url: '/og-image.png', width: 1200, height: 630 }],
     },
     twitter: {

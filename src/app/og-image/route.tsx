@@ -75,7 +75,7 @@ export async function GET() {
 
           {/* URL */}
           <div style={{ color: '#4F8EF7', fontSize: 13, marginTop: 32, fontWeight: 600 }}>
-            ai-school-management-omega.vercel.app
+            www.schoolproai.com
           </div>
         </div>
 

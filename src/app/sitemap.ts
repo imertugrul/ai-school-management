@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE = 'https://ai-school-management-omega.vercel.app'
+const BASE = 'https://www.schoolproai.com'
 
 const MODULES = [
   'teacher', 'student', 'parent',
