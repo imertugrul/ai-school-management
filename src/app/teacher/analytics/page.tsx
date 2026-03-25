@@ -102,16 +102,16 @@ export default function TeacherAnalyticsPage() {
     try {
       await exportExcel({
         kpis: {
-          Öğrenci: data.classStats?.studentCount ?? 0,
-          'Sınıf Ortalaması': data.classStats?.avg ?? '—',
-          'Devam Oranı': data.classStats?.attendanceRate ?? '—',
-          'En Yüksek': data.classStats?.maxGrade ?? '—',
-          'En Düşük': data.classStats?.minGrade ?? '—',
+          Students: data.classStats?.studentCount ?? 0,
+          'Class Average': data.classStats?.avg ?? '—',
+          'Attendance Rate': data.classStats?.attendanceRate ?? '—',
+          'Highest': data.classStats?.maxGrade ?? '—',
+          'Lowest': data.classStats?.minGrade ?? '—',
         },
         gradeDistribution: {},
         attendanceTrend: data.trend,
         atRiskStudents: data.atRisk,
-        title: 'Öğretmen_Analitik',
+        title: 'Teacher_Analytics',
       })
     } finally { setExporting(false) }
   }
@@ -126,7 +126,7 @@ export default function TeacherAnalyticsPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push('/teacher/dashboard')} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
-              <h1 className="text-lg font-bold text-gray-900">Analitik Dashboard</h1>
+              <h1 className="text-lg font-bold text-gray-900">Analytics Dashboard</h1>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExport} disabled={exporting || !data} className="btn-secondary text-sm disabled:opacity-50">
@@ -144,27 +144,27 @@ export default function TeacherAnalyticsPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3 print:hidden">
           <select value={courseId} onChange={e => setCourseId(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Dersler</option>
+            <option value="">All Courses</option>
             {data?.courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select value={classId} onChange={e => setClassId(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Sınıflar</option>
+            <option value="">All Classes</option>
             {data?.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Yenile</button>
+          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Refresh</button>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard icon="👨‍🎓" title="Öğrenci Sayısı"  value={stats?.studentCount ?? '—'}       color="bg-teal-50" />
-          <StatCard icon="📊" title="Sınıf Ortalaması"   value={stats?.avg ?? '—'}                color="bg-violet-50" />
-          <StatCard icon="📅" title="Devam Oranı"        value={stats?.attendanceRate !== null && stats?.attendanceRate !== undefined ? `%${stats.attendanceRate}` : '—'} color="bg-green-50" />
-          <StatCard icon="⬆️" title="En Yüksek"          value={stats?.maxGrade ?? '—'}           color="bg-blue-50" />
-          <StatCard icon="⬇️" title="En Düşük"           value={stats?.minGrade ?? '—'}           color="bg-orange-50" />
+          <StatCard icon="👨‍🎓" title="Student Count"    value={stats?.studentCount ?? '—'}       color="bg-teal-50" />
+          <StatCard icon="📊" title="Class Average"       value={stats?.avg ?? '—'}                color="bg-violet-50" />
+          <StatCard icon="📅" title="Attendance Rate"     value={stats?.attendanceRate !== null && stats?.attendanceRate !== undefined ? `%${stats.attendanceRate}` : '—'} color="bg-green-50" />
+          <StatCard icon="⬆️" title="Highest"             value={stats?.maxGrade ?? '—'}           color="bg-blue-50" />
+          <StatCard icon="⬇️" title="Lowest"              value={stats?.minGrade ?? '—'}           color="bg-orange-50" />
         </div>
 
         {/* Component averages */}
-        <Section title="Bileşen Ortalamaları">
+        <Section title="Component Averages">
           <ComponentBar
             data={(data?.componentAverages ?? []).map(c => ({ name: c.name, avg: c.avg, count: c.count }))}
             loading={loading}
@@ -173,21 +173,21 @@ export default function TeacherAnalyticsPage() {
         </Section>
 
         {/* Student performance table */}
-        <Section title={`Öğrenci Performansı ${data?.studentPerformance.length ? `(${data.studentPerformance.length})` : ''}`}>
+        <Section title={`Student Performance ${data?.studentPerformance.length ? `(${data.studentPerformance.length})` : ''}`}>
           {loading ? (
             <div className="h-32 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : !data?.studentPerformance.length ? (
-            <p className="text-center text-gray-400 py-8 text-sm">Veri yok</p>
+            <p className="text-center text-gray-400 py-8 text-sm">No data</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Öğrenci</th>
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Sınıf</th>
-                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Ortalama</th>
-                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Devam %</th>
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Durum</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Student</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Class</th>
+                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Average</th>
+                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Attendance %</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -203,11 +203,11 @@ export default function TeacherAnalyticsPage() {
                       </td>
                       <td className="px-4 py-2.5">
                         {s.avg !== null && s.avg < 60 ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Düşük Not</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Low Grade</span>
                         ) : s.attendanceRate < 80 ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Devamsızlık</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Attendance</span>
                         ) : (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">İyi</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Good</span>
                         )}
                       </td>
                     </tr>
@@ -219,11 +219,11 @@ export default function TeacherAnalyticsPage() {
         </Section>
 
         {/* Trend */}
-        <Section title="Değerlendirme Trendi">
+        <Section title="Assessment Trend">
           {loading ? (
             <div className="h-64 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : !data?.trend.length ? (
-            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">Veri yok</div>
+            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No data</div>
           ) : (
             <AttendanceTrend
               data={data.trend.map(t => ({ month: t.name, absent: 0, late: 0, present: t.avg ?? 0 }))}
@@ -234,7 +234,7 @@ export default function TeacherAnalyticsPage() {
         </Section>
 
         {/* At-risk */}
-        <Section title={`Risk Altındaki Öğrenciler ${data?.atRisk.length ? `(${data.atRisk.length})` : ''}`}>
+        <Section title={`At-Risk Students ${data?.atRisk.length ? `(${data.atRisk.length})` : ''}`}>
           <RiskTable
             data={(data?.atRisk ?? []).map(s => ({ student: s.name, class: s.class, avg: s.avg, attendanceRate: s.attendanceRate, riskFactors: s.riskFactors }))}
             loading={loading}

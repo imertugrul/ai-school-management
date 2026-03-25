@@ -10,11 +10,11 @@ import RiskTable       from '@/components/analytics/RiskTable'
 import { exportExcel, printReport } from '@/lib/exportReport'
 
 const MONTHS = [
-  { value: '', label: 'Tüm Yıl' },
-  { value: '09', label: 'Eylül' }, { value: '10', label: 'Ekim' }, { value: '11', label: 'Kasım' },
-  { value: '12', label: 'Aralık' }, { value: '01', label: 'Ocak' }, { value: '02', label: 'Şubat' },
-  { value: '03', label: 'Mart' }, { value: '04', label: 'Nisan' }, { value: '05', label: 'Mayıs' },
-  { value: '06', label: 'Haziran' },
+  { value: '', label: 'All Year' },
+  { value: '09', label: 'September' }, { value: '10', label: 'October' }, { value: '11', label: 'November' },
+  { value: '12', label: 'December' }, { value: '01', label: 'January' }, { value: '02', label: 'February' },
+  { value: '03', label: 'March' }, { value: '04', label: 'April' }, { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
 ]
 
 interface AnalyticsData {
@@ -107,7 +107,7 @@ export default function AdminAnalyticsPage() {
         gradeDistribution: data.gradeDistribution as unknown as Record<string, unknown>,
         attendanceTrend:   data.attendanceTrend,
         atRiskStudents:    data.atRiskStudents,
-        title:             'Admin_Analitik',
+        title:             'Admin_Analytics',
       })
     } finally { setExporting(false) }
   }
@@ -120,7 +120,7 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push('/manage-panel')} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
-              <h1 className="text-lg font-bold text-gray-900">Analitik Dashboard</h1>
+              <h1 className="text-lg font-bold text-gray-900">Analytics Dashboard</h1>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExportExcel} disabled={exporting || !data} className="btn-secondary text-sm disabled:opacity-50">
@@ -138,44 +138,44 @@ export default function AdminAnalyticsPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3 print:hidden">
           <select value={term} onChange={e => setTerm(e.target.value)} className="input-field text-sm">
-            {TERMS.map(t => <option key={t} value={t}>{t} Öğretim Yılı</option>)}
+            {TERMS.map(t => <option key={t} value={t}>{t} Academic Year</option>)}
           </select>
           <select value={month} onChange={e => setMonth(e.target.value)} className="input-field text-sm">
             {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
           <select value={classId} onChange={e => setClassId(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Sınıflar</option>
+            <option value="">All Classes</option>
             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Yenile</button>
+          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Refresh</button>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KPICard icon="👨‍🎓" title="Toplam Öğrenci"  value={data?.kpis.students ?? '—'}       color="bg-teal-50" />
-          <KPICard icon="👩‍🏫" title="Aktif Öğretmen"   value={data?.kpis.teachers ?? '—'}       color="bg-amber-50" />
-          <KPICard icon="🏫" title="Sınıf"              value={data?.kpis.classes ?? '—'}        color="bg-sky-50" />
-          <KPICard icon="📊" title="Okul Ortalaması"    value={data?.kpis.avgGrade ?? '—'}       color="bg-violet-50" />
-          <KPICard icon="📅" title="Devam Oranı"        value={data?.kpis.attendanceRate !== null && data?.kpis.attendanceRate !== undefined ? `%${data.kpis.attendanceRate}` : '—'} color="bg-green-50" />
-          <KPICard icon="📝" title="Tamamlanan Sınav"   value={data?.kpis.completedTests ?? '—'} color="bg-blue-50" />
+          <KPICard icon="👨‍🎓" title="Total Students"    value={data?.kpis.students ?? '—'}       color="bg-teal-50" />
+          <KPICard icon="👩‍🏫" title="Active Teachers"   value={data?.kpis.teachers ?? '—'}       color="bg-amber-50" />
+          <KPICard icon="🏫" title="Classes"             value={data?.kpis.classes ?? '—'}        color="bg-sky-50" />
+          <KPICard icon="📊" title="School Average"      value={data?.kpis.avgGrade ?? '—'}       color="bg-violet-50" />
+          <KPICard icon="📅" title="Attendance Rate"     value={data?.kpis.attendanceRate !== null && data?.kpis.attendanceRate !== undefined ? `${data.kpis.attendanceRate}%` : '—'} color="bg-green-50" />
+          <KPICard icon="📝" title="Completed Tests"     value={data?.kpis.completedTests ?? '—'} color="bg-blue-50" />
         </div>
 
         {/* Grade distribution + class averages */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Section title="Not Dağılımı (Harf Notu)">
+          <Section title="Grade Distribution (Letter Grade)">
             <GradeDonutChart data={data?.gradeDistribution ?? null} loading={loading} />
           </Section>
-          <Section title="Sınıf Bazlı Ortalamalar">
+          <Section title="Class-Based Averages">
             <ClassBarChart data={data?.gradeDistribution.byClass ?? []} loading={loading} />
           </Section>
         </div>
 
         {/* Attendance trend + by class */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Section title="Aylık Devamsızlık Trendi">
+          <Section title="Monthly Attendance Trend">
             <AttendanceTrend data={data?.attendanceTrend ?? []} loading={loading} />
           </Section>
-          <Section title="Sınıf Bazlı Devamsızlık Oranı">
+          <Section title="Class-Based Attendance Rate">
             {loading ? (
               <div className="h-64 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
             ) : (
@@ -190,21 +190,21 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Teacher performance */}
-        <Section title="Öğretmen Performansı">
+        <Section title="Teacher Performance">
           {loading ? (
             <div className="h-20 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : sortedTeachers.length === 0 ? (
-            <p className="text-center text-gray-400 py-8 text-sm">Veri yok</p>
+            <p className="text-center text-gray-400 py-8 text-sm">No data</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
                     {[
-                      { col: 'teacher' as const, label: 'Öğretmen' },
-                      { col: null, label: 'Dersler' },
-                      { col: 'avgGrade' as const, label: 'Sınıf Ort.' },
-                      { col: 'testCount' as const, label: 'Sınav Sayısı' },
+                      { col: 'teacher' as const, label: 'Teacher' },
+                      { col: null, label: 'Subjects' },
+                      { col: 'avgGrade' as const, label: 'Class Avg.' },
+                      { col: 'testCount' as const, label: 'Exam Count' },
                     ].map(({ col, label }) => (
                       <th key={label} onClick={col ? () => sort(col) : undefined}
                         className={`text-left px-4 py-2.5 font-semibold text-gray-600 ${col ? 'cursor-pointer hover:text-gray-900' : ''}`}>
@@ -233,17 +233,17 @@ export default function AdminAnalyticsPage() {
         </Section>
 
         {/* Risk students */}
-        <Section title={`Risk Altındaki Öğrenciler ${data?.atRiskStudents.length ? `(${data.atRiskStudents.length})` : ''}`}>
+        <Section title={`At-Risk Students ${data?.atRiskStudents.length ? `(${data.atRiskStudents.length})` : ''}`}>
           <RiskTable data={data?.atRiskStudents ?? []} loading={loading} />
         </Section>
 
         {/* AI usage */}
         {data?.aiUsage && (
-          <Section title="AI Kullanım İstatistikleri">
+          <Section title="AI Usage Statistics">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { icon: '📋', label: 'Ders Planı', value: data.aiUsage.lessonPlans },
-                { icon: '📊', label: 'Gönderilen Bülten', value: data.aiUsage.gradedTests },
+                { icon: '📋', label: 'Lesson Plans', value: data.aiUsage.lessonPlans },
+                { icon: '📊', label: 'Bulletins Sent', value: data.aiUsage.gradedTests },
               ].map(s => (
                 <div key={s.label} className="bg-indigo-50 rounded-2xl p-4 text-center">
                   <p className="text-2xl mb-1">{s.icon}</p>

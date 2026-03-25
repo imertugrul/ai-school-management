@@ -6,13 +6,13 @@ import { useEffect, useState } from 'react'
 import { ROLE_LABELS } from '@/lib/permissions'
 
 const NAV_ITEMS = [
-  { href: '/staff-panel',                   icon: '🏠', label: 'Ana Sayfa'         },
-  { href: '/staff-panel/attendance-review', icon: '📋', label: 'Devamsızlık Onayı', badgeKey: 'attendance' },
-  { href: '/staff-panel/students',          icon: '👥', label: 'Öğrenciler'         },
-  { href: '/staff-panel/announcements',     icon: '📢', label: 'Duyurular'          },
-  { href: '/staff-panel/events',            icon: '📅', label: 'Etkinlikler'        },
-  { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Program'            },
-  { href: '/staff-panel/analytics',         icon: '📊', label: 'Raporlar'           },
+  { href: '/staff-panel',                   icon: '🏠', label: 'Home'                },
+  { href: '/staff-panel/attendance-review', icon: '📋', label: 'Attendance Approval', badgeKey: 'attendance' },
+  { href: '/staff-panel/students',          icon: '👥', label: 'Students'             },
+  { href: '/staff-panel/announcements',     icon: '📢', label: 'Announcements'        },
+  { href: '/staff-panel/events',            icon: '📅', label: 'Events'               },
+  { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Schedule'             },
+  { href: '/staff-panel/analytics',         icon: '📊', label: 'Reports'              },
 ]
 
 export default function StaffPanelLayout({ children }: { children: React.ReactNode }) {
@@ -49,7 +49,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
               <span className="text-white font-bold text-base">S</span>
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Personel Paneli</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">Staff Panel</p>
               <p className="text-xs text-gray-400">{roleLabel}</p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
             onClick={() => signOut({ callbackUrl: '/' })}
             className="w-full text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-xl transition-colors font-medium"
           >
-            Çıkış Yap
+            Sign Out
           </button>
         </div>
       </aside>

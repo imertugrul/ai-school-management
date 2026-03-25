@@ -28,8 +28,8 @@ function textColor(avg: number | null) {
   if (avg >= 85) return 'text-green-600'; if (avg >= 70) return 'text-amber-600'; return 'text-red-600'
 }
 const TYPE_LABELS: Record<string, string> = {
-  EXAM: 'Sınav', QUIZ: 'Kısa Sınav', HOMEWORK: 'Ödev',
-  PROJECT: 'Proje', PARTICIPATION: 'Katılım', ATTENDANCE: 'Devam',
+  EXAM: 'Exam', QUIZ: 'Quiz', HOMEWORK: 'Assignment',
+  PROJECT: 'Project', PARTICIPATION: 'Participation', ATTENDANCE: 'Attendance',
 }
 
 export default function ParentGrades() {
@@ -57,26 +57,26 @@ export default function ParentGrades() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Not Takibi</h1>
+        <h1 className="text-xl font-bold text-gray-900">Grade Tracker</h1>
         <p className="text-sm text-gray-400">{selectedChild?.name}</p>
       </div>
 
       {overallAvg !== null && (
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white flex items-center gap-4">
           <div>
-            <p className="text-xs text-indigo-200">Genel Ortalama</p>
+            <p className="text-xs text-indigo-200">Overall Average</p>
             <p className="text-4xl font-bold">{overallAvg}</p>
           </div>
           <div className="flex-1" />
           <div className="text-right">
             <p className="text-3xl font-bold">{letterGrade(overallAvg)}</p>
-            <p className="text-xs text-indigo-200">{withAvg.length} ders</p>
+            <p className="text-xs text-indigo-200">{withAvg.length} subject{withAvg.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}
 
       {courses.length === 0 ? (
-        <div className="text-center py-16"><div className="text-4xl mb-3">📊</div><p className="text-gray-500 text-sm">Henüz not girilmemiş.</p></div>
+        <div className="text-center py-16"><div className="text-4xl mb-3">📊</div><p className="text-gray-500 text-sm">No grades entered yet.</p></div>
       ) : courses.map(course => (
         <div key={course.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
@@ -117,7 +117,7 @@ export default function ParentGrades() {
                 <div className="text-right shrink-0 w-16">
                   {comp.score !== null
                     ? <p className={`text-sm font-bold ${textColor(comp.percentage)}`}>{comp.score}/{comp.maxScore}</p>
-                    : <p className="text-xs text-gray-300">Girilmedi</p>
+                    : <p className="text-xs text-gray-300">Not entered</p>
                   }
                 </div>
               </div>

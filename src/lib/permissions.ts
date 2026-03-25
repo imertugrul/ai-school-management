@@ -96,14 +96,14 @@ export const STAFF_ROLES: Role[] = ['VICE_PRINCIPAL', 'COUNSELOR', 'SECRETARY']
 
 /** Role display labels */
 export const ROLE_LABELS: Record<string, string> = {
-  ADMIN:                'Yönetici',
-  VICE_PRINCIPAL:       'Müdür Yardımcısı',
-  COUNSELOR:            'Rehber Öğretmen',
-  SECRETARY:            'Sekreter',
-  TEACHER:              'Öğretmen',
-  STUDENT:              'Öğrenci',
-  PARENT:               'Veli',
-  SOCIAL_MEDIA_MANAGER: 'Sosyal Medya Yöneticisi',
+  ADMIN:                'Admin',
+  VICE_PRINCIPAL:       'Vice Principal',
+  COUNSELOR:            'Counselor',
+  SECRETARY:            'Secretary',
+  TEACHER:              'Teacher',
+  STUDENT:              'Student',
+  PARENT:               'Parent/Guardian',
+  SOCIAL_MEDIA_MANAGER: 'Social Media Manager',
 }
 
 /** Dashboard URL for each role */

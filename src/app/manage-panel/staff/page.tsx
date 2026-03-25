@@ -13,9 +13,9 @@ interface StaffMember {
 }
 
 const STAFF_ROLES = [
-  { value: 'VICE_PRINCIPAL', label: 'Müdür Yardımcısı' },
-  { value: 'COUNSELOR',      label: 'Rehber Öğretmen'  },
-  { value: 'SECRETARY',      label: 'Sekreter'          },
+  { value: 'VICE_PRINCIPAL', label: 'Vice Principal'     },
+  { value: 'COUNSELOR',      label: 'Guidance Counselor' },
+  { value: 'SECRETARY',      label: 'Secretary'          },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -59,8 +59,8 @@ export default function AdminStaffPage() {
         body: JSON.stringify(form),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast(`${form.name} eklendi`)
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast(`${form.name} added`)
       setForm({ name: '', email: '', password: '', role: 'VICE_PRINCIPAL' })
       setShowForm(false)
       fetchStaff()
@@ -70,10 +70,10 @@ export default function AdminStaffPage() {
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`${name} adlı kullanıcıyı silmek istediğinizden emin misiniz?`)) return
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return
     const r = await fetch(`/api/admin/staff/${id}`, { method: 'DELETE' })
     if (r.ok) {
-      showToast(`${name} silindi`)
+      showToast(`${name} deleted`)
       fetchStaff()
     }
   }
@@ -85,10 +85,10 @@ export default function AdminStaffPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push('/manage-panel')} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
-              <h1 className="text-lg font-bold text-gray-900">Personel Yönetimi</h1>
+              <h1 className="text-lg font-bold text-gray-900">Staff Management</h1>
             </div>
             <button onClick={() => setShowForm(v => !v)} className="btn-primary text-sm">
-              {showForm ? 'İptal' : '+ Yeni Personel'}
+              {showForm ? 'Cancel' : '+ New Staff Member'}
             </button>
           </div>
         </div>
@@ -96,41 +96,41 @@ export default function AdminStaffPage() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <p className="text-sm text-gray-500 mb-6">
-          Müdür yardımcısı, rehber öğretmen ve sekreter gibi personel hesaplarını yönetin.
-          Bu kullanıcılar <strong>/staff-panel</strong>'e erişebilir.
+          Manage staff accounts such as vice principals, guidance counselors, and secretaries.
+          These users can access <strong>/staff-panel</strong>.
         </p>
 
         {/* Create form */}
         {showForm && (
           <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-4">Yeni Personel Ekle</h2>
+            <h2 className="font-semibold text-gray-900 mb-4">Add New Staff Member</h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                 <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="input-field text-sm w-full" placeholder="Ayşe Demir" />
+                  className="input-field text-sm w-full" placeholder="Jane Smith" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                 <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="input-field text-sm w-full" placeholder="ayse@okul.edu.tr" />
+                  className="input-field text-sm w-full" placeholder="jane@school.edu" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Şifre *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
                 <input required type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className="input-field text-sm w-full" placeholder="En az 8 karakter" minLength={8} />
+                  className="input-field text-sm w-full" placeholder="At least 8 characters" minLength={8} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
                 <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="input-field text-sm w-full">
                   {STAFF_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-4">
-              <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm">İptal</button>
+              <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm">Cancel</button>
               <button type="submit" disabled={submitting} className="btn-primary text-sm disabled:opacity-50">
-                {submitting ? 'Kaydediliyor…' : 'Oluştur'}
+                {submitting ? 'Saving…' : 'Create'}
               </button>
             </div>
           </form>
@@ -148,22 +148,22 @@ export default function AdminStaffPage() {
 
         {/* Staff list */}
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Yükleniyor…</div>
+          <div className="text-center py-20 text-gray-400">Loading…</div>
         ) : staff.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">👥</div>
-            <p className="text-gray-500">Henüz personel eklenmemiş.</p>
+            <p className="text-gray-500">No staff members added yet.</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Ad Soyad</th>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Full Name</th>
                   <th className="text-left px-5 py-3 font-semibold text-gray-600">Email</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Rol</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Eklenme</th>
-                  <th className="text-right px-5 py-3 font-semibold text-gray-600">İşlem</th>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Role</th>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Added</th>
+                  <th className="text-right px-5 py-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,10 +176,10 @@ export default function AdminStaffPage() {
                         {ROLE_LABELS[s.role] ?? s.role}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(s.createdAt).toLocaleDateString('tr-TR')}</td>
+                    <td className="px-5 py-3 text-gray-400 text-xs">{new Date(s.createdAt).toLocaleDateString('en-GB')}</td>
                     <td className="px-5 py-3 text-right">
                       <button onClick={() => handleDelete(s.id, s.name)}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium">Sil</button>
+                        className="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
                     </td>
                   </tr>
                 ))}

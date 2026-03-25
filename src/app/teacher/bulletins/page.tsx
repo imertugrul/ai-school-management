@@ -39,17 +39,17 @@ interface SurveyForm {
 }
 
 const RATING_LABELS: Record<number, string> = {
-  5: 'Mükemmel',
-  4: 'İyi',
-  3: 'Orta',
-  2: 'Geliştirilmeli',
-  1: 'Yetersiz',
+  5: 'Excellent',
+  4: 'Good',
+  3: 'Average',
+  2: 'Needs Improvement',
+  1: 'Insufficient',
 }
 
 function monthLabel(month: string) {
   const [year, m] = month.split('-')
-  const months = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+  const months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December']
   return `${months[parseInt(m)] ?? m} ${year}`
 }
 
@@ -60,9 +60,9 @@ function currentMonth() {
 
 function StatusBadge({ status }: { status: Bulletin['status'] }) {
   const map = {
-    DRAFT: { label: 'Taslak', cls: 'bg-gray-100 text-gray-600' },
-    READY: { label: 'Hazır', cls: 'bg-blue-100 text-blue-700' },
-    SENT:  { label: 'Gönderildi', cls: 'bg-green-100 text-green-700' },
+    DRAFT: { label: 'Draft', cls: 'bg-gray-100 text-gray-600' },
+    READY: { label: 'Ready', cls: 'bg-blue-100 text-blue-700' },
+    SENT:  { label: 'Sent', cls: 'bg-green-100 text-green-700' },
   }
   const s = map[status]
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${s.cls}`}>{s.label}</span>
@@ -147,9 +147,9 @@ export default function BulletinsPage() {
         body: JSON.stringify({ month, classId: selectedClass }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
       setBulletins(d.bulletins ?? [])
-      showToast(`${d.count} öğrenci için veri toplandı`)
+      showToast(`Data collected for ${d.count} student(s)`)
     } finally {
       setCollecting(false)
     }
@@ -175,10 +175,10 @@ export default function BulletinsPage() {
       body: JSON.stringify(form),
     })
     const d = await r.json()
-    if (!r.ok) { showToast(d.error || 'Hata', false); return }
+    if (!r.ok) { showToast(d.error || 'Error', false); return }
     setBulletins(prev => prev.map(b => b.id === surveyBulletin.id ? d.bulletin : b))
     setSurveyBulletin(null)
-    showToast('Değerlendirme kaydedildi, bülten hazır')
+    showToast('Assessment saved, bulletin ready')
   }
 
   async function sendOne(b: Bulletin) {
@@ -186,9 +186,9 @@ export default function BulletinsPage() {
     try {
       const r = await fetch(`/api/teacher/bulletins/${b.id}/send`, { method: 'POST' })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
       setBulletins(prev => prev.map(x => x.id === b.id ? d.bulletin : x))
-      showToast(`Gönderildi (${d.sentToCount} veli)`)
+      showToast(`Sent (${d.sentToCount} guardian(s))`)
     } finally {
       setSendingId(null)
     }
@@ -203,12 +203,12 @@ export default function BulletinsPage() {
         body: JSON.stringify({ month, classId: selectedClass }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
       // Refresh bulletins
       const r2 = await fetch(`/api/teacher/bulletins?month=${month}&classId=${selectedClass}`)
       const d2 = await r2.json()
       setBulletins(d2.bulletins ?? [])
-      showToast(d.message ?? `${d.sent} bülten gönderildi`)
+      showToast(d.message ?? `${d.sent} bulletin(s) sent`)
     } finally {
       setSendingAll(false)
     }
@@ -228,7 +228,7 @@ export default function BulletinsPage() {
               <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600">
                 ←
               </button>
-              <h1 className="text-lg font-bold text-gray-900">Performans Bültenleri</h1>
+              <h1 className="text-lg font-bold text-gray-900">Performance Bulletins</h1>
             </div>
           </div>
         </div>
@@ -238,19 +238,19 @@ export default function BulletinsPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Sınıf</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Class</label>
             <select
               value={selectedClass}
               onChange={e => setSelectedClass(e.target.value)}
               className="input-field text-sm"
             >
               {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c._count.students} öğrenci)</option>
+                <option key={c.id} value={c.id}>{c.name} ({c._count.students} student(s))</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Ay</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Month</label>
             <input
               type="month"
               value={month}
@@ -264,7 +264,7 @@ export default function BulletinsPage() {
               disabled={collecting || !selectedClass}
               className="btn-primary text-sm disabled:opacity-50"
             >
-              {collecting ? 'Toplanıyor…' : '🔄 Veri Topla'}
+              {collecting ? 'Collecting…' : '🔄 Collect Data'}
             </button>
             {readyCount > 0 && (
               <button
@@ -272,7 +272,7 @@ export default function BulletinsPage() {
                 disabled={sendingAll}
                 className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors disabled:opacity-50"
               >
-                {sendingAll ? 'Gönderiliyor…' : `📨 Tümünü Gönder (${readyCount})`}
+                {sendingAll ? 'Sending…' : `📨 Send All (${readyCount})`}
               </button>
             )}
           </div>
@@ -283,38 +283,38 @@ export default function BulletinsPage() {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
               <div className="text-2xl font-bold text-gray-400">{draftCount}</div>
-              <div className="text-xs text-gray-500 mt-1">Taslak</div>
+              <div className="text-xs text-gray-500 mt-1">Draft</div>
             </div>
             <div className="bg-white rounded-2xl border border-blue-200 p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">{readyCount}</div>
-              <div className="text-xs text-gray-500 mt-1">Hazır</div>
+              <div className="text-xs text-gray-500 mt-1">Ready</div>
             </div>
             <div className="bg-white rounded-2xl border border-green-200 p-4 text-center">
               <div className="text-2xl font-bold text-green-600">{sentCount}</div>
-              <div className="text-xs text-gray-500 mt-1">Gönderildi</div>
+              <div className="text-xs text-gray-500 mt-1">Sent</div>
             </div>
           </div>
         )}
 
         {/* Bulletin list */}
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Yükleniyor…</div>
+          <div className="text-center py-20 text-gray-400">Loading…</div>
         ) : bulletins.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">📨</div>
-            <p className="text-gray-500 mb-2">Bu ay için henüz bülten oluşturulmadı.</p>
-            <p className="text-sm text-gray-400">Veri Topla butonuna tıklayarak başlayın.</p>
+            <p className="text-gray-500 mb-2">No bulletins created for this month yet.</p>
+            <p className="text-sm text-gray-400">Click Collect Data to get started.</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Öğrenci</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Devam</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Not Ort.</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Durum</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600">İşlemler</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Student</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Attendance</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Grade Avg.</th>
+                  <th className="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -342,14 +342,14 @@ export default function BulletinsPage() {
                             onClick={() => setPreviewBulletin(b)}
                             className="text-xs text-gray-500 hover:text-gray-700 underline"
                           >
-                            Önizle
+                            Preview
                           </button>
                           {b.status !== 'SENT' && (
                             <button
                               onClick={() => openSurvey(b)}
                               className="btn-secondary text-xs py-1 px-3"
                             >
-                              {b.status === 'READY' ? 'Düzenle' : 'Değerlendir'}
+                              {b.status === 'READY' ? 'Edit' : 'Assess'}
                             </button>
                           )}
                           {b.status === 'READY' && (
@@ -358,11 +358,11 @@ export default function BulletinsPage() {
                               disabled={sendingId === b.id}
                               className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-3 py-1 rounded-lg transition-colors disabled:opacity-50"
                             >
-                              {sendingId === b.id ? '…' : 'Gönder'}
+                              {sendingId === b.id ? '…' : 'Send'}
                             </button>
                           )}
                           {b.status === 'SENT' && (
-                            <span className="text-xs text-gray-400">{b.sentToCount} veli</span>
+                            <span className="text-xs text-gray-400">{b.sentToCount} guardian(s)</span>
                           )}
                         </div>
                       </td>
@@ -382,64 +382,64 @@ export default function BulletinsPage() {
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="font-bold text-gray-900">{surveyBulletin.student.name}</h2>
-                <p className="text-xs text-gray-500">{monthLabel(surveyBulletin.month)} Değerlendirmesi</p>
+                <p className="text-xs text-gray-500">{monthLabel(surveyBulletin.month)} Assessment</p>
               </div>
               <button onClick={() => setSurveyBulletin(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="p-6 space-y-5">
               {/* Attendance recap */}
               <div className="bg-gray-50 rounded-xl p-3 grid grid-cols-3 gap-2 text-center text-sm">
-                <div><div className="font-bold text-green-600">{surveyBulletin.attendancePresent}</div><div className="text-gray-400 text-xs">Devam</div></div>
-                <div><div className="font-bold text-red-600">{surveyBulletin.attendanceAbsent}</div><div className="text-gray-400 text-xs">Devamsız</div></div>
-                <div><div className="font-bold text-blue-600">{surveyBulletin.gradeAverage?.toFixed(1) ?? '—'}</div><div className="text-gray-400 text-xs">Not Ort.</div></div>
+                <div><div className="font-bold text-green-600">{surveyBulletin.attendancePresent}</div><div className="text-gray-400 text-xs">Present</div></div>
+                <div><div className="font-bold text-red-600">{surveyBulletin.attendanceAbsent}</div><div className="text-gray-400 text-xs">Absent</div></div>
+                <div><div className="font-bold text-blue-600">{surveyBulletin.gradeAverage?.toFixed(1) ?? '—'}</div><div className="text-gray-400 text-xs">Grade Avg.</div></div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Derse Katılım</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Class Participation</label>
                 <RatingStars value={form.participationRating} onChange={v => setForm(f => ({ ...f, participationRating: v }))} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Davranış</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Behavior</label>
                 <RatingStars value={form.behaviorRating} onChange={v => setForm(f => ({ ...f, behaviorRating: v }))} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Ev Ödevi</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Homework</label>
                 <RatingStars value={form.homeworkRating} onChange={v => setForm(f => ({ ...f, homeworkRating: v }))} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Güçlü Yönler</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Strengths</label>
                 <textarea
                   rows={2}
                   className="input-field text-sm w-full"
-                  placeholder="Öğrencinin öne çıkan güçlü yönleri…"
+                  placeholder="Student's key strengths…"
                   value={form.strengthAreas}
                   onChange={e => setForm(f => ({ ...f, strengthAreas: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Gelişim Alanları</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Areas for Improvement</label>
                 <textarea
                   rows={2}
                   className="input-field text-sm w-full"
-                  placeholder="Geliştirilmesi gereken alanlar…"
+                  placeholder="Areas that need development…"
                   value={form.improvementAreas}
                   onChange={e => setForm(f => ({ ...f, improvementAreas: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Öğretmen Yorumu</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Teacher Comment</label>
                 <textarea
                   rows={3}
                   className="input-field text-sm w-full"
-                  placeholder="Veliye iletilecek genel yorum…"
+                  placeholder="General comment to be shared with guardian…"
                   value={form.teacherComment}
                   onChange={e => setForm(f => ({ ...f, teacherComment: e.target.value }))}
                 />
               </div>
             </div>
             <div className="px-6 pb-6 flex gap-3 justify-end">
-              <button onClick={() => setSurveyBulletin(null)} className="btn-secondary text-sm">İptal</button>
-              <button onClick={submitSurvey} className="btn-primary text-sm">Kaydet & Hazırla</button>
+              <button onClick={() => setSurveyBulletin(null)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={submitSurvey} className="btn-primary text-sm">Save & Prepare</button>
             </div>
           </div>
         </div>
@@ -452,23 +452,23 @@ export default function BulletinsPage() {
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="font-bold text-gray-900">{previewBulletin.student.name}</h2>
-                <p className="text-xs text-gray-500">Bülten Önizlemesi — {monthLabel(previewBulletin.month)}</p>
+                <p className="text-xs text-gray-500">Bulletin Preview — {monthLabel(previewBulletin.month)}</p>
               </div>
               <button onClick={() => setPreviewBulletin(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="p-6 space-y-4">
               {/* Attendance */}
               <div className="bg-blue-50 rounded-xl p-4">
-                <h3 className="font-semibold text-sm text-gray-700 mb-3">Devam Durumu</h3>
+                <h3 className="font-semibold text-sm text-gray-700 mb-3">Attendance Status</h3>
                 <div className="grid grid-cols-4 gap-2 text-center text-sm">
-                  <div><div className="text-xl font-bold text-green-600">{previewBulletin.attendancePresent}</div><div className="text-xs text-gray-500">Devam</div></div>
-                  <div><div className="text-xl font-bold text-red-600">{previewBulletin.attendanceAbsent}</div><div className="text-xs text-gray-500">Devamsız</div></div>
-                  <div><div className="text-xl font-bold text-amber-600">{previewBulletin.attendanceLate}</div><div className="text-xs text-gray-500">Geç</div></div>
+                  <div><div className="text-xl font-bold text-green-600">{previewBulletin.attendancePresent}</div><div className="text-xs text-gray-500">Present</div></div>
+                  <div><div className="text-xl font-bold text-red-600">{previewBulletin.attendanceAbsent}</div><div className="text-xs text-gray-500">Absent</div></div>
+                  <div><div className="text-xl font-bold text-amber-600">{previewBulletin.attendanceLate}</div><div className="text-xs text-gray-500">Late</div></div>
                   <div>
                     {(() => {
                       const t = previewBulletin.attendancePresent + previewBulletin.attendanceAbsent + previewBulletin.attendanceLate
                       const p = t > 0 ? Math.round((previewBulletin.attendancePresent / t) * 100) : 0
-                      return <><div className="text-xl font-bold text-blue-600">{p}%</div><div className="text-xs text-gray-500">Oran</div></>
+                      return <><div className="text-xl font-bold text-blue-600">{p}%</div><div className="text-xs text-gray-500">Rate</div></>
                     })()}
                   </div>
                 </div>
@@ -476,7 +476,7 @@ export default function BulletinsPage() {
               {/* Grade */}
               {previewBulletin.gradeAverage !== null && (
                 <div className="bg-indigo-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-sm text-gray-700 mb-1">Not Ortalaması</h3>
+                  <h3 className="font-semibold text-sm text-gray-700 mb-1">Grade Average</h3>
                   <span className="text-3xl font-bold text-indigo-700">{previewBulletin.gradeAverage.toFixed(1)}</span>
                   <span className="text-gray-400 text-sm ml-1">/ 100</span>
                 </div>
@@ -486,19 +486,19 @@ export default function BulletinsPage() {
                 <div className="border border-gray-100 rounded-xl overflow-hidden text-sm">
                   {previewBulletin.participationRating && (
                     <div className="flex justify-between px-4 py-2 border-b border-gray-50">
-                      <span className="text-gray-600">Katılım</span>
+                      <span className="text-gray-600">Participation</span>
                       <span>{'★'.repeat(previewBulletin.participationRating)}{'☆'.repeat(5 - previewBulletin.participationRating)}</span>
                     </div>
                   )}
                   {previewBulletin.behaviorRating && (
                     <div className="flex justify-between px-4 py-2 border-b border-gray-50">
-                      <span className="text-gray-600">Davranış</span>
+                      <span className="text-gray-600">Behavior</span>
                       <span>{'★'.repeat(previewBulletin.behaviorRating)}{'☆'.repeat(5 - previewBulletin.behaviorRating)}</span>
                     </div>
                   )}
                   {previewBulletin.homeworkRating && (
                     <div className="flex justify-between px-4 py-2">
-                      <span className="text-gray-600">Ev Ödevi</span>
+                      <span className="text-gray-600">Homework</span>
                       <span>{'★'.repeat(previewBulletin.homeworkRating)}{'☆'.repeat(5 - previewBulletin.homeworkRating)}</span>
                     </div>
                   )}
@@ -506,36 +506,36 @@ export default function BulletinsPage() {
               )}
               {previewBulletin.strengthAreas && (
                 <div className="bg-green-50 border-l-4 border-green-500 rounded-r-xl p-3">
-                  <div className="text-xs font-semibold text-green-700 uppercase mb-1">Güçlü Yönler</div>
+                  <div className="text-xs font-semibold text-green-700 uppercase mb-1">Strengths</div>
                   <div className="text-sm text-gray-700">{previewBulletin.strengthAreas}</div>
                 </div>
               )}
               {previewBulletin.improvementAreas && (
                 <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-xl p-3">
-                  <div className="text-xs font-semibold text-amber-700 uppercase mb-1">Gelişim Alanları</div>
+                  <div className="text-xs font-semibold text-amber-700 uppercase mb-1">Areas for Improvement</div>
                   <div className="text-sm text-gray-700">{previewBulletin.improvementAreas}</div>
                 </div>
               )}
               {previewBulletin.teacherComment && (
                 <div className="bg-purple-50 border-l-4 border-purple-500 rounded-r-xl p-3">
-                  <div className="text-xs font-semibold text-purple-700 uppercase mb-1">Öğretmen Yorumu</div>
+                  <div className="text-xs font-semibold text-purple-700 uppercase mb-1">Teacher Comment</div>
                   <div className="text-sm text-gray-700 italic">"{previewBulletin.teacherComment}"</div>
                 </div>
               )}
               {previewBulletin.status === 'DRAFT' && (
                 <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-3 text-center text-sm text-gray-400">
-                  Değerlendirme henüz tamamlanmadı
+                  Assessment not yet completed
                 </div>
               )}
             </div>
             <div className="px-6 pb-6 flex gap-3 justify-end">
-              <button onClick={() => setPreviewBulletin(null)} className="btn-secondary text-sm">Kapat</button>
+              <button onClick={() => setPreviewBulletin(null)} className="btn-secondary text-sm">Close</button>
               {previewBulletin.status === 'READY' && (
                 <button
                   onClick={() => { setPreviewBulletin(null); sendOne(previewBulletin) }}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
                 >
-                  Gönder
+                  Send
                 </button>
               )}
             </div>

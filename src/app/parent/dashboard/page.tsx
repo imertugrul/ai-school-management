@@ -22,7 +22,7 @@ function gradeColor(avg: number | null) {
 }
 
 const ABSENCE_ICON: Record<string, string> = { ABSENT: '🔴', LATE: '🟡', PRESENT: '🟢', EXCUSED: '🔵' }
-const ABSENCE_LABEL: Record<string, string> = { ABSENT: 'Devamsız', LATE: 'Geç Geldi', EXCUSED: 'Mazeretli', PRESENT: 'Mevcut' }
+const ABSENCE_LABEL: Record<string, string> = { ABSENT: 'Absent', LATE: 'Late', EXCUSED: 'Excused', PRESENT: 'Present' }
 
 export default function ParentDashboard() {
   const { selectedChild, loading: childLoading } = useChild()
@@ -46,7 +46,7 @@ export default function ParentDashboard() {
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-400">Yükleniyor…</p>
+          <p className="text-sm text-gray-400">Loading...</p>
         </div>
       </div>
     )
@@ -56,8 +56,8 @@ export default function ParentDashboard() {
     return (
       <div className="text-center py-20">
         <div className="text-5xl mb-4">👨‍👩‍👧</div>
-        <p className="text-gray-500 text-sm">Kayıtlı çocuk bulunamadı.</p>
-        <p className="text-gray-400 text-xs mt-2">Lütfen okul yöneticisiyle iletişime geçin.</p>
+        <p className="text-gray-500 text-sm">No registered children found.</p>
+        <p className="text-gray-400 text-xs mt-2">Please contact the school administrator.</p>
       </div>
     )
   }
@@ -80,7 +80,7 @@ export default function ParentDashboard() {
           {data.gradeAverage !== null && (
             <div className="text-right">
               <p className="text-3xl font-bold">{data.gradeAverage}</p>
-              <p className="text-blue-100 text-xs">Genel Ort.</p>
+              <p className="text-blue-100 text-xs">Overall Avg.</p>
             </div>
           )}
         </div>
@@ -96,7 +96,7 @@ export default function ParentDashboard() {
           <p className={`text-2xl font-bold ${gradeColor(data.gradeAverage)}`}>
             {data.gradeAverage !== null ? `${data.gradeAverage}` : '—'}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">Genel Ortalama</p>
+          <p className="text-xs text-gray-500 mt-0.5">Overall Average</p>
         </button>
 
         <button
@@ -106,7 +106,7 @@ export default function ParentDashboard() {
           <p className="text-2xl mb-1">📅</p>
           <p className="text-2xl font-bold text-gray-900">%{pctStr}</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            Bu Ay Devam — {data.attendanceSummary.absent} devamsız
+            This Month Attendance — {data.attendanceSummary.absent} absent
           </p>
         </button>
 
@@ -116,7 +116,7 @@ export default function ParentDashboard() {
         >
           <p className="text-2xl mb-1">📋</p>
           <p className="text-2xl font-bold text-gray-900">{data.recentBulletins.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Bülten</p>
+          <p className="text-xs text-gray-500 mt-0.5">Bulletin</p>
           {data.recentBulletins[0] && (
             <p className="text-xs text-blue-500 mt-1">{data.recentBulletins[0].month} →</p>
           )}
@@ -125,7 +125,7 @@ export default function ParentDashboard() {
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <p className="text-2xl mb-1">📝</p>
           <p className="text-2xl font-bold text-gray-900">{data.upcomingTests.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Yaklaşan Sınav</p>
+          <p className="text-xs text-gray-500 mt-0.5">Upcoming Exam</p>
           {data.upcomingTests[0] && (
             <p className="text-xs text-gray-400 mt-1 truncate">{data.upcomingTests[0].title}</p>
           )}
@@ -136,7 +136,7 @@ export default function ParentDashboard() {
       {data.upcomingTests.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50">
-            <h3 className="font-semibold text-gray-900 text-sm">Yaklaşan Sınavlar</h3>
+            <h3 className="font-semibold text-gray-900 text-sm">Upcoming Exams</h3>
           </div>
           {data.upcomingTests.map(t => (
             <div key={t.id} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 last:border-0">
@@ -157,9 +157,9 @@ export default function ParentDashboard() {
       {data.recentAbsences.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-sm">Son Devamsızlıklar</h3>
+            <h3 className="font-semibold text-gray-900 text-sm">Recent Absences</h3>
             <button onClick={() => router.push('/parent/attendance')} className="text-xs text-blue-500">
-              Tümü →
+              All →
             </button>
           </div>
           {data.recentAbsences.map(a => (
@@ -172,10 +172,10 @@ export default function ParentDashboard() {
                 </p>
               </div>
               {a.notifStatus === 'APPROVED' && (
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Bildirildi</span>
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Notified</span>
               )}
               {a.notifStatus === 'PENDING' && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Bekliyor</span>
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Pending</span>
               )}
             </div>
           ))}
@@ -186,7 +186,7 @@ export default function ParentDashboard() {
       {data.announcements.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50">
-            <h3 className="font-semibold text-gray-900 text-sm">Duyurular</h3>
+            <h3 className="font-semibold text-gray-900 text-sm">Announcements</h3>
           </div>
           {data.announcements.map(ann => (
             <div key={ann.id} className="px-4 py-3 border-b border-gray-50 last:border-0">

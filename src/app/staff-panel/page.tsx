@@ -17,9 +17,9 @@ interface DashboardData {
 
 function greeting() {
   const h = new Date().getHours()
-  if (h < 12) return 'Günaydın'
-  if (h < 18) return 'İyi günler'
-  return 'İyi akşamlar'
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 
 export default function StaffDashboard() {
@@ -70,9 +70,9 @@ export default function StaffDashboard() {
   const cards = [
     {
       icon: '⏳',
-      title: 'Devamsızlık Onayı',
+      title: 'Attendance Approval',
       value: data?.pendingAbsences ?? '…',
-      subtitle: data?.pendingAbsences ? `${data.pendingAbsences} bildirim onay bekliyor` : 'Onay bekleyen yok',
+      subtitle: data?.pendingAbsences ? `${data.pendingAbsences} notification(s) pending approval` : 'No pending approvals',
       urgent: (data?.pendingAbsences ?? 0) > 0,
       href: '/staff-panel/attendance-review',
       gradient: 'from-red-500 to-rose-600',
@@ -80,9 +80,9 @@ export default function StaffDashboard() {
     },
     {
       icon: '👥',
-      title: 'Öğrenciler',
+      title: 'Students',
       value: data?.totalStudents ?? '…',
-      subtitle: data?.missingGuardians ? `⚠️ ${data.missingGuardians} öğrencinin velisi eksik` : 'Tüm veliler kayıtlı',
+      subtitle: data?.missingGuardians ? `⚠️ ${data.missingGuardians} student(s) missing guardian` : 'All guardians registered',
       urgent: (data?.missingGuardians ?? 0) > 0,
       href: '/staff-panel/students',
       gradient: 'from-teal-500 to-cyan-600',
@@ -90,9 +90,9 @@ export default function StaffDashboard() {
     },
     {
       icon: '📅',
-      title: 'Haftalık Devamsızlık',
+      title: 'Weekly Absences',
       value: data?.weeklyAbsent ?? '…',
-      subtitle: `${data?.weeklyAbsent ?? 0} devamsız · ${data?.weeklyLate ?? 0} geç (7 gün)`,
+      subtitle: `${data?.weeklyAbsent ?? 0} absent · ${data?.weeklyLate ?? 0} late (7 days)`,
       urgent: false,
       href: '/staff-panel/reports',
       gradient: 'from-amber-500 to-orange-600',
@@ -100,9 +100,9 @@ export default function StaffDashboard() {
     },
     {
       icon: '📢',
-      title: 'Duyurular',
+      title: 'Announcements',
       value: data?.recentAnnouncements.length ?? '…',
-      subtitle: 'Son duyurular',
+      subtitle: 'Recent announcements',
       urgent: false,
       href: '/staff-panel/announcements',
       gradient: 'from-blue-500 to-indigo-600',
@@ -118,9 +118,9 @@ export default function StaffDashboard() {
           {greeting()}, {session?.user?.name?.split(' ')[0]}! 👋
         </h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {roleLabel} · {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {roleLabel} · {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           {(data?.pendingAbsences ?? 0) > 0 && (
-            <span className="ml-2 text-red-600 font-semibold">📋 {data!.pendingAbsences} onay bekliyor</span>
+            <span className="ml-2 text-red-600 font-semibold">📋 {data!.pendingAbsences} pending approval</span>
           )}
         </p>
       </div>
@@ -148,11 +148,11 @@ export default function StaffDashboard() {
         {/* Recent announcements */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Son Duyurular</h2>
-            <button onClick={() => router.push('/staff-panel/announcements')} className="text-xs text-indigo-600 hover:underline">Tümü →</button>
+            <h2 className="font-bold text-gray-900">Recent Announcements</h2>
+            <button onClick={() => router.push('/staff-panel/announcements')} className="text-xs text-indigo-600 hover:underline">All →</button>
           </div>
           {data?.recentAnnouncements.length === 0 ? (
-            <p className="text-sm text-gray-400">Duyuru bulunamadı</p>
+            <p className="text-sm text-gray-400">No announcements found</p>
           ) : (
             <div className="space-y-3">
               {data?.recentAnnouncements.map(a => (
@@ -170,18 +170,18 @@ export default function StaffDashboard() {
             onClick={() => router.push('/staff-panel/announcements')}
             className="mt-4 w-full text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 py-2 rounded-xl transition-colors"
           >
-            + Yeni Duyuru
+            + New Announcement
           </button>
         </div>
 
         {/* Upcoming events */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Yaklaşan Etkinlikler</h2>
-            <button onClick={() => router.push('/staff-panel/events')} className="text-xs text-indigo-600 hover:underline">Tümü →</button>
+            <h2 className="font-bold text-gray-900">Upcoming Events</h2>
+            <button onClick={() => router.push('/staff-panel/events')} className="text-xs text-indigo-600 hover:underline">All →</button>
           </div>
           {data?.upcomingEvents.length === 0 ? (
-            <p className="text-sm text-gray-400">Yaklaşan etkinlik yok</p>
+            <p className="text-sm text-gray-400">No upcoming events</p>
           ) : (
             <div className="space-y-3">
               {data?.upcomingEvents.map(e => (
@@ -201,7 +201,7 @@ export default function StaffDashboard() {
             onClick={() => router.push('/staff-panel/events')}
             className="mt-4 w-full text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 py-2 rounded-xl transition-colors"
           >
-            + Yeni Etkinlik
+            + New Event
           </button>
         </div>
       </div>

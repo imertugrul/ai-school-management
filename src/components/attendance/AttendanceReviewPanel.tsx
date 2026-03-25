@@ -45,18 +45,18 @@ interface ClassItem {
 }
 
 const STATUS_MAP: Record<NotifStatus, { label: string; cls: string; icon: string }> = {
-  PENDING:   { label: 'Bekliyor',    cls: 'bg-amber-100 text-amber-700',   icon: '⏳' },
-  APPROVED:  { label: 'Onaylandı',  cls: 'bg-blue-100 text-blue-700',     icon: '✅' },
-  CORRECTED: { label: 'Düzeltildi', cls: 'bg-purple-100 text-purple-700', icon: '✏️' },
-  SENT:      { label: 'Gönderildi', cls: 'bg-green-100 text-green-700',   icon: '📨' },
-  FAILED:    { label: 'Başarısız',  cls: 'bg-red-100 text-red-700',       icon: '❌' },
+  PENDING:   { label: 'Pending',   cls: 'bg-amber-100 text-amber-700',   icon: '⏳' },
+  APPROVED:  { label: 'Approved',  cls: 'bg-blue-100 text-blue-700',     icon: '✅' },
+  CORRECTED: { label: 'Corrected', cls: 'bg-purple-100 text-purple-700', icon: '✏️' },
+  SENT:      { label: 'Sent',      cls: 'bg-green-100 text-green-700',   icon: '📨' },
+  FAILED:    { label: 'Failed',    cls: 'bg-red-100 text-red-700',       icon: '❌' },
 }
 
 const ATTEND_MAP: Record<string, { label: string; icon: string; cls: string }> = {
-  ABSENT:  { label: 'Devamsız',   icon: '🔴', cls: 'text-red-600 font-semibold'    },
-  LATE:    { label: 'Geç',        icon: '🟡', cls: 'text-amber-600 font-semibold'  },
-  PRESENT: { label: 'Mevcut',    icon: '🟢', cls: 'text-green-600'                 },
-  EXCUSED: { label: 'Mazeretli', icon: '🔵', cls: 'text-blue-600'                  },
+  ABSENT:  { label: 'Absent',  icon: '🔴', cls: 'text-red-600 font-semibold'    },
+  LATE:    { label: 'Late',    icon: '🟡', cls: 'text-amber-600 font-semibold'  },
+  PRESENT: { label: 'Present', icon: '🟢', cls: 'text-green-600'                 },
+  EXCUSED: { label: 'Excused', icon: '🔵', cls: 'text-blue-600'                  },
 }
 
 export default function AttendanceReviewPanel() {
@@ -107,8 +107,8 @@ export default function AttendanceReviewPanel() {
     try {
       const r = await fetch(`/api/admin/attendance-review/${id}/approve`, { method: 'POST' })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Onaylandı, bildirim gönderiliyor')
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast('Approved, sending notification')
       fetchData()
     } finally { setActionLoading(null) }
   }
@@ -123,8 +123,8 @@ export default function AttendanceReviewPanel() {
         body: JSON.stringify({ ids: Array.from(selected) }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast(`${d.approved} bildirim onaylandı`)
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast(`${d.approved} notification${d.approved !== 1 ? 's' : ''} approved`)
       setSelected(new Set())
       fetchData()
     } finally { setActionLoading(null) }
@@ -139,8 +139,8 @@ export default function AttendanceReviewPanel() {
         body: JSON.stringify({ approveAll: true, date }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast(d.message ?? `${d.approved} bildirim onaylandı`)
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast(d.message ?? `${d.approved} notification${d.approved !== 1 ? 's' : ''} approved`)
       setSelected(new Set())
       fetchData()
     } finally { setActionLoading(null) }
@@ -156,8 +156,8 @@ export default function AttendanceReviewPanel() {
         body: JSON.stringify({ correctedTo: correctTo, reviewNote }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Yoklama düzeltildi')
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast('Attendance corrected')
       setCorrectModal(null)
       fetchData()
     } finally { setActionLoading(null) }
@@ -172,8 +172,8 @@ export default function AttendanceReviewPanel() {
         body: JSON.stringify({ notificationId: id }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Tekrar gönderme başlatıldı')
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast('Retry initiated')
       fetchData()
     } finally { setActionLoading(null) }
   }
@@ -189,10 +189,10 @@ export default function AttendanceReviewPanel() {
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { icon: '⏳', label: 'Onay Bekleyen',    value: summary.pending,       cls: 'border-amber-300 bg-amber-50'   },
-          { icon: '✅', label: 'Bugün Onaylanan',  value: summary.approvedToday, cls: 'border-blue-200 bg-blue-50'    },
-          { icon: '✏️', label: 'Düzeltilen',       value: summary.corrected,     cls: 'border-purple-200 bg-purple-50' },
-          { icon: '📨', label: 'Bugün Gönderilen', value: summary.sent,          cls: 'border-green-200 bg-green-50'  },
+          { icon: '⏳', label: 'Pending Approval',   value: summary.pending,       cls: 'border-amber-300 bg-amber-50'   },
+          { icon: '✅', label: 'Approved Today',      value: summary.approvedToday, cls: 'border-blue-200 bg-blue-50'    },
+          { icon: '✏️', label: 'Corrected',           value: summary.corrected,     cls: 'border-purple-200 bg-purple-50' },
+          { icon: '📨', label: 'Sent Today',          value: summary.sent,          cls: 'border-green-200 bg-green-50'  },
         ].map(s => (
           <div key={s.label} className={`rounded-2xl border p-4 text-center ${s.cls}`}>
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -205,28 +205,28 @@ export default function AttendanceReviewPanel() {
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Tarih</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input-field text-sm" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Sınıf</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Class</label>
           <select value={classId} onChange={e => setClassId(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Sınıflar</option>
+            <option value="">All Classes</option>
             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Durum</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
           <select value={statusF} onChange={e => setStatusF(e.target.value)} className="input-field text-sm">
-            <option value="ALL">Tümü</option>
-            <option value="PENDING">Bekleyenler</option>
-            <option value="APPROVED">Onaylananlar</option>
-            <option value="CORRECTED">Düzeltilenler</option>
-            <option value="SENT">Gönderilenler</option>
-            <option value="FAILED">Başarısızlar</option>
+            <option value="ALL">All</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="CORRECTED">Corrected</option>
+            <option value="SENT">Sent</option>
+            <option value="FAILED">Failed</option>
           </select>
         </div>
-        <button onClick={fetchData} className="btn-secondary text-sm">Yenile</button>
+        <button onClick={fetchData} className="btn-secondary text-sm">Refresh</button>
       </div>
 
       {/* Bulk actions */}
@@ -239,28 +239,28 @@ export default function AttendanceReviewPanel() {
               onChange={() => selected.size === pendingItems.length ? setSelected(new Set()) : setSelected(new Set(pendingItems.map(n => n.id)))}
               className="w-4 h-4 rounded"
             />
-            Tümünü seç ({pendingItems.length})
+            Select all ({pendingItems.length})
           </label>
           {selected.size > 0 && (
             <button onClick={approveSelected} disabled={!!actionLoading}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
-              ✅ Seçilenleri Onayla ({selected.size})
+              ✅ Approve Selected ({selected.size})
             </button>
           )}
           <button onClick={approveAll} disabled={!!actionLoading}
             className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
-            {actionLoading === 'all' ? 'İşleniyor…' : `✅ Tümünü Onayla (${pendingItems.length})`}
+            {actionLoading === 'all' ? 'Processing...' : `✅ Approve All (${pendingItems.length})`}
           </button>
         </div>
       )}
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-20 text-gray-400">Yükleniyor…</div>
+        <div className="text-center py-20 text-gray-400">Loading...</div>
       ) : notifications.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">✅</div>
-          <p className="text-gray-500">Bu filtre için bildirim bulunamadı.</p>
+          <p className="text-gray-500">No notifications found for this filter.</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -269,13 +269,13 @@ export default function AttendanceReviewPanel() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="px-4 py-3 w-8"></th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Öğrenci / Sınıf</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Durum</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Tarih</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Öğretmen</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Veli</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Bildirim</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600">İşlemler</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Student / Class</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Date</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Teacher</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Guardian</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Notification</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,7 +304,7 @@ export default function AttendanceReviewPanel() {
                       <td className="px-4 py-3 text-gray-600">{n.markedBy.name}</td>
                       <td className="px-4 py-3">
                         {n.student.guardians.length === 0 ? (
-                          <span className="text-amber-600 text-xs font-medium">⚠️ Veli yok</span>
+                          <span className="text-amber-600 text-xs font-medium">⚠️ No guardian</span>
                         ) : (
                           <div className="space-y-0.5">
                             {n.student.guardians.slice(0, 2).map((g, gi) => (
@@ -334,18 +334,18 @@ export default function AttendanceReviewPanel() {
                             <>
                               <button onClick={() => approveOne(n.id)} disabled={actionLoading === n.id}
                                 className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-                                {actionLoading === n.id ? '…' : '✅ Onayla'}
+                                {actionLoading === n.id ? '…' : '✅ Approve'}
                               </button>
                               <button onClick={() => { setCorrectModal(n); setCorrectTo('PRESENT'); setReviewNote('') }}
                                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                                ✏️ Düzelt
+                                ✏️ Correct
                               </button>
                             </>
                           )}
                           {n.status === 'FAILED' && (
                             <button onClick={() => retryOne(n.id)} disabled={actionLoading === n.id + '_retry'}
                               className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-                              🔄 Tekrar
+                              🔄 Retry
                             </button>
                           )}
                         </div>
@@ -364,23 +364,23 @@ export default function AttendanceReviewPanel() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900">Yoklama Düzeltme</h2>
+              <h2 className="font-bold text-gray-900">Attendance Correction</h2>
               <p className="text-sm text-gray-500 mt-0.5">{correctModal.student.name}</p>
             </div>
             <div className="p-6 space-y-4">
               <div className="bg-gray-50 rounded-xl p-3 text-sm">
-                <span className="text-gray-500">Mevcut durum: </span>
+                <span className="text-gray-500">Current status: </span>
                 <span className={ATTEND_MAP[correctModal.attendance.status]?.cls ?? ''}>
                   {ATTEND_MAP[correctModal.attendance.status]?.icon} {ATTEND_MAP[correctModal.attendance.status]?.label ?? correctModal.attendance.status}
                 </span>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Düzelt:</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Correct to:</label>
                 <div className="space-y-2">
                   {[
-                    { value: 'PRESENT', label: '🟢 Mevcut (Present)' },
-                    { value: 'LATE',    label: '🟡 Geç (Late)'       },
-                    { value: 'EXCUSED', label: '🔵 Mazeretli (Excused)' },
+                    { value: 'PRESENT', label: '🟢 Present' },
+                    { value: 'LATE',    label: '🟡 Late'    },
+                    { value: 'EXCUSED', label: '🔵 Excused' },
                   ].map(opt => (
                     <label key={opt.value} className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-gray-50">
                       <input type="radio" name="correctedTo" value={opt.value}
@@ -391,17 +391,17 @@ export default function AttendanceReviewPanel() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Müdür Notu (opsiyonel)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Admin Note (optional)</label>
                 <textarea rows={3} className="input-field text-sm w-full"
-                  placeholder="Veli aradı, hastalık mazeret belgesi gelecek…"
+                  placeholder="Parent called, medical excuse letter will follow…"
                   value={reviewNote} onChange={e => setReviewNote(e.target.value)} />
               </div>
             </div>
             <div className="px-6 pb-6 flex gap-3 justify-end">
-              <button onClick={() => setCorrectModal(null)} className="btn-secondary text-sm">İptal</button>
+              <button onClick={() => setCorrectModal(null)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={submitCorrection} disabled={actionLoading === 'correct'}
                 className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors disabled:opacity-50">
-                {actionLoading === 'correct' ? 'Kaydediliyor…' : 'Düzeltmeyi Kaydet'}
+                {actionLoading === 'correct' ? 'Saving...' : 'Save Correction'}
               </button>
             </div>
           </div>

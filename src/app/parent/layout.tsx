@@ -5,11 +5,11 @@ import { usePathname, useRouter } from 'next/navigation'
 import { ChildProvider, useChild } from '@/context/ChildContext'
 
 const NAV_ITEMS = [
-  { href: '/parent/dashboard',     icon: '🏠', label: 'Ana Sayfa'   },
-  { href: '/parent/grades',        icon: '📊', label: 'Notlar'      },
-  { href: '/parent/attendance',    icon: '📅', label: 'Devamsızlık' },
-  { href: '/parent/bulletins',     icon: '📋', label: 'Bültenler'   },
-  { href: '/parent/profile',       icon: '👤', label: 'Profil'      },
+  { href: '/parent/dashboard',     icon: '🏠', label: 'Home'       },
+  { href: '/parent/grades',        icon: '📊', label: 'Grades'     },
+  { href: '/parent/attendance',    icon: '📅', label: 'Attendance' },
+  { href: '/parent/bulletins',     icon: '📋', label: 'Bulletins'  },
+  { href: '/parent/profile',       icon: '👤', label: 'Profile'    },
 ]
 
 function ParentLayoutInner({ children }: { children: React.ReactNode }) {
@@ -30,9 +30,9 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
                 <span className="text-white font-bold text-sm">S</span>
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-bold text-gray-900 leading-tight">Veli Portalı</p>
+                <p className="text-xs font-bold text-gray-900 leading-tight">Parent Portal</p>
                 <p className="text-xs text-gray-400">
-                  Hoşgeldiniz, {session?.user?.name?.split(' ')[0]}
+                  Welcome, {session?.user?.name?.split(' ')[0]}
                 </p>
               </div>
             </div>
@@ -66,7 +66,7 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
               onClick={() => signOut({ callbackUrl: '/' })}
               className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1"
             >
-              Çıkış
+              Sign Out
             </button>
           </div>
         </div>

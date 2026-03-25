@@ -18,45 +18,45 @@ const PLATFORMS = [
 const AI_PLATFORMS = PLATFORMS.filter(p => p.id !== 'YOUTUBE')
 
 const CONTENT_TYPES = [
-  { id: 'achievement',  label: '🏆 Başarı & Ödül' },
-  { id: 'academic',     label: '📚 Akademik İçerik' },
-  { id: 'event',        label: '📅 Etkinlik & Duyuru' },
-  { id: 'graduation',   label: '🎓 Mezuniyet & Tören' },
-  { id: 'staff',        label: '👨‍🏫 Öğretmen & Personel' },
-  { id: 'spotlight',    label: '🌟 Öğrenci Spotlight' },
-  { id: 'data',         label: '📊 İstatistik & Veri' },
-  { id: 'school-life',  label: '🏫 Okul Hayatı' },
-  { id: 'tips',         label: '💡 Eğitim İpuçları' },
-  { id: 'community',    label: '🤝 Toplum & Sosyal Sorumluluk' },
+  { id: 'achievement',  label: '🏆 Achievement & Award' },
+  { id: 'academic',     label: '📚 Academic Content' },
+  { id: 'event',        label: '📅 Event & Announcement' },
+  { id: 'graduation',   label: '🎓 Graduation & Ceremony' },
+  { id: 'staff',        label: '👨‍🏫 Teacher & Staff' },
+  { id: 'spotlight',    label: '🌟 Student Spotlight' },
+  { id: 'data',         label: '📊 Statistics & Data' },
+  { id: 'school-life',  label: '🏫 School Life' },
+  { id: 'tips',         label: '💡 Education Tips' },
+  { id: 'community',    label: '🤝 Community & Social Responsibility' },
 ]
 
 const TONES = [
-  { id: 'professional',  label: '💼 Profesyonel' },
-  { id: 'casual',        label: '😊 Samimi' },
-  { id: 'educational',   label: '🎓 Eğitici' },
-  { id: 'inspirational', label: '🌟 İlham Verici' },
-  { id: 'celebratory',   label: '🎉 Kutlayıcı' },
+  { id: 'professional',  label: '💼 Professional' },
+  { id: 'casual',        label: '😊 Casual' },
+  { id: 'educational',   label: '🎓 Educational' },
+  { id: 'inspirational', label: '🌟 Inspirational' },
+  { id: 'celebratory',   label: '🎉 Celebratory' },
 ]
 
 const LANGUAGES = [
-  { id: 'tr', label: '🇹🇷 Türkçe' },
-  { id: 'en', label: '🇬🇧 İngilizce' },
-  { id: 'de', label: '🇩🇪 Almanca' },
+  { id: 'tr', label: '🇹🇷 Turkish' },
+  { id: 'en', label: '🇬🇧 English' },
+  { id: 'de', label: '🇩🇪 German' },
 ]
 
 const EMOJI_LEVELS = [
-  { id: 'heavy',    label: 'Çok' },
-  { id: 'moderate', label: 'Orta' },
-  { id: 'minimal',  label: 'Az' },
-  { id: 'none',     label: 'Hiç' },
+  { id: 'heavy',    label: 'Heavy' },
+  { id: 'moderate', label: 'Moderate' },
+  { id: 'minimal',  label: 'Minimal' },
+  { id: 'none',     label: 'None' },
 ]
 
 const BEST_TIMES: Record<string, string> = {
-  INSTAGRAM: 'Salı–Cuma 12:00–14:00 arası önerilir',
-  TWITTER:   'Hafta içi 09:00, 12:00, 17:00 önerilir',
-  FACEBOOK:  'Çarşamba–Cuma 13:00–15:00 önerilir',
-  LINKEDIN:  'Salı–Perşembe 08:00–10:00 önerilir',
-  TIKTOK:    'Salı ve Cuma 19:00–21:00 önerilir',
+  INSTAGRAM: 'Recommended: Tuesday–Friday 12:00–14:00',
+  TWITTER:   'Recommended: Weekdays 09:00, 12:00, 17:00',
+  FACEBOOK:  'Recommended: Wednesday–Friday 13:00–15:00',
+  LINKEDIN:  'Recommended: Tuesday–Thursday 08:00–10:00',
+  TIKTOK:    'Recommended: Tuesday and Friday 19:00–21:00',
 }
 
 interface Template {
@@ -102,7 +102,7 @@ function HashtagChips({
       <div className="flex gap-2">
         <input
           className="input-field text-xs py-1 flex-1"
-          placeholder="# ekle ve Enter'a bas"
+          placeholder="Add # and press Enter"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => {
@@ -210,8 +210,8 @@ export default function CreatePostPage() {
   /* ─────────────────────────────────────────────────────────────────────── */
 
   async function handleGenerate() {
-    if (!topic.trim()) { setAiError('Konu gereklidir'); return }
-    if (!aiPlatforms.length) { setAiError('En az bir platform seçin'); return }
+    if (!topic.trim()) { setAiError('Topic is required'); return }
+    if (!aiPlatforms.length) { setAiError('Please select at least one platform'); return }
     setAiError('')
     setGenerating(true)
     try {
@@ -221,12 +221,12 @@ export default function CreatePostPage() {
         body: JSON.stringify({ topic, contentTypes: selectedTypes, platforms: aiPlatforms, tone, language, emojiLevel }),
       })
       const data = await res.json()
-      if (!data.success) { setAiError(data.error || 'Oluşturma başarısız'); return }
+      if (!data.success) { setAiError(data.error || 'Generation failed'); return }
       setGenerated(data.generated)
       setEditedContent({})
       setActivePlatformTab(aiPlatforms[0])
     } catch {
-      setAiError('Bir hata oluştu')
+      setAiError('An error occurred')
     } finally {
       setGenerating(false)
     }
@@ -274,18 +274,18 @@ export default function CreatePostPage() {
           status:      postStatus,
           scheduledFor: scheduledAt ?? null,
           tags:        postTags,
-          notes:       'AI ile oluşturuldu ✨',
+          notes:       'Created with AI ✨',
         }),
       })
       const data = await res.json()
       if (data.success) {
-        setSaveMsg(postStatus === 'SCHEDULED' ? `${platform} planlandı ✓` : `${platform} taslak kaydedildi ✓`)
+        setSaveMsg(postStatus === 'SCHEDULED' ? `${platform} scheduled ✓` : `${platform} saved as draft ✓`)
         setTimeout(() => setSaveMsg(''), 3000)
       } else {
-        setAiError(data.error || 'Kayıt başarısız')
+        setAiError(data.error || 'Save failed')
       }
     } catch {
-      setAiError('Kayıt sırasında hata oluştu')
+      setAiError('An error occurred while saving')
     } finally {
       setSaving(null)
     }
@@ -312,8 +312,8 @@ export default function CreatePostPage() {
 
   async function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (manPlatforms.length === 0) { setManError('En az bir platform seçin'); return }
-    if (!content.trim())           { setManError('İçerik gereklidir'); return }
+    if (manPlatforms.length === 0) { setManError('Please select at least one platform'); return }
+    if (!content.trim())           { setManError('Content is required'); return }
     setSaving2(true); setManError('')
     try {
       const res  = await fetch('/api/social-media/posts', {
@@ -331,9 +331,9 @@ export default function CreatePostPage() {
       })
       const data = await res.json()
       if (data.success) router.push('/social-media-hub/posts')
-      else setManError(data.error || 'Kayıt başarısız')
+      else setManError(data.error || 'Save failed')
     } catch {
-      setManError('Bir hata oluştu')
+      setManError('An error occurred')
     } finally {
       setSaving2(false)
     }
@@ -353,7 +353,7 @@ export default function CreatePostPage() {
       <div className="space-y-4">
         {imagePrompt && (
           <div className="p-3 bg-pink-50 rounded-xl border border-pink-100 text-sm italic text-pink-700">
-            📸 Görsel önerisi: {imagePrompt}
+            📸 Image suggestion: {imagePrompt}
           </div>
         )}
         <div>
@@ -366,7 +366,7 @@ export default function CreatePostPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtag&apos;ler</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtags</label>
           <HashtagChips
             tags={hashtags}
             onRemove={t => patchEdit('instagram', 'hashtags', hashtags.filter(h => h !== t))}
@@ -384,7 +384,7 @@ export default function CreatePostPage() {
       <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-semibold text-gray-700">Ana Tweet</label>
+            <label className="text-sm font-semibold text-gray-700">Main Tweet</label>
             <span className={`text-xs font-mono ${tweet.length > 280 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
               {tweet.length}/280
             </span>
@@ -395,11 +395,11 @@ export default function CreatePostPage() {
             value={tweet}
             onChange={e => patchEdit('twitter', 'tweet', e.target.value)}
           />
-          {tweet.length > 280 && <p className="text-xs text-red-500 mt-1">280 karakter sınırını aştınız</p>}
+          {tweet.length > 280 && <p className="text-xs text-red-500 mt-1">You have exceeded the 280 character limit</p>}
         </div>
         {thread.length > 0 && (
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Thread Versiyonu</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Thread Version</label>
             <div className="space-y-2">
               {thread.map((tw, i) => (
                 <div key={i} className="flex gap-2 items-start">
@@ -427,7 +427,7 @@ export default function CreatePostPage() {
     const fbContent = getEdit<string>('facebook', 'content', '')
     return (
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">İçerik</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Content</label>
         <textarea
           className="input-field resize-none"
           rows={8}
@@ -445,7 +445,7 @@ export default function CreatePostPage() {
     return (
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Hook (Giriş Cümlesi)</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Hook (Opening Line)</label>
           <input
             className="input-field"
             value={hook}
@@ -453,7 +453,7 @@ export default function CreatePostPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">İçerik</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Content</label>
           <textarea
             className="input-field resize-none"
             rows={7}
@@ -462,7 +462,7 @@ export default function CreatePostPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtag&apos;ler</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtags</label>
           <HashtagChips
             tags={hashtags}
             onRemove={t => patchEdit('linkedin', 'hashtags', hashtags.filter(h => h !== t))}
@@ -481,7 +481,7 @@ export default function CreatePostPage() {
     return (
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Hook (İlk 3 saniye)</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Hook (First 3 seconds)</label>
           <input
             className="input-field"
             value={hook}
@@ -489,7 +489,7 @@ export default function CreatePostPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Açıklama</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
           <textarea
             className="input-field resize-none"
             rows={4}
@@ -498,10 +498,10 @@ export default function CreatePostPage() {
           />
         </div>
         {sound && (
-          <p className="text-xs italic text-gray-500">🎵 Ses önerisi: {sound}</p>
+          <p className="text-xs italic text-gray-500">🎵 Sound suggestion: {sound}</p>
         )}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtag&apos;ler</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Hashtags</label>
           <HashtagChips
             tags={hashtags}
             onRemove={t => patchEdit('tiktok', 'hashtags', hashtags.filter(h => h !== t))}
@@ -522,8 +522,8 @@ export default function CreatePostPage() {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Post Oluştur</h2>
-          <p className="text-gray-500 text-sm">Yeni sosyal medya içeriği oluştur</p>
+          <h2 className="text-2xl font-bold text-gray-900">Create Post</h2>
+          <p className="text-gray-500 text-sm">Create new social media content</p>
         </div>
 
         {/* Tabs */}
@@ -537,7 +537,7 @@ export default function CreatePostPage() {
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            ✨ AI ile Oluştur
+            ✨ Create with AI
           </button>
           <button
             type="button"
@@ -548,7 +548,7 @@ export default function CreatePostPage() {
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            ✏️ Manuel Yaz
+            ✏️ Write Manually
           </button>
         </div>
 
@@ -560,12 +560,12 @@ export default function CreatePostPage() {
             {/* Topic */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Post Konusu <span className="text-red-400">*</span>
+                Post Topic <span className="text-red-400">*</span>
               </label>
               <textarea
                 className="input-field resize-none"
                 rows={3}
-                placeholder={`Ne hakkında post oluşturmak istiyorsunuz?\nÖrnek: Bu ay matematik olimpiyatında birinci olduk`}
+                placeholder={`What would you like to create a post about?\nExample: We won first place in the math olympiad this month`}
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
               />
@@ -574,18 +574,18 @@ export default function CreatePostPage() {
             {/* Templates */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">Şablonlar</span>
+                <span className="text-sm font-semibold text-gray-700">Templates</span>
                 <button
                   type="button"
                   onClick={loadTemplates}
                   className="text-xs text-pink-600 font-semibold hover:underline"
                 >
-                  {showTemplates ? 'Kapat ▲' : 'Şablonlardan Seç ▼'}
+                  {showTemplates ? 'Close ▲' : 'Choose from Templates ▼'}
                 </button>
               </div>
               {showTemplates && (
                 templatesLoading ? (
-                  <p className="text-sm text-gray-400">Yükleniyor…</p>
+                  <p className="text-sm text-gray-400">Loading…</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {templates.map(t => (
@@ -609,7 +609,7 @@ export default function CreatePostPage() {
 
             {/* Content types */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">İçerik Türü</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Content Type</label>
               <div className="flex flex-wrap gap-2">
                 {CONTENT_TYPES.map(ct => (
                   <Chip
@@ -625,7 +625,7 @@ export default function CreatePostPage() {
             {/* Platform selection */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Platform Seçimi <span className="text-red-400">*</span>
+                Platform Selection <span className="text-red-400">*</span>
               </label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {AI_PLATFORMS.map(p => {
@@ -650,7 +650,7 @@ export default function CreatePostPage() {
             {/* Tone + Language + Emoji */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Ton</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tone</label>
                 <div className="flex flex-wrap gap-2">
                   {TONES.map(t => (
                     <Chip
@@ -663,7 +663,7 @@ export default function CreatePostPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Dil</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Language</label>
                 <div className="flex gap-2">
                   {LANGUAGES.map(l => (
                     <Chip
@@ -676,7 +676,7 @@ export default function CreatePostPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Emoji Kullanımı</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Emoji Usage</label>
                 <div className="flex gap-2">
                   {EMOJI_LEVELS.map(el => (
                     <Chip
@@ -703,9 +703,9 @@ export default function CreatePostPage() {
               {generating ? (
                 <>
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  İçerik oluşturuluyor…
+                  Generating content…
                 </>
-              ) : '✨ AI ile Oluştur'}
+              ) : '✨ Create with AI'}
             </button>
           </div>
         )}
@@ -718,7 +718,7 @@ export default function CreatePostPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">✨ İçerikleriniz hazır!</h3>
+                <h3 className="text-lg font-bold text-gray-900">✨ Your content is ready!</h3>
                 <p className="text-sm text-gray-500">{topic.slice(0, 80)}</p>
               </div>
               <button
@@ -726,7 +726,7 @@ export default function CreatePostPage() {
                 onClick={() => { setGenerated(null); setEditedContent({}) }}
                 className="text-sm text-pink-600 font-semibold hover:underline"
               >
-                ← Yeni oluştur
+                ← Create new
               </button>
             </div>
 
@@ -794,7 +794,7 @@ export default function CreatePostPage() {
                       }}
                       className="px-4 py-2 rounded-xl text-sm font-medium border-2 border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all"
                     >
-                      📅 Planla
+                      📅 Schedule
                     </button>
                     <button
                       type="button"
@@ -802,7 +802,7 @@ export default function CreatePostPage() {
                       onClick={() => savePost(pid, 'DRAFT')}
                       className="px-4 py-2 rounded-xl text-sm font-medium border-2 border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all disabled:opacity-50"
                     >
-                      {saving === pid ? '…' : '💾 Taslak Kaydet'}
+                      {saving === pid ? '…' : '💾 Save Draft'}
                     </button>
                     <div className="relative group">
                       <button
@@ -810,11 +810,11 @@ export default function CreatePostPage() {
                         disabled
                         className="px-4 py-2 rounded-xl text-sm font-medium border-2 border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
                       >
-                        🚀 Hemen Paylaş
+                        🚀 Publish Now
                       </button>
                       <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-10">
                         <div className="bg-gray-800 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap">
-                          Hesap bağlantısı gerekli
+                          Account connection required
                         </div>
                       </div>
                     </div>
@@ -833,14 +833,14 @@ export default function CreatePostPage() {
                 }}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all"
               >
-                📅 Tümünü Planla
+                📅 Schedule All
               </button>
               <button
                 type="button"
                 onClick={saveAllDrafts}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-pink-600 text-white hover:bg-pink-700 transition-all"
               >
-                💾 Tümünü Kaydet
+                💾 Save All
               </button>
             </div>
           </div>
@@ -853,7 +853,7 @@ export default function CreatePostPage() {
           <form onSubmit={handleManualSubmit} className="space-y-6">
             {/* Platform selector */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Platformlar <span className="text-red-400">*</span></h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Platforms <span className="text-red-400">*</span></h3>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {PLATFORMS.map(p => {
                   const selected = manPlatforms.includes(p.id)
@@ -877,7 +877,7 @@ export default function CreatePostPage() {
             {/* Content */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Başlık <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Title <span className="text-gray-400 font-normal">(optional)</span></label>
                 <input
                   className="input-field"
                   placeholder="e.g. Back to school announcement"
@@ -887,7 +887,7 @@ export default function CreatePostPage() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-semibold text-gray-700">İçerik <span className="text-red-400">*</span></label>
+                  <label className="block text-sm font-semibold text-gray-700">Content <span className="text-red-400">*</span></label>
                   <span className={`text-xs ${content.length > manCharLimit ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
                     {content.length}/{manCharLimit}
                   </span>
@@ -895,26 +895,26 @@ export default function CreatePostPage() {
                 <textarea
                   className="input-field resize-none"
                   rows={7}
-                  placeholder="İçeriği buraya yazın…"
+                  placeholder="Write your content here…"
                   value={content}
                   onChange={e => setContent(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Etiketler / Hashtag&apos;ler <span className="text-gray-400 font-normal">(virgülle ayrın)</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Tags / Hashtags <span className="text-gray-400 font-normal">(comma-separated)</span></label>
                 <input
                   className="input-field"
-                  placeholder="#eğitim, #okul, #başarı"
+                  placeholder="#education, #school, #achievement"
                   value={tags}
                   onChange={e => setTags(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Dahili Notlar <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Internal Notes <span className="text-gray-400 font-normal">(optional)</span></label>
                 <textarea
                   className="input-field resize-none"
                   rows={2}
-                  placeholder="Kendinize veya ekibinize not…"
+                  placeholder="Notes for yourself or your team…"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                 />
@@ -923,7 +923,7 @@ export default function CreatePostPage() {
 
             {/* Status */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">Yayınlama</h3>
+              <h3 className="text-sm font-semibold text-gray-700">Publishing</h3>
               <div className="flex flex-wrap gap-2">
                 {(['DRAFT', 'SCHEDULED', 'PUBLISHED'] as const).map(s => (
                   <button
@@ -936,13 +936,13 @@ export default function CreatePostPage() {
                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    {s === 'DRAFT' ? '📝 Taslak Kaydet' : s === 'SCHEDULED' ? '📅 Planla' : '🚀 Şimdi Yayınla'}
+                    {s === 'DRAFT' ? '📝 Save Draft' : s === 'SCHEDULED' ? '📅 Schedule' : '🚀 Publish Now'}
                   </button>
                 ))}
               </div>
               {status === 'SCHEDULED' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Tarih ve Saat</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Date and Time</label>
                   <input
                     type="datetime-local"
                     className="input-field"
@@ -958,9 +958,9 @@ export default function CreatePostPage() {
             )}
 
             <div className="flex gap-3 justify-end">
-              <button type="button" onClick={() => router.back()} className="btn-secondary">İptal</button>
+              <button type="button" onClick={() => router.back()} className="btn-secondary">Cancel</button>
               <button type="submit" disabled={saving2} className="btn-primary disabled:opacity-50">
-                {saving2 ? 'Kaydediliyor…' : status === 'DRAFT' ? 'Taslak Kaydet' : status === 'SCHEDULED' ? 'Planla' : 'Yayınla'}
+                {saving2 ? 'Saving…' : status === 'DRAFT' ? 'Save Draft' : status === 'SCHEDULED' ? 'Schedule' : 'Publish'}
               </button>
             </div>
           </form>
@@ -973,9 +973,9 @@ export default function CreatePostPage() {
       {showScheduleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4">
-            <h3 className="font-bold text-gray-900 text-lg">📅 Planlama</h3>
+            <h3 className="font-bold text-gray-900 text-lg">📅 Schedule</h3>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Tarih ve Saat</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Date and Time</label>
               <input
                 type="datetime-local"
                 className="input-field"
@@ -985,7 +985,7 @@ export default function CreatePostPage() {
             </div>
             {schedulePlatform && schedulePlatform !== 'ALL' && BEST_TIMES[schedulePlatform] && (
               <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-                💡 Öneri: {BEST_TIMES[schedulePlatform]}
+                💡 Tip: {BEST_TIMES[schedulePlatform]}
               </p>
             )}
             <div className="flex gap-3 justify-end pt-2">
@@ -994,7 +994,7 @@ export default function CreatePostPage() {
                 onClick={() => { setShowScheduleModal(false); setScheduleDate(''); setSchedulePlatform(null) }}
                 className="btn-secondary"
               >
-                İptal
+                Cancel
               </button>
               <button
                 type="button"
@@ -1013,7 +1013,7 @@ export default function CreatePostPage() {
                 disabled={!scheduleDate}
                 className="btn-primary disabled:opacity-50"
               >
-                Planla
+                Schedule
               </button>
             </div>
           </div>

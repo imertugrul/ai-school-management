@@ -9,9 +9,9 @@ interface RiskStudent {
 }
 
 const RISK_BADGE: Record<string, { label: string; color: string }> = {
-  LOW_GRADE:    { label: '🔴 Düşük Not',     color: 'bg-red-100 text-red-700'    },
-  HIGH_ABSENCE: { label: '🟡 Yüksek Devamsızlık', color: 'bg-amber-100 text-amber-700' },
-  TREND_DOWN:   { label: '🟠 Düşüş Trendi', color: 'bg-orange-100 text-orange-700' },
+  LOW_GRADE:    { label: '🔴 Low Grade',         color: 'bg-red-100 text-red-700'    },
+  HIGH_ABSENCE: { label: '🟡 High Absence Rate', color: 'bg-amber-100 text-amber-700' },
+  TREND_DOWN:   { label: '🟠 Declining Trend',   color: 'bg-orange-100 text-orange-700' },
 }
 
 interface Props {
@@ -24,7 +24,7 @@ export default function RiskTable({ data, loading }: Props) {
   if (data.length === 0) return (
     <div className="text-center py-8">
       <div className="text-3xl mb-2">✅</div>
-      <p className="text-sm text-gray-400">Risk altında öğrenci yok</p>
+      <p className="text-sm text-gray-400">No at-risk students</p>
     </div>
   )
 
@@ -33,10 +33,10 @@ export default function RiskTable({ data, loading }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-100">
-            <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Öğrenci</th>
-            <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Sınıf</th>
-            <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Ortalama</th>
-            <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Devam %</th>
+            <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Student</th>
+            <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Class</th>
+            <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Average</th>
+            <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Attendance %</th>
             <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Risk</th>
           </tr>
         </thead>

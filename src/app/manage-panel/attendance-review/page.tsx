@@ -30,16 +30,16 @@ const STATUS_BADGE: Record<string, string> = {
   FAILED:    'bg-red-100 text-red-700',
 }
 const STATUS_LABEL: Record<string, string> = {
-  PENDING:   '⏳ Bekliyor',
-  APPROVED:  '✅ Onaylandı',
-  CORRECTED: '✏️ Düzeltildi',
-  FAILED:    '❌ Başarısız',
+  PENDING:   '⏳ Pending',
+  APPROVED:  '✅ Approved',
+  CORRECTED: '✏️ Corrected',
+  FAILED:    '❌ Failed',
 }
 const ATTENDANCE_LABEL: Record<string, string> = {
-  ABSENT:  'Devamsız',
-  LATE:    'Geç Geldi',
-  PRESENT: 'Mevcut',
-  EXCUSED: 'İzinli',
+  ABSENT:  'Absent',
+  LATE:    'Late',
+  PRESENT: 'Present',
+  EXCUSED: 'Excused',
 }
 
 export default function AdminAttendanceReviewPage() {
@@ -84,8 +84,8 @@ export default function AdminAttendanceReviewPage() {
     try {
       const r = await fetch(`/api/admin/absence-notifications/${id}/approve`, { method: 'POST' })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Bildirim onaylandı ve gönderildi')
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast('Notification approved and sent')
       fetchData()
     } finally { setSubmitting(false) }
   }
@@ -100,8 +100,8 @@ export default function AdminAttendanceReviewPage() {
         body: JSON.stringify({ ids: Array.from(selected) }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast(`${d.summary.sent} gönderildi, ${d.summary.failed} başarısız`)
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast(`${d.summary.sent} sent, ${d.summary.failed} failed`)
       fetchData()
     } finally { setSubmitting(false) }
   }
@@ -115,8 +115,8 @@ export default function AdminAttendanceReviewPage() {
         body: JSON.stringify({ ids }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast(`Tekrar denendi: ${d.summary.sent} gönderildi`)
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast(`Retried: ${d.summary.sent} sent`)
       fetchData()
     } finally { setSubmitting(false) }
   }
@@ -131,8 +131,8 @@ export default function AdminAttendanceReviewPage() {
         body:    JSON.stringify({ correctedTo: correctTo, reviewNote: correctNote }),
       })
       const d = await r.json()
-      if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Devamsızlık düzeltildi')
+      if (!r.ok) { showToast(d.error || 'Error', false); return }
+      showToast('Attendance corrected')
       setCorrectModal(null)
       setCorrectNote('')
       fetchData()
@@ -162,13 +162,13 @@ export default function AdminAttendanceReviewPage() {
             <div className="flex items-center gap-3">
               <button onClick={() => router.push('/manage-panel')} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Devamsızlık Bildirimleri</h1>
-                <p className="text-xs text-gray-500">Yoklama bildirimlerini incele ve onayla</p>
+                <h1 className="text-lg font-bold text-gray-900">Absence Notifications</h1>
+                <p className="text-xs text-gray-500">Review and approve attendance notifications</p>
               </div>
             </div>
             {summary.pending > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                {summary.pending} bekliyor
+                {summary.pending} pending
               </span>
             )}
           </div>
@@ -179,10 +179,10 @@ export default function AdminAttendanceReviewPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Bekleyen',   value: summary.pending,   color: 'text-amber-600', bg: 'bg-amber-50',  border: 'border-amber-200' },
-            { label: 'Onaylanan',  value: summary.approved,  color: 'text-green-600', bg: 'bg-green-50',  border: 'border-green-200' },
-            { label: 'Düzeltilen', value: summary.corrected, color: 'text-blue-600',  bg: 'bg-blue-50',   border: 'border-blue-200'  },
-            { label: 'Başarısız',  value: summary.failed,    color: 'text-red-600',   bg: 'bg-red-50',    border: 'border-red-200'   },
+            { label: 'Pending',   value: summary.pending,   color: 'text-amber-600', bg: 'bg-amber-50',  border: 'border-amber-200' },
+            { label: 'Approved',  value: summary.approved,  color: 'text-green-600', bg: 'bg-green-50',  border: 'border-green-200' },
+            { label: 'Corrected', value: summary.corrected, color: 'text-blue-600',  bg: 'bg-blue-50',   border: 'border-blue-200'  },
+            { label: 'Failed',    value: summary.failed,    color: 'text-red-600',   bg: 'bg-red-50',    border: 'border-red-200'   },
           ].map(card => (
             <div key={card.label} className={`${card.bg} border ${card.border} rounded-2xl p-4 text-center`}>
               <div className={`text-2xl font-bold ${card.color}`}>{card.value}</div>
@@ -200,13 +200,13 @@ export default function AdminAttendanceReviewPage() {
             className="input-field text-sm"
           />
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Durumlar</option>
-            <option value="PENDING">Bekleyen</option>
-            <option value="APPROVED">Onaylanan</option>
-            <option value="CORRECTED">Düzeltilen</option>
-            <option value="FAILED">Başarısız</option>
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="CORRECTED">Corrected</option>
+            <option value="FAILED">Failed</option>
           </select>
-          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Yenile</button>
+          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Refresh</button>
 
           {selected.size > 0 && (
             <button
@@ -214,18 +214,18 @@ export default function AdminAttendanceReviewPage() {
               disabled={submitting}
               className="btn-primary text-sm disabled:opacity-50"
             >
-              ✅ {selected.size} bildirimi onayla ve gönder
+              ✅ Approve and send {selected.size} notification{selected.size !== 1 ? 's' : ''}
             </button>
           )}
         </div>
 
         {/* Table */}
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Yükleniyor…</div>
+          <div className="text-center py-20 text-gray-400">Loading…</div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">📋</div>
-            <p className="text-gray-500">Bildirim bulunamadı.</p>
+            <p className="text-gray-500">No notifications found.</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -235,13 +235,13 @@ export default function AdminAttendanceReviewPage() {
                   <th className="px-4 py-3 text-left">
                     <input type="checkbox" checked={allPendingSelected} onChange={toggleAll} className="rounded" />
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Öğrenci</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Sınıf</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Tarih</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Durum</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Bildirim</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600">İşaretleyen</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-600">İşlem</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Student</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Class</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Date</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Notification</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600">Marked By</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,7 +255,7 @@ export default function AdminAttendanceReviewPage() {
                     <td className="px-4 py-3 font-medium text-gray-900">{n.student.name}</td>
                     <td className="px-4 py-3 text-gray-500">{n.class.name}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">
-                      {new Date(n.date).toLocaleDateString('tr-TR')}
+                      {new Date(n.date).toLocaleDateString('en-GB')}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[n.status]}`}>
@@ -271,13 +271,13 @@ export default function AdminAttendanceReviewPage() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1.5 text-xs">
                         {n.whatsappSent
-                          ? <span className="text-green-600" title="WhatsApp gönderildi">📱✅</span>
+                          ? <span className="text-green-600" title="WhatsApp sent">📱✅</span>
                           : n.whatsappError
                             ? <span className="text-red-400" title={n.whatsappError}>📱❌</span>
                             : <span className="text-gray-300">📱—</span>
                         }
                         {n.emailSent
-                          ? <span className="text-green-600" title="E-posta gönderildi">✉️✅</span>
+                          ? <span className="text-green-600" title="Email sent">✉️✅</span>
                           : n.emailError
                             ? <span className="text-red-400" title={n.emailError}>✉️❌</span>
                             : <span className="text-gray-300">✉️—</span>
@@ -294,13 +294,13 @@ export default function AdminAttendanceReviewPage() {
                               disabled={submitting}
                               className="text-xs text-green-600 hover:text-green-800 font-semibold disabled:opacity-50"
                             >
-                              Onayla
+                              Approve
                             </button>
                             <button
                               onClick={() => { setCorrectModal(n); setCorrectTo('PRESENT'); setCorrectNote('') }}
                               className="text-xs text-blue-500 hover:text-blue-700 font-semibold"
                             >
-                              Düzelt
+                              Correct
                             </button>
                           </>
                         )}
@@ -310,7 +310,7 @@ export default function AdminAttendanceReviewPage() {
                             disabled={submitting}
                             className="text-xs text-orange-500 hover:text-orange-700 font-semibold disabled:opacity-50"
                           >
-                            Tekrar Dene
+                            Retry
                           </button>
                         )}
                         {n.reviewNote && (
@@ -330,33 +330,33 @@ export default function AdminAttendanceReviewPage() {
       {correctModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-1">Devamsızlık Düzelt</h2>
+            <h2 className="font-bold text-gray-900 text-lg mb-1">Correct Attendance</h2>
             <p className="text-sm text-gray-500 mb-4">
-              <strong>{correctModal.student.name}</strong> — {new Date(correctModal.date).toLocaleDateString('tr-TR')}
+              <strong>{correctModal.student.name}</strong> — {new Date(correctModal.date).toLocaleDateString('en-GB')}
             </p>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Yeni Durum</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Status</label>
               <select value={correctTo} onChange={e => setCorrectTo(e.target.value)} className="input-field text-sm w-full">
-                <option value="PRESENT">Mevcut</option>
-                <option value="EXCUSED">İzinli</option>
-                <option value="ABSENT">Devamsız</option>
-                <option value="LATE">Geç Geldi</option>
+                <option value="PRESENT">Present</option>
+                <option value="EXCUSED">Excused</option>
+                <option value="ABSENT">Absent</option>
+                <option value="LATE">Late</option>
               </select>
             </div>
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Not (isteğe bağlı)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
               <textarea
                 value={correctNote}
                 onChange={e => setCorrectNote(e.target.value)}
                 className="input-field text-sm w-full resize-none"
                 rows={2}
-                placeholder="Düzeltme sebebi…"
+                placeholder="Reason for correction…"
               />
             </div>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setCorrectModal(null)} className="btn-secondary text-sm">İptal</button>
+              <button onClick={() => setCorrectModal(null)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCorrect} disabled={submitting} className="btn-primary text-sm disabled:opacity-50">
-                {submitting ? 'Kaydediliyor…' : 'Kaydet'}
+                {submitting ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>

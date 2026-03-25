@@ -17,36 +17,36 @@ export async function exportExcel(payload: {
   const wb   = XLSX.utils.book_new()
 
   // Sheet 1: KPI Summary
-  const kpiRows = Object.entries(payload.kpis).map(([key, val]) => ({ Metrik: key, Değer: val }))
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpiRows), 'KPI Özet')
+  const kpiRows = Object.entries(payload.kpis).map(([key, val]) => ({ Metric: key, Value: val }))
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kpiRows), 'KPI Summary')
 
   // Sheet 2: Grade distribution
   const distRows = Object.entries(payload.gradeDistribution)
     .filter(([k]) => k !== 'byClass')
-    .map(([key, val]) => ({ Harf: key, Öğrenci: val }))
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(distRows), 'Not Dağılımı')
+    .map(([key, val]) => ({ Grade: key, Students: val }))
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(distRows), 'Grade Distribution')
 
   // Sheet 3: Attendance trend
   if (payload.attendanceTrend.length > 0) {
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.attendanceTrend as object[]), 'Devamsızlık Trendi')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.attendanceTrend as object[]), 'Attendance Trend')
   }
 
   // Sheet 4: At-risk students
   if (payload.atRiskStudents.length > 0) {
     const riskRows = (payload.atRiskStudents as { student: string; class: string; avg: number | null; attendanceRate: number; riskFactors: string[] }[])
       .map(s => ({
-        Öğrenci:    s.student,
-        Sınıf:      s.class,
-        Ortalama:   s.avg,
-        'Devam %':  s.attendanceRate,
-        'Risk Faktörleri': s.riskFactors.join(', '),
+        Student:          s.student,
+        Class:            s.class,
+        Average:          s.avg,
+        'Attendance %':   s.attendanceRate,
+        'Risk Factors':   s.riskFactors.join(', '),
       }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(riskRows), 'Risk Öğrenciler')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(riskRows), 'At-Risk Students')
   }
 
   // Download
-  const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')
-  XLSX.writeFile(wb, `${payload.title ?? 'Analitik'}_${dateStr}.xlsx`)
+  const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-')
+  XLSX.writeFile(wb, `${payload.title ?? 'Analytics'}_${dateStr}.xlsx`)
 }
 
 // ── Staff Excel export ────────────────────────────────────────────────────────
@@ -60,13 +60,13 @@ export async function exportStaffExcel(payload: {
   const XLSX = await import('xlsx')
   const wb   = XLSX.utils.book_new()
 
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([payload.summary]), 'Özet')
-  if (payload.trend.length > 0)        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.trend as object[]), 'Aylık Trend')
-  if (payload.byClass.length > 0)      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.byClass as object[]), 'Sınıf Bazlı')
-  if (payload.chronicAbsent.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.chronicAbsent as object[]), 'Kronik Devamsızlar')
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([payload.summary]), 'Summary')
+  if (payload.trend.length > 0)        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.trend as object[]), 'Monthly Trend')
+  if (payload.byClass.length > 0)      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.byClass as object[]), 'By Class')
+  if (payload.chronicAbsent.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payload.chronicAbsent as object[]), 'Chronic Absences')
 
-  const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')
-  XLSX.writeFile(wb, `Devamsızlık_Raporu_${dateStr}.xlsx`)
+  const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-')
+  XLSX.writeFile(wb, `Attendance_Report_${dateStr}.xlsx`)
 }
 
 // ── PDF: browser print ────────────────────────────────────────────────────────

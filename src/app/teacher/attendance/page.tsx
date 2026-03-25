@@ -144,10 +144,10 @@ function AttendanceContent() {
   const notifIcon = (s: string | null) => {
     if (!s) return null
     const map: Record<string, { icon: string; title: string; cls: string }> = {
-      PENDING:   { icon: '⏳', title: 'Onay bekliyor',    cls: 'text-amber-500'  },
-      APPROVED:  { icon: '✅', title: 'Gönderildi',        cls: 'text-green-500'  },
-      CORRECTED: { icon: '✏️', title: 'Düzeltildi',        cls: 'text-blue-500'   },
-      FAILED:    { icon: '❌', title: 'Gönderim başarısız', cls: 'text-red-500'   },
+      PENDING:   { icon: '⏳', title: 'Pending approval',  cls: 'text-amber-500'  },
+      APPROVED:  { icon: '✅', title: 'Sent',               cls: 'text-green-500'  },
+      CORRECTED: { icon: '✏️', title: 'Corrected',          cls: 'text-blue-500'   },
+      FAILED:    { icon: '❌', title: 'Sending failed',     cls: 'text-red-500'   },
     }
     const m = map[s]
     if (!m) return null
@@ -327,7 +327,7 @@ function AttendanceContent() {
                 disabled={saving}
                 className="btn-primary text-base px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? 'Kaydediliyor…' : '💾 Yoklamayı Kaydet'}
+                {saving ? 'Saving…' : '💾 Save Attendance'}
               </button>
             </div>
           </>

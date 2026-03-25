@@ -72,29 +72,29 @@ function KvkkModal({
             <span className="text-xl">⚠️</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Bu işlem geri alınamaz!</h3>
-            <p className="text-xs text-gray-500">KVKK Madde 7 — Kalıcı Veri Silme</p>
+            <h3 className="text-lg font-bold text-gray-900">This action cannot be undone!</h3>
+            <p className="text-xs text-gray-500">GDPR Article 17 — Permanent Data Deletion</p>
           </div>
         </div>
 
         {/* What will be deleted */}
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 text-sm">
           <p className="font-semibold text-red-800 mb-2">
-            <span className="font-bold">{student.name}</span> adlı öğrenciye ait şu veriler kalıcı olarak silinecek:
+            The following data belonging to <span className="font-bold">{student.name}</span> will be permanently deleted:
           </p>
           <ul className="space-y-1 text-red-700">
-            <li>• Tüm sınav sonuçları ve cevaplar</li>
-            <li>• Not kayıtları</li>
-            <li>• Devamsızlık kayıtları</li>
-            <li>• Kayıt bilgileri</li>
-            <li>• Kullanıcı hesabı</li>
+            <li>• All exam results and answers</li>
+            <li>• Grade records</li>
+            <li>• Attendance records</li>
+            <li>• Registration information</li>
+            <li>• User account</li>
           </ul>
         </div>
 
         {/* Name confirmation input */}
         <div className="mb-5">
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            Devam etmek için öğrencinin adını yazın:
+            Type the student&apos;s name to continue:
           </label>
           <input
             className="input-field"
@@ -104,7 +104,7 @@ function KvkkModal({
             autoFocus
           />
           {input && !confirmed && (
-            <p className="text-xs text-red-500 mt-1">Ad eşleşmiyor. Tam olarak: <strong>{student.name}</strong></p>
+            <p className="text-xs text-red-500 mt-1">Name does not match. Enter exactly: <strong>{student.name}</strong></p>
           )}
         </div>
 
@@ -115,7 +115,7 @@ function KvkkModal({
             disabled={deleting}
             className="btn-secondary disabled:opacity-50"
           >
-            İptal
+            Cancel
           </button>
           <button
             onClick={onConfirm}
@@ -123,8 +123,8 @@ function KvkkModal({
             className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {deleting
-              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> Siliniyor…</>
-              : <>🛡️ Kalıcı Olarak Sil</>
+              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> Deleting…</>
+              : <>🛡️ Delete Permanently</>
             }
           </button>
         </div>
@@ -183,13 +183,13 @@ export default function AdminStudentsPage() {
       body: JSON.stringify({ ...formData, role: 'STUDENT' }),
     })
     if (response.ok) {
-      addToast('Öğrenci başarıyla eklendi.', 'success')
+      addToast('Student added successfully.', 'success')
       setFormData({ name: '', email: '', password: '', classId: '' })
       setActiveTab('list')
       fetchData()
     } else {
       const data = await response.json()
-      addToast(data.error || 'Öğrenci eklenemedi.', 'error')
+      addToast(data.error || 'Failed to add student.', 'error')
     }
   }
 
@@ -205,7 +205,7 @@ export default function AdminStudentsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this student?')) return
     const res = await fetch(`/api/admin/students/${id}`, { method: 'DELETE' })
-    if (res.ok) { addToast('Öğrenci silindi.', 'success'); fetchData() }
+    if (res.ok) { addToast('Student deleted.', 'success'); fetchData() }
   }
 
   // ─── KVKK Delete ─────────────────────────────────────────────────────────
@@ -219,17 +219,17 @@ export default function AdminStudentsPage() {
         setStudents(prev => prev.filter(s => s.id !== kvkkTarget.id))
         setKvkkTarget(null)
         if (data.parentEmailed) {
-          addToast(`${data.studentName} adlı öğrencinin tüm verileri KVKK kapsamında silindi ve veliye e-posta gönderildi.`, 'success')
+          addToast(`All data for ${data.studentName} has been deleted under GDPR and a notification email was sent to the guardian.`, 'success')
         } else if (!data.parentFound) {
-          addToast(`Veriler silindi, ancak kayıtlı veli bulunamadı — e-posta gönderilemedi.`, 'warning')
+          addToast(`Data deleted, but no registered guardian was found — email could not be sent.`, 'warning')
         } else {
-          addToast(`Veriler silindi, ancak e-posta gönderilemedi.`, 'warning')
+          addToast(`Data deleted, but the email could not be sent.`, 'warning')
         }
       } else {
-        addToast(data.error || 'Silme işlemi başarısız.', 'error')
+        addToast(data.error || 'Deletion failed.', 'error')
       }
     } catch {
-      addToast('Bir hata oluştu, lütfen tekrar deneyin.', 'error')
+      addToast('An error occurred, please try again.', 'error')
     } finally {
       setKvkkDeleting(false)
     }
@@ -311,7 +311,7 @@ export default function AdminStudentsPage() {
                 onClick={() => router.push('/manage-panel/gdpr')}
                 className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium rounded-lg transition-colors"
               >
-                🛡️ KVKK Logları
+                🛡️ GDPR Logs
               </button>
               <button
                 onClick={() => router.push('/manage-panel')}
@@ -355,7 +355,7 @@ export default function AdminStudentsPage() {
               <h2 className="text-lg font-bold text-gray-900">All Students</h2>
               <div className="flex items-center gap-1.5 text-xs text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-                Kırmızı kalkan = KVKK silme
+                Red shield = GDPR deletion
               </div>
             </div>
 
@@ -442,10 +442,10 @@ export default function AdminStudentsPage() {
                               {/* KVKK Delete */}
                               <button
                                 onClick={() => setKvkkTarget(student)}
-                                title="KVKK/GDPR kapsamında öğrencinin tüm verilerini kalıcı olarak siler"
+                                title="Permanently deletes all student data under GDPR"
                                 className="flex items-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 border border-red-200 hover:border-red-300 rounded-lg text-xs font-semibold transition-all"
                               >
-                                🛡️ Tüm Verileri Sil
+                                🛡️ Delete All Data
                               </button>
                             </div>
                           )}
@@ -467,7 +467,7 @@ export default function AdminStudentsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Student Name *</label>
-                  <input type="text" required className="input-field" placeholder="e.g., Ali Yılmaz"
+                  <input type="text" required className="input-field" placeholder="e.g., John Smith"
                     value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div>

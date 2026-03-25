@@ -45,16 +45,16 @@ function buildWhatsAppMessage(opts: {
   schoolName: string
   schoolPhone: string
 }): string {
-  const dateStr     = opts.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
-  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'devamsız' : 'geç gelmiş'
+  const dateStr     = opts.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'absent' : 'late'
   return [
-    `📢 *${opts.schoolName} — Devamsızlık Bildirimi*`,
+    `📢 *${opts.schoolName} — Absence Notification*`,
     ``,
-    `Sayın Veli,`,
+    `Dear Parent/Guardian,`,
     ``,
-    `*${opts.studentName}* adlı öğrencinin ${dateStr} tarihinde *${statusLabel}* olduğu belirlenmiştir.`,
+    `We would like to inform you that *${opts.studentName}* was marked *${statusLabel}* on ${dateStr}.`,
     ``,
-    `Bilgi ve gereği için,`,
+    `For further information please contact us,`,
     `📞 ${opts.schoolPhone}`,
     `_${opts.schoolName}_`,
   ].join('\n')
@@ -69,49 +69,49 @@ function buildAbsenceEmailHtml(opts: {
   schoolEmail: string
   schoolPhone: string
 }): { subject: string; html: string } {
-  const dateStr     = opts.date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
-  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'Devamsız' : 'Geç Kaldı'
-  const subject     = `Devamsızlık Bildirimi — ${opts.studentName} — ${dateStr}`
+  const dateStr     = opts.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+  const statusLabel = opts.attendanceStatus === 'ABSENT' ? 'Absent' : 'Late'
+  const subject     = `Absence Notification — ${opts.studentName} — ${dateStr}`
 
   const html = `<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center" style="padding:40px 16px">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">
         <tr><td style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:32px 40px;text-align:center">
-          <h1 style="color:#fff;margin:0;font-size:22px">📢 Devamsızlık Bildirimi</h1>
+          <h1 style="color:#fff;margin:0;font-size:22px">📢 Absence Notification</h1>
           <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px">${opts.schoolName}</p>
         </td></tr>
         <tr><td style="padding:40px">
-          <p style="color:#374151;font-size:15px;margin:0 0 24px">Sayın Veli,</p>
+          <p style="color:#374151;font-size:15px;margin:0 0 24px">Dear Parent/Guardian,</p>
           <table width="100%" cellpadding="12" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:24px">
             <tr>
-              <td style="color:#6b7280;font-size:13px;width:40%">Öğrenci</td>
+              <td style="color:#6b7280;font-size:13px;width:40%">Student</td>
               <td style="color:#111827;font-size:14px;font-weight:600">${opts.studentName}</td>
             </tr>
             <tr>
-              <td style="color:#6b7280;font-size:13px">Sınıf</td>
+              <td style="color:#6b7280;font-size:13px">Class</td>
               <td style="color:#111827;font-size:14px">${opts.className}</td>
             </tr>
             <tr>
-              <td style="color:#6b7280;font-size:13px">Tarih</td>
+              <td style="color:#6b7280;font-size:13px">Date</td>
               <td style="color:#111827;font-size:14px">${dateStr}</td>
             </tr>
             <tr>
-              <td style="color:#6b7280;font-size:13px">Durum</td>
+              <td style="color:#6b7280;font-size:13px">Status</td>
               <td style="color:#dc2626;font-size:14px;font-weight:600">${statusLabel}</td>
             </tr>
           </table>
-          <p style="color:#374151;font-size:14px;line-height:1.6">Herhangi bir sorunuz için lütfen okulumuzla iletişime geçiniz.</p>
+          <p style="color:#374151;font-size:14px;line-height:1.6">If you have any questions, please do not hesitate to contact our school.</p>
           <p style="color:#6b7280;font-size:13px;margin-top:24px">
             📞 ${opts.schoolPhone}<br>
             ✉️ ${opts.schoolEmail}
           </p>
         </td></tr>
         <tr><td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb">
-          <p style="color:#9ca3af;font-size:12px;margin:0">${opts.schoolName} — Otomatik Bildirim Sistemi</p>
+          <p style="color:#9ca3af;font-size:12px;margin:0">${opts.schoolName} — Automated Notification System</p>
         </td></tr>
       </table>
     </td></tr>
@@ -143,7 +143,7 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
     where: { studentId: notif.studentId },
   })
 
-  const schoolName  = process.env.SCHOOL_NAME  || 'Okul'
+  const schoolName  = process.env.SCHOOL_NAME  || 'School'
   const schoolPhone = process.env.SCHOOL_PHONE  || ''
   const schoolEmail = process.env.SCHOOL_EMAIL  || ''
 
@@ -153,8 +153,8 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
       where: { id: notificationId },
       data: {
         status:        'FAILED',
-        emailError:    'Kayıtlı veli bulunamadı',
-        whatsappError: 'Kayıtlı veli bulunamadı',
+        emailError:    'No registered guardian found',
+        whatsappError: 'No registered guardian found',
         sentAt:        new Date(),
       },
     })
@@ -162,7 +162,7 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
   }
 
   const msgOpts = {
-    studentName:      notif.student.name || 'Öğrenci',
+    studentName:      notif.student.name || 'Student',
     className:        notif.class.name,
     attendanceStatus: notif.attendance.status,
     date:             notif.date,
@@ -178,7 +178,7 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
   // --- WhatsApp ---
   const smsGuardians = guardians.filter(g => g.receivesSMS && g.phone)
   if (smsGuardians.length === 0) {
-    whatsappError = 'SMS alacak velisi yok'
+    whatsappError = 'No guardian configured to receive SMS'
   } else {
     const body    = buildWhatsAppMessage(msgOpts)
     const results = await Promise.all(
@@ -193,7 +193,7 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
   // --- Email ---
   const emailGuardians = guardians.filter(g => g.receivesEmail && g.email)
   if (emailGuardians.length === 0) {
-    emailError = 'E-posta alacak velisi yok'
+    emailError = 'No guardian configured to receive email'
   } else {
     try {
       const { Resend } = await import('resend')

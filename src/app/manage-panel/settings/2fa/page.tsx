@@ -36,7 +36,7 @@ export default function TwoFactorSetupPage() {
       setQrCode(data.qrCode)
       setSecret(data.secret)
       setPhase('setup')
-    } catch { setError('Hata oluştu.') }
+    } catch { setError('An error occurred.') }
     finally  { setLoading(false) }
   }
 
@@ -56,8 +56,8 @@ export default function TwoFactorSetupPage() {
       setTwoFaEnabled(true)
       setPhase('idle')
       setCode('')
-      setSuccess('2FA başarıyla etkinleştirildi! Bir sonraki girişte doğrulama kodu istenir.')
-    } catch { setError('Hata oluştu.') }
+      setSuccess('2FA successfully enabled! You will be asked for a verification code on your next login.')
+    } catch { setError('An error occurred.') }
     finally  { setLoading(false) }
   }
 
@@ -77,8 +77,8 @@ export default function TwoFactorSetupPage() {
       setTwoFaEnabled(false)
       setPhase('idle')
       setPassword('')
-      setSuccess('2FA devre dışı bırakıldı.')
-    } catch { setError('Hata oluştu.') }
+      setSuccess('2FA has been disabled.')
+    } catch { setError('An error occurred.') }
     finally  { setLoading(false) }
   }
 
@@ -99,7 +99,7 @@ export default function TwoFactorSetupPage() {
           </button>
           <div className="flex items-center gap-2">
             <span className="text-xl">🔐</span>
-            <h1 className="text-lg font-bold text-gray-900">İki Adımlı Doğrulama</h1>
+            <h1 className="text-lg font-bold text-gray-900">Two-Factor Authentication</h1>
           </div>
         </div>
       </nav>
@@ -109,18 +109,18 @@ export default function TwoFactorSetupPage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">2FA Durumu</h2>
+              <h2 className="text-lg font-semibold text-gray-900">2FA Status</h2>
               <p className="text-sm text-gray-500 mt-1">
-                Google Authenticator veya Authy ile TOTP tabanlı doğrulama
+                TOTP-based authentication with Google Authenticator or Authy
               </p>
             </div>
             {twoFaEnabled ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                ✓ Aktif
+                ✓ Active
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-sm font-medium">
-                Pasif
+                Inactive
               </span>
             )}
           </div>
@@ -140,7 +140,7 @@ export default function TwoFactorSetupPage() {
           <div className="mt-5">
             {!twoFaEnabled && phase === 'idle' && (
               <button onClick={startSetup} disabled={loading} className="btn-primary disabled:opacity-50">
-                {loading ? 'Yükleniyor...' : '2FA Etkinleştir'}
+                {loading ? 'Loading...' : 'Enable 2FA'}
               </button>
             )}
             {twoFaEnabled && phase === 'idle' && (
@@ -148,7 +148,7 @@ export default function TwoFactorSetupPage() {
                 onClick={() => { setPhase('disabling'); setError(''); setSuccess('') }}
                 className="btn-secondary text-red-600 border-red-200 hover:bg-red-50"
               >
-                2FA Devre Dışı Bırak
+                Disable 2FA
               </button>
             )}
           </div>
@@ -157,9 +157,9 @@ export default function TwoFactorSetupPage() {
         {/* QR Code setup */}
         {phase === 'setup' && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
-            <h3 className="font-semibold text-gray-900">QR Kodu Tarayın</h3>
+            <h3 className="font-semibold text-gray-900">Scan QR Code</h3>
             <p className="text-sm text-gray-500">
-              Authenticator uygulamanızla aşağıdaki QR kodu tarayın, ardından üretilen 6 haneli kodu girin.
+              Scan the QR code below with your authenticator app, then enter the generated 6-digit code.
             </p>
 
             {qrCode && (
@@ -169,14 +169,14 @@ export default function TwoFactorSetupPage() {
             )}
 
             <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <p className="text-xs text-gray-500 mb-1">Manuel giriş için gizli anahtar:</p>
+              <p className="text-xs text-gray-500 mb-1">Secret key for manual entry:</p>
               <code className="text-sm font-mono text-gray-800 break-all select-all">{secret}</code>
             </div>
 
             <form onSubmit={confirmSetup} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Doğrulama Kodu
+                  Verification Code
                 </label>
                 <input
                   type="text"
@@ -194,10 +194,10 @@ export default function TwoFactorSetupPage() {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3">
                 <button type="submit" disabled={loading || code.length !== 6} className="btn-primary flex-1 disabled:opacity-50">
-                  {loading ? 'Doğrulanıyor...' : 'Doğrula ve Etkinleştir'}
+                  {loading ? 'Verifying...' : 'Verify and Enable'}
                 </button>
                 <button type="button" onClick={() => { setPhase('idle'); setError('') }} className="btn-secondary">
-                  İptal
+                  Cancel
                 </button>
               </div>
             </form>
@@ -207,13 +207,13 @@ export default function TwoFactorSetupPage() {
         {/* Disable 2FA */}
         {phase === 'disabling' && (
           <div className="bg-white rounded-2xl border border-red-200 p-6 shadow-sm space-y-4">
-            <h3 className="font-semibold text-gray-900">2FA Devre Dışı Bırak</h3>
+            <h3 className="font-semibold text-gray-900">Disable 2FA</h3>
             <p className="text-sm text-gray-500">
-              Devam etmek için mevcut şifrenizi girin.
+              Enter your current password to continue.
             </p>
             <form onSubmit={disableSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <input
                   type="password"
                   value={password}
@@ -225,10 +225,10 @@ export default function TwoFactorSetupPage() {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3">
                 <button type="submit" disabled={loading || !password} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 flex-1">
-                  {loading ? 'İşleniyor...' : 'Devre Dışı Bırak'}
+                  {loading ? 'Processing...' : 'Disable'}
                 </button>
                 <button type="button" onClick={() => { setPhase('idle'); setError('') }} className="btn-secondary">
-                  İptal
+                  Cancel
                 </button>
               </div>
             </form>
@@ -237,11 +237,11 @@ export default function TwoFactorSetupPage() {
 
         {/* Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm text-blue-800 space-y-2">
-          <p className="font-semibold">2FA hakkında</p>
+          <p className="font-semibold">About 2FA</p>
           <ul className="list-disc list-inside space-y-1 text-blue-700">
-            <li>Google Authenticator, Authy veya 1Password desteklenir</li>
-            <li>Her 30 saniyede yenilenen TOTP (RFC 6238) standardı kullanılır</li>
-            <li>Telefonu kaybederseniz yönetici DB erişimiyle 2FA devre dışı bırakılabilir</li>
+            <li>Google Authenticator, Authy, or 1Password are supported</li>
+            <li>Uses TOTP (RFC 6238) standard, refreshed every 30 seconds</li>
+            <li>If you lose your phone, 2FA can be disabled via admin DB access</li>
           </ul>
         </div>
       </div>

@@ -6,11 +6,11 @@ import AttendanceTrend from '@/components/analytics/AttendanceTrend'
 import { exportStaffExcel, printReport } from '@/lib/exportReport'
 
 const MONTHS = [
-  { value: '', label: 'Bu Ay' },
-  { value: '09', label: 'Eylül' }, { value: '10', label: 'Ekim' }, { value: '11', label: 'Kasım' },
-  { value: '12', label: 'Aralık' }, { value: '01', label: 'Ocak' }, { value: '02', label: 'Şubat' },
-  { value: '03', label: 'Mart' }, { value: '04', label: 'Nisan' }, { value: '05', label: 'Mayıs' },
-  { value: '06', label: 'Haziran' },
+  { value: '', label: 'This Month' },
+  { value: '09', label: 'September' }, { value: '10', label: 'October' }, { value: '11', label: 'November' },
+  { value: '12', label: 'December' }, { value: '01', label: 'January' }, { value: '02', label: 'February' },
+  { value: '03', label: 'March' }, { value: '04', label: 'April' }, { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
 ]
 
 interface Summary {
@@ -107,11 +107,11 @@ export default function StaffAnalyticsPage() {
     try {
       await exportStaffExcel({
         summary: {
-          'Toplam Devamsızlık': data.summary.totalAbsent,
-          'Toplam Geç Kalma':  data.summary.totalLate,
-          'En Kötü Sınıf':    data.summary.worstClass,
-          'Bildirilen':        data.summary.notified,
-          'Bekleyen':          data.summary.pending,
+          'Total Absences':   data.summary.totalAbsent,
+          'Total Late':       data.summary.totalLate,
+          'Worst Class':      data.summary.worstClass,
+          'Notified':         data.summary.notified,
+          'Pending':          data.summary.pending,
         },
         trend:         data.trend,
         byClass:       data.byClass,
@@ -130,7 +130,7 @@ export default function StaffAnalyticsPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push('/staff-panel')} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
-              <h1 className="text-lg font-bold text-gray-900">Devamsızlık Raporları</h1>
+              <h1 className="text-lg font-bold text-gray-900">Attendance Reports</h1>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExport} disabled={exporting || !data} className="btn-secondary text-sm disabled:opacity-50">
@@ -151,32 +151,32 @@ export default function StaffAnalyticsPage() {
             {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
           <select value={classId} onChange={e => setClassId(e.target.value)} className="input-field text-sm">
-            <option value="">Tüm Sınıflar</option>
+            <option value="">All Classes</option>
             {data?.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Yenile</button>
+          <button onClick={fetchData} className="btn-secondary text-sm">🔄 Refresh</button>
         </div>
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <SummaryCard icon="❌" title="Devamsızlık"    value={s?.totalAbsent ?? '—'}  color="bg-red-50" />
-          <SummaryCard icon="⏰" title="Geç Kalma"      value={s?.totalLate   ?? '—'}  color="bg-amber-50" />
-          <SummaryCard icon="🏫" title="En Kötü Sınıf" value={s?.worstClass  || '—'}  color="bg-orange-50" />
-          <SummaryCard icon="✅" title="Bildirilen"     value={s?.notified    ?? '—'}  color="bg-green-50" />
-          <SummaryCard icon="⏳" title="Bekleyen"       value={s?.pending     ?? '—'}  color="bg-yellow-50" />
+          <SummaryCard icon="❌" title="Absences"      value={s?.totalAbsent ?? '—'}  color="bg-red-50" />
+          <SummaryCard icon="⏰" title="Late Arrivals" value={s?.totalLate   ?? '—'}  color="bg-amber-50" />
+          <SummaryCard icon="🏫" title="Worst Class"   value={s?.worstClass  || '—'}  color="bg-orange-50" />
+          <SummaryCard icon="✅" title="Notified"       value={s?.notified    ?? '—'}  color="bg-green-50" />
+          <SummaryCard icon="⏳" title="Pending"        value={s?.pending     ?? '—'}  color="bg-yellow-50" />
         </div>
 
         {/* Trend */}
-        <Section title="Aylık Devamsızlık Trendi (Son 6 Ay)">
+        <Section title="Monthly Absence Trend (Last 6 Months)">
           <AttendanceTrend data={data?.trend ?? []} loading={loading} />
         </Section>
 
         {/* By-class */}
-        <Section title="Sınıf Bazlı Devamsızlık">
+        <Section title="Absences by Class">
           {loading ? (
             <div className="h-32 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : !data?.byClass.length ? (
-            <p className="text-center text-gray-400 py-8 text-sm">Veri yok</p>
+            <p className="text-center text-gray-400 py-8 text-sm">No data</p>
           ) : (
             <div className="space-y-2">
               {data.byClass.map((row, i) => (
@@ -198,23 +198,23 @@ export default function StaffAnalyticsPage() {
         </Section>
 
         {/* Chronic absentees */}
-        <Section title={`Kronik Devamsızlar ${data?.chronicAbsent.length ? `(${data.chronicAbsent.length})` : ''}`}>
+        <Section title={`Chronically Absent Students ${data?.chronicAbsent.length ? `(${data.chronicAbsent.length})` : ''}`}>
           {loading ? (
             <div className="h-32 flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
           ) : !data?.chronicAbsent.length ? (
             <div className="text-center py-8">
               <div className="text-3xl mb-2">✅</div>
-              <p className="text-sm text-gray-400">Kronik devamsız öğrenci yok</p>
+              <p className="text-sm text-gray-400">No chronically absent students</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Öğrenci</th>
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Sınıf</th>
-                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Gün</th>
-                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Bildirim</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Student</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Class</th>
+                    <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Days</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Notification</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,9 +227,9 @@ export default function StaffAnalyticsPage() {
                       </td>
                       <td className="px-4 py-2.5">
                         {row.notified ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Bildirildi</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Notified</span>
                         ) : (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Bekliyor</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Pending</span>
                         )}
                       </td>
                     </tr>

@@ -27,7 +27,7 @@ interface GeneratedPlan {
 const CURRICULUM_TYPES = [
   { value: 'IB',          label: 'IB',          full: 'International Baccalaureate', desc: 'Inquiry-based, conceptual learning', color: 'border-blue-400 bg-blue-50' },
   { value: 'AP',          label: 'AP',           full: 'Advanced Placement',          desc: 'College-level rigor, exam prep',    color: 'border-purple-400 bg-purple-50' },
-  { value: 'NATIONAL',    label: 'National',     full: 'Milli Müfredat (MEB)',         desc: 'Turkish national curriculum',      color: 'border-red-400 bg-red-50' },
+  { value: 'NATIONAL',    label: 'National',     full: 'National Curriculum (MEB)',      desc: 'Turkish national curriculum',      color: 'border-red-400 bg-red-50' },
   { value: 'IGCSE',       label: 'IGCSE',        full: 'International GCSE',           desc: 'Cambridge curriculum',             color: 'border-green-400 bg-green-50' },
   { value: 'COMMON_CORE', label: 'Common Core',  full: 'US Common Core',               desc: 'College & career readiness',       color: 'border-orange-400 bg-orange-50' },
 ]

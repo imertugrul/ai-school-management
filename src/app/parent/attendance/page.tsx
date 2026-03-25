@@ -14,7 +14,7 @@ const STATUS_COLOR: Record<string, string> = {
   LATE: 'bg-amber-100 text-amber-700', EXCUSED: 'bg-blue-100 text-blue-700',
 }
 const STATUS_LABEL: Record<string, string> = {
-  PRESENT: 'Mevcut', ABSENT: 'Devamsız', LATE: 'Geç Geldi', EXCUSED: 'Mazeretli',
+  PRESENT: 'Present', ABSENT: 'Absent', LATE: 'Late', EXCUSED: 'Excused',
 }
 const STATUS_DOT: Record<string, string> = {
   PRESENT: 'bg-green-400', ABSENT: 'bg-red-500', LATE: 'bg-amber-400', EXCUSED: 'bg-blue-400',
@@ -67,7 +67,7 @@ export default function ParentAttendance() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Devamsızlık</h1>
+        <h1 className="text-xl font-bold text-gray-900">Attendance</h1>
         <p className="text-sm text-gray-400">{selectedChild?.name}</p>
       </div>
 
@@ -81,10 +81,10 @@ export default function ParentAttendance() {
       {/* Summary */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Mevcut', value: summary.present, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Devamsız', value: summary.absent, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Geç', value: summary.late, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Mazeretli', value: summary.excused, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Present', value: summary.present, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Absent', value: summary.absent, color: 'text-red-600', bg: 'bg-red-50' },
+          { label: 'Late', value: summary.late, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Excused', value: summary.excused, color: 'text-blue-600', bg: 'bg-blue-50' },
         ].map(c => (
           <div key={c.label} className={`${c.bg} rounded-2xl p-3 text-center`}>
             <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
@@ -96,7 +96,7 @@ export default function ParentAttendance() {
       {/* Rate bar */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Devam Oranı</span>
+          <span className="text-sm font-medium text-gray-700">Attendance Rate</span>
           <span className={`text-lg font-bold ${attendRate >= 90 ? 'text-green-600' : attendRate >= 80 ? 'text-amber-600' : 'text-red-600'}`}>%{attendRate}</span>
         </div>
         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -107,7 +107,7 @@ export default function ParentAttendance() {
       {/* Calendar */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="grid grid-cols-7 mb-2">
-          {['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>)}
+          {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>)}
         </div>
         {loading ? (
           <div className="h-24 flex items-center justify-center"><div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -127,7 +127,7 @@ export default function ParentAttendance() {
           </div>
         )}
         <div className="flex gap-3 mt-3 flex-wrap">
-          {[['PRESENT','Mevcut'],['ABSENT','Devamsız'],['LATE','Geç'],['EXCUSED','Mazeretli']].map(([s,l]) => (
+          {[['PRESENT','Present'],['ABSENT','Absent'],['LATE','Late'],['EXCUSED','Excused']].map(([s,l]) => (
             <div key={s} className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded-full ${STATUS_DOT[s]}`} />
               <span className="text-xs text-gray-400">{l}</span>
@@ -139,7 +139,7 @@ export default function ParentAttendance() {
       {/* Detail list */}
       {nonPresent.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">Devamsızlık Detayı</h3></div>
+          <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">Absence Detail</h3></div>
           {nonPresent.map(r => (
             <div key={r.id} className="px-4 py-3 flex items-start gap-3 border-b border-gray-50 last:border-0">
               <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[r.status]}`} />
@@ -152,10 +152,10 @@ export default function ParentAttendance() {
                 {r.notification && (
                   <p className="text-xs mt-0.5">
                     {r.notification.whatsappSent || r.notification.emailSent
-                      ? <span className="text-green-600">✓ Veli bilgilendirildi</span>
+                      ? <span className="text-green-600">✓ Parent notified</span>
                       : r.notification.status === 'PENDING'
-                        ? <span className="text-amber-600">⏳ Onay bekliyor</span>
-                        : <span className="text-gray-400">Henüz bildirilmedi</span>
+                        ? <span className="text-amber-600">⏳ Pending approval</span>
+                        : <span className="text-gray-400">Not yet notified</span>
                     }
                   </p>
                 )}
@@ -166,7 +166,7 @@ export default function ParentAttendance() {
       )}
 
       {!loading && records.length === 0 && (
-        <div className="text-center py-10"><div className="text-4xl mb-2">📅</div><p className="text-sm text-gray-400">Bu ay için yoklama kaydı yok.</p></div>
+        <div className="text-center py-10"><div className="text-4xl mb-2">📅</div><p className="text-sm text-gray-400">No attendance records for this month.</p></div>
       )}
     </div>
   )

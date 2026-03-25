@@ -27,7 +27,7 @@ export default function AttendanceTrend({ data, loading, showPresent }: Props) {
         <XAxis dataKey="month" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip />
-        <Legend formatter={(v: string) => ({ absent: 'Devamsız', late: 'Geç', excused: 'Mazeretli', present: 'Mevcut' }[v] ?? v)} />
+        <Legend formatter={(v: string) => ({ absent: 'Absent', late: 'Late', excused: 'Excused', present: 'Present' }[v] ?? v)} />
         <Line type="monotone" dataKey="absent" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} name="absent" />
         <Line type="monotone" dataKey="late"   stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name="late" />
         {data[0]?.excused !== undefined && <Line type="monotone" dataKey="excused" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="excused" />}

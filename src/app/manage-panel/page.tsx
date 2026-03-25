@@ -176,8 +176,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/staff',
     icon: '👔',
-    title: 'Personel Yönetimi',
-    description: 'Müdür yardımcısı, rehber öğretmen ve sekreter hesapları',
+    title: 'Staff Management',
+    description: 'Vice principal, counselor, and secretary accounts',
     gradient: 'from-indigo-500 to-violet-600',
     shadow: 'shadow-indigo-500/30',
     hover: 'hover:border-indigo-300',
@@ -188,8 +188,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/attendance-review',
     icon: '📋',
-    title: 'Devamsızlık Onayı',
-    description: 'Devamsızlık bildirimlerini incele ve velilere gönder',
+    title: 'Attendance Approval',
+    description: 'Review absence notifications and send to guardians',
     gradient: 'from-red-500 to-rose-600',
     shadow: 'shadow-red-500/30',
     hover: 'hover:border-red-300',
@@ -200,8 +200,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/gdpr',
     icon: '🛡️',
-    title: 'KVKK & Gizlilik',
-    description: 'Veri silme günlükleri ve yapay zeka denetim izi',
+    title: 'GDPR & Privacy',
+    description: 'Data deletion logs and AI audit trail',
     gradient: 'from-slate-500 to-slate-700',
     shadow: 'shadow-slate-500/30',
     hover: 'hover:border-slate-300',
@@ -212,8 +212,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/settings/2fa',
     icon: '🔐',
-    title: '2FA Ayarları',
-    description: 'İki adımlı doğrulamayı etkinleştir veya devre dışı bırak',
+    title: '2FA Settings',
+    description: 'Enable or disable two-factor authentication',
     gradient: 'from-gray-700 to-gray-900',
     shadow: 'shadow-gray-700/30',
     hover: 'hover:border-gray-400',
@@ -287,9 +287,9 @@ export default function AdminPage() {
             <span className="text-2xl">⏳</span>
             <div className="flex-1">
               <p className="font-semibold text-red-800 text-sm">
-                {pendingAbsences} devamsızlık bildirimi onay bekliyor
+                {pendingAbsences} absence notification(s) awaiting approval
               </p>
-              <p className="text-xs text-red-600">Devamsızlık Onay Paneline git →</p>
+              <p className="text-xs text-red-600">Go to Attendance Approval Panel →</p>
             </div>
           </button>
         )}
@@ -303,9 +303,9 @@ export default function AdminPage() {
             <span className="text-2xl">⚠️</span>
             <div className="flex-1">
               <p className="font-semibold text-amber-800 text-sm">
-                {missingGuardians} öğrencinin veli bilgisi eksik
+                {missingGuardians} student(s) have missing guardian information
               </p>
-              <p className="text-xs text-amber-600">Veli Yönetimi sayfasına git →</p>
+              <p className="text-xs text-amber-600">Go to Guardian Management page →</p>
             </div>
           </button>
         )}
