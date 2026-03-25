@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Çevrimdışı — SchoolPro AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F8FAFC;
+      font-family: Inter, system-ui, sans-serif;
+      padding: 24px;
+    }
+    .card {
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 36px;
+      box-shadow: 0 8px 32px rgba(30,58,95,0.25);
+    }
+    .offline-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 14px;
+      color: #64748B;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .tips {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 28px;
+    }
+    .tips h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tips ul {
+      list-style: none;
+      padding: 0;
+    }
+    .tips ul li {
+      font-size: 13px;
+      color: #64748B;
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+    .tips ul li::before {
+      content: '•';
+      position: absolute;
+      left: 6px;
+      color: #F59E0B;
+      font-weight: bold;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 14px rgba(30,58,95,0.3);
+    }
+    .btn:active { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🏫</div>
+    <div class="offline-icon">📡</div>
+    <h1>İnternet Bağlantısı Yok</h1>
+    <p>
+      Şu anda çevrimdışısınız. İnternet bağlantınızı kontrol edip tekrar deneyin.
+      Bazı sayfalar önbelleğe alındığı için çevrimdışı da görüntülenebilir.
+    </p>
+    <div class="tips">
+      <h3>Ne yapabilirsiniz?</h3>
+      <ul>
+        <li>Wi-Fi veya mobil veri bağlantınızı kontrol edin</li>
+        <li>Uçak modunu kapatın</li>
+        <li>Sayfayı yenileyin ve tekrar deneyin</li>
+      </ul>
+    </div>
+    <button class="btn" onclick="window.location.reload()">Tekrar Dene</button>
+  </div>
+</body>
+</html>

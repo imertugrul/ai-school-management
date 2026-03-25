@@ -89,6 +89,18 @@ export function generateMetadata(): Metadata {
       },
     },
 
+    manifest: '/manifest.json',
+
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'SchoolPro AI',
+    },
+
+    formatDetection: {
+      telephone: false,
+    },
+
     other: {
       ...Sentry.getTraceData(),
     },
@@ -98,6 +110,10 @@ export function generateMetadata(): Metadata {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
+      <head>
+        <meta name="theme-color" content="#1E3A5F" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className={inter.className}>
         <GoogleAnalytics />
         <RootProviders>{children}</RootProviders>

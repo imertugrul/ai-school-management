@@ -77,3 +77,13 @@ prisma/.env
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# PWA (next-pwa generated)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/worker-*.js
+public/worker-*.js.map
+public/fallback-*.js
+public/fallback-*.js.map
