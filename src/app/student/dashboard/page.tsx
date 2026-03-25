@@ -11,7 +11,9 @@ export default function StudentDashboard() {
     coursesEnrolled: 0,
     averageGrade: 0,
     attendanceRate: 0,
-    pendingTests: 0
+    pendingTests: 0,
+    isNinthGrade: false,
+    unipathCompletion: 0,
   })
 
   useEffect(() => {
@@ -183,6 +185,51 @@ export default function StudentDashboard() {
             </div>
           ))}
         </div>
+
+        {/* UniPath Card — Grade 9 only */}
+        {stats.isNinthGrade && (
+          <div className="mb-6">
+            <button
+              onClick={() => router.push('/student/unipath')}
+              className="group w-full text-left rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-6 shadow-sm hover:shadow-lg hover:border-indigo-300 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                    <span className="text-white text-xl">🎓</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900">University Advisor</h3>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">NEW</span>
+                    </div>
+                    <p className="text-sm text-gray-500">AI-powered university application guide</p>
+                  </div>
+                </div>
+                <span className="text-indigo-500 text-lg group-hover:translate-x-1 transition-transform">→</span>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-indigo-700">Profile Completion</span>
+                  <span className="text-xs font-bold text-indigo-600">{stats.unipathCompletion}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-indigo-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-700"
+                    style={{ width: `${stats.unipathCompletion}%` }}
+                  />
+                </div>
+                <p className="text-xs text-indigo-600 mt-2 font-medium">
+                  {stats.unipathCompletion === 0
+                    ? 'Start planning your university application with AI guidance →'
+                    : stats.unipathCompletion < 50
+                    ? 'Continue setting up your profile →'
+                    : 'Your profile is looking great! Keep going →'}
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* Main Actions */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

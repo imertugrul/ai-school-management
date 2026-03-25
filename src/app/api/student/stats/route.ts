@@ -11,12 +11,15 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email! }
+      where: { email: session.user.email! },
+      include: { class: { select: { grade: true } } }
     })
 
     if (!user || user.role !== 'STUDENT') {
       return NextResponse.json({ error: 'Student access required' }, { status: 403 })
     }
+
+    const isNinthGrade = user.class?.grade === '9'
 
     // Courses enrolled (via class assignments)
     const coursesEnrolled = user.classId
@@ -62,13 +65,34 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // UniPath profile completion (only for grade 9)
+    let unipathCompletion = 0
+    if (isNinthGrade) {
+      const uniProfile = await prisma.universityProfile.findUnique({ where: { studentId: user.id } })
+      if (uniProfile) {
+        const checks = [
+          (uniProfile.targetRegion as string[])?.length > 0,
+          !!uniProfile.educationLevel,
+          !!uniProfile.startYear,
+          !!uniProfile.fieldOfInterest,
+          uniProfile.gpa != null,
+          !!uniProfile.examScores,
+          !!uniProfile.universityList,
+          !!uniProfile.documentStatus,
+        ]
+        unipathCompletion = Math.round((checks.filter(Boolean).length / checks.length) * 100)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       stats: {
         coursesEnrolled,
         averageGrade,
         attendanceRate,
-        pendingTests: Math.max(0, assignments - submitted)
+        pendingTests: Math.max(0, assignments - submitted),
+        isNinthGrade,
+        unipathCompletion,
       }
     })
 

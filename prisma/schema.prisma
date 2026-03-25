@@ -91,6 +91,7 @@ model User {
   libraryQuestions      LibraryQuestion[] @relation("TeacherLibrary")
   socialPosts           SocialPost[]   @relation("AuthorPosts")
   mediaLibrary          MediaLibraryItem[] @relation("MediaLibrary")
+  universityProfile     UniversityProfile?  @relation("StudentUniversityProfile")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -938,4 +939,52 @@ model PerformanceBulletin {
 
   @@unique([teacherId, studentId, month])
   @@index([classId, month])
+}
+
+// ─── UniPath University Advisor ────────────────────────────────────────────────
+model UniversityProfile {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  student   User     @relation("StudentUniversityProfile", fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Phase 1 — Target
+  targetRegion      String[]  @default([])
+  educationLevel    String?
+  startYear         String?
+  fieldOfInterest   String?
+  scholarshipNeeded String?
+
+  // Phase 2 — Academic Profile
+  diplomaSystem     String?
+  gradeSystem       String?
+  gpa               Float?
+  currentGrade      String?
+  examScores        Json?
+
+  // Phase 3 — Extracurricular
+  activities        Json?
+
+  // Phase 4 — Portfolio
+  portfolioStatus   String?
+  portfolioItems    Json?
+
+  // Phase 5 — Recommendation Letters
+  recommendationLetters Json?
+
+  // Phase 6 — University List
+  universityList    Json?
+
+  // Phase 7 — Document Status
+  documentStatus    Json?
+
+  // Phase 8 — Timeline
+  applicationYear   String?
+  nextDeadline      DateTime?
+
+  // Chat history (last 50 messages)
+  chatHistory       Json?
+  lastActivePhase   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
