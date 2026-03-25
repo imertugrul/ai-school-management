@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
 import { logAiCall } from '@/lib/aiLogger'
 import Anthropic from '@anthropic-ai/sdk'
+import { handleApiError } from '@/lib/apiError'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -97,8 +98,6 @@ Instagram caption max 2200 karakter, Twitter max 280 karakter, LinkedIn max 3000
 
     return NextResponse.json({ success: true, generated })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('POST /api/social-media/generate error:', error)
-    return NextResponse.json({ error: message }, { status: 500 })
+    return handleApiError(error, 'social-media/generate')
   }
 }

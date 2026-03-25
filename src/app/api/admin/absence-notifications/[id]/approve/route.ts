@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
+import { handleApiError } from '@/lib/apiError'
 import { sendAbsenceNotification } from '@/lib/notifications/absenceNotification'
 
 const ALLOWED_ROLES = ['ADMIN', 'VICE_PRINCIPAL']
@@ -46,7 +47,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     return NextResponse.json({ success: true, notification: updated, delivery: result })
   } catch (error) {
-    console.error('absence-notifications approve error:', error)
-    return NextResponse.json({ error: 'Failed to approve notification' }, { status: 500 })
+    return handleApiError(error, 'admin/absence-notifications/approve')
   }
 }

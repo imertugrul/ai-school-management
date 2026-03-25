@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
+import { handleApiError } from '@/lib/apiError'
 import { sendEmail } from '@/lib/email'
 import { buildBulletinEmail } from '@/lib/emails/bulletinTemplate'
 
@@ -95,6 +96,6 @@ export async function POST(_req: NextRequest, { params }: Ctx) {
 
     return NextResponse.json({ bulletin: updated, sentToCount: sentCount })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return handleApiError(error, 'teacher/bulletins/send')
   }
 }

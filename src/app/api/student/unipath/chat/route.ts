@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
 import { UNIPATH_MASTER_PROMPT } from '@/lib/unipath/masterPrompt'
+import { handleApiError } from '@/lib/apiError'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -161,7 +162,6 @@ Use this context to personalize your responses. If the student mentions new info
       },
     })
   } catch (error: any) {
-    console.error('UniPath chat error:', error)
-    return NextResponse.json({ error: 'Failed to process chat' }, { status: 500 })
+    return handleApiError(error, 'unipath/chat')
   }
 }
