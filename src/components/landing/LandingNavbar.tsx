@@ -48,12 +48,18 @@ export default function LandingNavbar() {
     { icon: '👨‍🎓', label: t.nav.modStudent,       href: '/features/student' },
     { icon: '👨‍👩‍👧', label: t.nav.modParent,        href: '/features/parent' },
     { divider: true },
+    { icon: '👑', label: t.nav.modAdmin,          href: '/features/admin' },
+    { icon: '🏫', label: t.nav.modStaff,          href: '/features/staff' },
+    { divider: true },
     { icon: '🤖', label: t.nav.modAiPlanner,     href: '/features/ai-planner' },
     { icon: '📝', label: t.nav.modTests,         href: '/features/test-system' },
     { icon: '📊', label: t.nav.modGradebook,     href: '/features/gradebook' },
     { icon: '📅', label: t.nav.modAttendance,    href: '/features/attendance' },
     { icon: '📈', label: t.nav.modAnalytics,     href: '/features/analytics' },
     { icon: '💬', label: t.nav.modCommunication, href: '/features/communication' },
+    { divider: true },
+    { icon: '📱', label: t.nav.modSocialMedia,   href: '/features/social-media' },
+    { icon: '🔒', label: t.nav.modSecurity,      href: '/features/security' },
   ] as ({ icon: string; label: string; href: string } | { divider: true })[]
 
   const textColor = scrolled ? 'var(--text-muted)' : 'rgba(15,23,42,0.7)'
@@ -97,7 +103,7 @@ export default function LandingNavbar() {
               {featOpen && (
                 <div
                   className="absolute left-0 top-full mt-2 rounded-2xl shadow-2xl overflow-hidden z-50 py-2"
-                  style={{ backgroundColor: '#fff', border: '1px solid var(--gray-200)', width: '220px' }}
+                  style={{ backgroundColor: '#fff', border: '1px solid var(--gray-200)', width: '240px' }}
                 >
                   {featureModules.map((item, idx) => {
                     if ('divider' in item) {

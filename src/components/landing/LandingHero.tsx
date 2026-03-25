@@ -68,7 +68,7 @@ export default function LandingHero() {
 
         {/* Trust indicators */}
         <div className="flex flex-wrap justify-center gap-6">
-          {[t.hero.trust1, t.hero.trust2, t.hero.trust3].map(item => (
+          {[t.hero.trust1, t.hero.trust2, t.hero.trust3, t.hero.trust4].map(item => (
             <span key={item} className="flex items-center gap-1.5 font-body text-sm"
               style={{ color: 'var(--text-muted)' }}>
               <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓</span> {item}

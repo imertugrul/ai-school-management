@@ -10,6 +10,9 @@ import LandingHero         from '@/components/landing/LandingHero'
 import LandingStats        from '@/components/landing/LandingStats'
 import LandingRoles        from '@/components/landing/LandingRoles'
 import LandingFeatures     from '@/components/landing/LandingFeatures'
+import LandingSocialHub   from '@/components/landing/LandingSocialHub'
+import LandingSecurity    from '@/components/landing/LandingSecurity'
+import LandingComparison  from '@/components/landing/LandingComparison'
 import LandingHowItWorks   from '@/components/landing/LandingHowItWorks'
 import LandingTestimonials from '@/components/landing/LandingTestimonials'
 import LandingPricing      from '@/components/landing/LandingPricing'
@@ -54,8 +57,11 @@ export default function HomePage() {
         <LandingStats />
         <LandingRoles />
         <LandingFeatures />
+        <LandingSocialHub />
         <LandingHowItWorks />
+        <LandingSecurity />
         <LandingTestimonials />
+        <LandingComparison />
         <LandingPricing />
         <LandingFAQ />
         <LandingContact />

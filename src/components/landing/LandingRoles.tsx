@@ -31,6 +31,24 @@ const ROLES = [
     shadow: 'rgba(124,58,237,0.14)',
     border: 'rgba(124,58,237,0.2)',
   },
+  {
+    key: 'admin' as const,
+    icon: '👑',
+    href: '/features/admin',
+    accent: '#D97706',
+    pale: '#FEF3C7',
+    shadow: 'rgba(217,119,6,0.14)',
+    border: 'rgba(217,119,6,0.2)',
+  },
+  {
+    key: 'staff' as const,
+    icon: '🏫',
+    href: '/features/staff',
+    accent: '#475569',
+    pale: '#F1F5F9',
+    shadow: 'rgba(71,85,105,0.12)',
+    border: 'rgba(71,85,105,0.18)',
+  },
 ]
 
 export default function LandingRoles() {
@@ -68,7 +86,7 @@ export default function LandingRoles() {
         </div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {ROLES.map((role, i) => {
             const data = t.roles[role.key]
             return (
