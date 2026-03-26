@@ -28,6 +28,10 @@ const nextConfig = {
           { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'X-DNS-Prefetch-Control',  value: 'on' },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-src 'self' https://www.geogebra.org https://geogebra.org https://www.desmos.com https://desmos.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.desmos.com https://www.googletagmanager.com;",
+          },
         ],
       },
       {

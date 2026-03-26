@@ -23,9 +23,46 @@ export async function gradeAnswer(
     options?: any
     correctAnswer?: string
     rubric?: any
+    config?: any
   },
   studentAnswer: string
 ): Promise<GradingResult> {
+
+  // GeoGebra / Desmos grading
+  if (question.type === 'GEOGEBRA' || question.type === 'DESMOS') {
+    const cfg = question.config as { responseType?: string; correctAnswer?: string; tolerance?: number } | null
+    const responseType = cfg?.responseType ?? 'observe'
+
+    // Observe: automatic full score
+    if (responseType === 'observe') {
+      return { score: question.points, maxScore: question.points, feedback: 'Tam puan (gözlem sorusu).', confidence: 1, tokensUsed: 0 }
+    }
+
+    // Numeric: exact match within tolerance
+    if (responseType === 'numeric') {
+      const expected = parseFloat(cfg?.correctAnswer ?? '')
+      const actual   = parseFloat(studentAnswer ?? '')
+      if (isNaN(expected)) {
+        return { score: question.points, maxScore: question.points, feedback: 'Doğru cevap tanımlanmamış, tam puan verildi.', confidence: 0.5, tokensUsed: 0 }
+      }
+      if (isNaN(actual)) {
+        return { score: 0, maxScore: question.points, feedback: 'Geçerli bir sayı girilmedi.', confidence: 1, tokensUsed: 0 }
+      }
+      const tolerance = cfg?.tolerance ?? 0.01
+      const isCorrect = Math.abs(actual - expected) <= tolerance
+      return {
+        score: isCorrect ? question.points : 0,
+        maxScore: question.points,
+        feedback: isCorrect ? `Doğru! (Beklenen: ${expected}, Tolerans: ±${tolerance})` : `Yanlış. Beklenen cevap: ${expected} (±${tolerance}), Girilen: ${actual}`,
+        confidence: 1,
+        tokensUsed: 0,
+      }
+    }
+
+    // Text: fall through to SHORT_ANSWER AI grading logic below using correctAnswer as expected
+    // Re-route as SHORT_ANSWER for AI evaluation
+    question = { ...question, type: 'SHORT_ANSWER', correctAnswer: cfg?.correctAnswer }
+  }
 
   // Multiple Choice - Exact match (no AI needed)
   if (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') {

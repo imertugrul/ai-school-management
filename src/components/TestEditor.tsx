@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import GeoGebraEditor, { GeoGebraConfig } from './questions/GeoGebraEditor'
+import DesmosEditor, { DesmosConfig } from './questions/DesmosEditor'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type QType =
@@ -84,7 +86,7 @@ const B_TYPES: { value: BType; label: string; icon: string }[] = [
   { value: 'EMBED',      label: 'Custom Embed',        icon: '</>' },
 ]
 
-const ADVANCED_TYPES: QType[] = ['DRAWING','LABEL_DRAG','LABEL_FILL','HOTSPOT','GEOGEBRA','DESMOS','AUDIO_RESPONSE','GROUP']
+const ADVANCED_TYPES: QType[] = ['DRAWING','LABEL_DRAG','LABEL_FILL','HOTSPOT','AUDIO_RESPONSE','GROUP']
 
 const uid = () => Math.random().toString(36).slice(2)
 
@@ -579,6 +581,18 @@ function QuestionEditor({ item, onUpdate }: { item: QItem; onUpdate: (p:any)=>vo
           {item.type === 'SORT' && <SortEditor item={item} onUpdate={onUpdate} />}
           {item.type === 'CLASSIFY' && <ClassifyEditor item={item} onUpdate={onUpdate} />}
           {item.type === 'TABLE' && <TableEditor item={item} onUpdate={onUpdate} />}
+          {item.type === 'GEOGEBRA' && (
+            <GeoGebraEditor
+              config={item.config as GeoGebraConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'DESMOS' && (
+            <DesmosEditor
+              config={item.config as DesmosConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
         </>
       )}
 

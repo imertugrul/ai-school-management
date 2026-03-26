@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+const GeoGebraStudent = dynamic(() => import('@/components/questions/GeoGebraStudent'), { ssr: false })
+const DesmosStudent   = dynamic(() => import('@/components/questions/DesmosStudent'),   { ssr: false })
 
 interface Question {
   id: string
@@ -10,6 +14,7 @@ interface Question {
   content: string
   points: number
   options?: any
+  config?: any
   orderIndex: number
 }
 
@@ -294,6 +299,22 @@ export default function TakeTestPage() {
               value={answers[currentQuestion.id] || ''}
               onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
               placeholder={currentQuestion.type === 'CODE' ? 'Write your code here...' : 'Write your answer here...'}
+            />
+          )}
+
+          {currentQuestion.type === 'GEOGEBRA' && currentQuestion.config && (
+            <GeoGebraStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'DESMOS' && currentQuestion.config && (
+            <DesmosStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
             />
           )}
         </div>
