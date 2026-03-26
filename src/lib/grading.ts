@@ -157,6 +157,34 @@ export async function gradeAnswer(
     }
   }
 
+  // ── Group ──────────────────────────────────────────────────────────────────
+  if (question.type === 'GROUP') {
+    const cfg = question.config as { subQuestions?: Array<{ id: string; type: string; content: string; points: number; options?: string[]; correctAnswer?: string; config?: any; rubric?: string }> } | null
+    if (!cfg?.subQuestions?.length) {
+      return { score: 0, maxScore: question.points, feedback: 'Alt soru tanımı yok.', confidence: 0, tokensUsed: 0 }
+    }
+    let groupAnswers: Record<string, string> = {}
+    try { groupAnswers = JSON.parse(studentAnswer) } catch { /* empty */ }
+
+    let totalScore = 0
+    let totalTokens = 0
+    const feedbackParts: string[] = []
+    const maxScore = cfg.subQuestions.reduce((s, sq) => s + sq.points, 0)
+
+    for (let i = 0; i < cfg.subQuestions.length; i++) {
+      const sq = cfg.subQuestions[i]
+      const sqAnswer = groupAnswers[sq.id] ?? ''
+      const result = await gradeAnswer(
+        { type: sq.type, content: sq.content, points: sq.points, options: sq.options, correctAnswer: sq.correctAnswer, rubric: sq.rubric, config: sq.config },
+        sqAnswer,
+      )
+      totalScore += result.score
+      totalTokens += result.tokensUsed
+      feedbackParts.push(`Alt Soru ${i + 1}: ${result.feedback}`)
+    }
+    return { score: totalScore, maxScore, feedback: feedbackParts.join('\n'), confidence: 0.9, tokensUsed: totalTokens }
+  }
+
   // Multiple Choice - Exact match (no AI needed)
   if (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') {
     const isCorrect = studentAnswer.trim() === question.correctAnswer?.trim()

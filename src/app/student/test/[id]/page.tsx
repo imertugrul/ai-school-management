@@ -12,6 +12,7 @@ const LabelDragStudent     = dynamic(() => import('@/components/questions/LabelD
 const LabelFillStudent     = dynamic(() => import('@/components/questions/LabelFillStudent'),     { ssr: false })
 const HotspotStudent       = dynamic(() => import('@/components/questions/HotspotStudent'),       { ssr: false })
 const AudioResponseStudent = dynamic(() => import('@/components/questions/AudioResponseStudent'), { ssr: false })
+const GroupStudent         = dynamic(() => import('@/components/questions/GroupStudent'),         { ssr: false })
 
 interface Question {
   id: string
@@ -357,6 +358,14 @@ export default function TakeTestPage() {
 
           {currentQuestion.type === 'AUDIO_RESPONSE' && currentQuestion.config && (
             <AudioResponseStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'GROUP' && currentQuestion.config && (
+            <GroupStudent
               config={currentQuestion.config}
               value={answers[currentQuestion.id] || ''}
               onChange={v => handleAnswerChange(currentQuestion.id, v)}

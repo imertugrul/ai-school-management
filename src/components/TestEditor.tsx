@@ -9,6 +9,7 @@ import LabelDragEditor,      { LabelDragConfig }      from './questions/LabelDra
 import LabelFillEditor,      { LabelFillConfig }      from './questions/LabelFillEditor'
 import HotspotEditor,        { HotspotConfig }        from './questions/HotspotEditor'
 import AudioResponseEditor,  { AudioResponseConfig }  from './questions/AudioResponseEditor'
+import GroupEditor,          { GroupConfig }          from './questions/GroupEditor'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type QType =
@@ -91,7 +92,7 @@ const B_TYPES: { value: BType; label: string; icon: string }[] = [
   { value: 'EMBED',      label: 'Custom Embed',        icon: '</>' },
 ]
 
-const ADVANCED_TYPES: QType[] = ['GROUP']
+const ADVANCED_TYPES: QType[] = []
 
 const uid = () => Math.random().toString(36).slice(2)
 
@@ -549,22 +550,31 @@ function QuestionEditor({ item, onUpdate }: { item: QItem; onUpdate: (p:any)=>vo
         >
           {Q_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-gray-500">Points</label>
-          <input type="number" min="0" className="input-field w-20 text-sm" value={item.points} onChange={e => onUpdate({ points: Number(e.target.value) })} />
-        </div>
+        {item.type === 'GROUP' ? (
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500">Points</label>
+            <span className="text-sm font-semibold text-slate-600 bg-slate-100 rounded px-2 py-1">{item.points} (otomatik)</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500">Points</label>
+            <input type="number" min="0" className="input-field w-20 text-sm" value={item.points} onChange={e => onUpdate({ points: Number(e.target.value) })} />
+          </div>
+        )}
       </div>
 
-      {/* Question text */}
-      <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Question</label>
-        <textarea
-          rows={3} className="input-field resize-y text-sm"
-          placeholder="Write your question here…"
-          value={item.content}
-          onChange={e => onUpdate({ content: e.target.value })}
-        />
-      </div>
+      {/* Question text — hidden for GROUP (context lives inside GroupEditor) */}
+      {item.type !== 'GROUP' && (
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Question</label>
+          <textarea
+            rows={3} className="input-field resize-y text-sm"
+            placeholder="Write your question here…"
+            value={item.content}
+            onChange={e => onUpdate({ content: e.target.value })}
+          />
+        </div>
+      )}
 
       {/* Type-specific editors */}
       {isAdvanced ? (
@@ -626,6 +636,13 @@ function QuestionEditor({ item, onUpdate }: { item: QItem; onUpdate: (p:any)=>vo
             <AudioResponseEditor
               config={item.config as AudioResponseConfig | undefined}
               onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'GROUP' && (
+            <GroupEditor
+              config={item.config as GroupConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+              onPointsChange={total => onUpdate({ points: total })}
             />
           )}
         </>
