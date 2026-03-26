@@ -64,6 +64,99 @@ export async function gradeAnswer(
     question = { ...question, type: 'SHORT_ANSWER', correctAnswer: cfg?.correctAnswer }
   }
 
+  // ── Drawing ────────────────────────────────────────────────────────────────
+  if (question.type === 'DRAWING') {
+    const cfg = question.config as { gradingType?: string; rubric?: string } | null
+    if (cfg?.gradingType === 'ai' && studentAnswer) {
+      try {
+        const base64 = studentAnswer.includes('base64,') ? studentAnswer.split('base64,')[1] : studentAnswer
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: `Bu çizimi değerlendir. Beklenti: ${cfg.rubric || 'Genel değerlendirme yap'}. Puan: 0-${question.points} arası ver. JSON: {"score": number, "feedback": "string"}` },
+              { type: 'image_url', image_url: { url: `data:image/png;base64,${base64}`, detail: 'low' } },
+            ],
+          }],
+          response_format: { type: 'json_object' },
+        })
+        const result = JSON.parse(response.choices[0].message.content ?? '{}')
+        return { score: Math.min(result.score ?? 0, question.points), maxScore: question.points, feedback: result.feedback ?? '', confidence: 0.8, tokensUsed: response.usage?.total_tokens ?? 0 }
+      } catch {
+        return { score: 0, maxScore: question.points, feedback: 'AI değerlendirme başarısız. Manuel inceleme gerekli.', confidence: 0, tokensUsed: 0 }
+      }
+    }
+    // Manual: pending teacher review
+    return { score: 0, maxScore: question.points, feedback: 'Manuel değerlendirme bekliyor.', confidence: 0, tokensUsed: 0 }
+  }
+
+  // ── Label Drag ─────────────────────────────────────────────────────────────
+  if (question.type === 'LABEL_DRAG') {
+    const cfg = question.config as { labels?: Array<{ id: string; correctX: number; correctY: number }>; tolerance?: number } | null
+    if (!cfg?.labels?.length) return { score: question.points, maxScore: question.points, feedback: 'Etiket tanımı yok, tam puan.', confidence: 0.5, tokensUsed: 0 }
+    let placements: Record<string, { x: number; y: number }> = {}
+    try { placements = JSON.parse(studentAnswer) } catch { /* empty */ }
+    const tolerance = cfg.tolerance ?? 10
+    let correct = 0
+    const feedbackParts: string[] = []
+    for (const label of cfg.labels) {
+      const p = placements[label.id]
+      if (!p) { feedbackParts.push(`"${label.id}" yerleştirilmedi`); continue }
+      const dist = Math.sqrt(Math.pow(p.x - label.correctX, 2) + Math.pow(p.y - label.correctY, 2))
+      if (dist <= tolerance) { correct++; } else { feedbackParts.push(`"${label.id}" yanlış konumda`) }
+    }
+    const score = Math.round((correct / cfg.labels.length) * question.points)
+    return { score, maxScore: question.points, feedback: score === question.points ? 'Tüm etiketler doğru!' : feedbackParts.join(', '), confidence: 1, tokensUsed: 0 }
+  }
+
+  // ── Label Fill ─────────────────────────────────────────────────────────────
+  if (question.type === 'LABEL_FILL') {
+    const cfg = question.config as { labels?: Array<{ id: string; correctAnswers: string[]; caseSensitive: boolean }> } | null
+    if (!cfg?.labels?.length) return { score: question.points, maxScore: question.points, feedback: 'Etiket tanımı yok, tam puan.', confidence: 0.5, tokensUsed: 0 }
+    let answers: Record<string, string> = {}
+    try { answers = JSON.parse(studentAnswer) } catch { /* empty */ }
+    let correct = 0
+    for (const label of cfg.labels) {
+      const studentAns = answers[label.id]?.trim() ?? ''
+      const match = label.correctAnswers.some(ca =>
+        label.caseSensitive ? ca === studentAns : ca.toLowerCase() === studentAns.toLowerCase()
+      )
+      if (match) correct++
+    }
+    const score = Math.round((correct / cfg.labels.length) * question.points)
+    return { score, maxScore: question.points, feedback: `${correct}/${cfg.labels.length} etiket doğru.`, confidence: 1, tokensUsed: 0 }
+  }
+
+  // ── Hotspot ────────────────────────────────────────────────────────────────
+  if (question.type === 'HOTSPOT') {
+    const cfg = question.config as { hotspots?: Array<{ id: string }>; requireAll?: boolean } | null
+    if (!cfg?.hotspots?.length) return { score: question.points, maxScore: question.points, feedback: 'Hotspot tanımı yok, tam puan.', confidence: 0.5, tokensUsed: 0 }
+    let selected: string[] = []
+    try { selected = JSON.parse(studentAnswer) } catch { /* empty */ }
+    const correctIds = cfg.hotspots.map(h => h.id)
+    const correctHits = selected.filter(id => correctIds.includes(id)).length
+    if (cfg.requireAll) {
+      const score = Math.round((correctHits / correctIds.length) * question.points)
+      return { score, maxScore: question.points, feedback: `${correctHits}/${correctIds.length} alan doğru seçildi.`, confidence: 1, tokensUsed: 0 }
+    }
+    const isCorrect = correctHits >= 1
+    return { score: isCorrect ? question.points : 0, maxScore: question.points, feedback: isCorrect ? 'Doğru alan seçildi.' : 'Doğru alan seçilmedi.', confidence: 1, tokensUsed: 0 }
+  }
+
+  // ── Audio Response ─────────────────────────────────────────────────────────
+  if (question.type === 'AUDIO_RESPONSE') {
+    const cfg = question.config as { gradingType?: string; rubric?: string } | null
+    if (cfg?.gradingType === 'ai' && studentAnswer) {
+      // Transcript-based AI grading — route as SHORT_ANSWER with rubric
+      question = { ...question, type: 'SHORT_ANSWER', correctAnswer: cfg.rubric }
+      // Fall through to SHORT_ANSWER grading below
+    } else {
+      return { score: 0, maxScore: question.points, feedback: 'Manuel değerlendirme bekliyor.', confidence: 0, tokensUsed: 0 }
+    }
+  }
+
   // Multiple Choice - Exact match (no AI needed)
   if (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') {
     const isCorrect = studentAnswer.trim() === question.correctAnswer?.trim()

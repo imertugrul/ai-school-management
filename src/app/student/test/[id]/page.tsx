@@ -5,8 +5,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 
-const GeoGebraStudent = dynamic(() => import('@/components/questions/GeoGebraStudent'), { ssr: false })
-const DesmosStudent   = dynamic(() => import('@/components/questions/DesmosStudent'),   { ssr: false })
+const GeoGebraStudent      = dynamic(() => import('@/components/questions/GeoGebraStudent'),      { ssr: false })
+const DesmosStudent        = dynamic(() => import('@/components/questions/DesmosStudent'),        { ssr: false })
+const DrawingStudent       = dynamic(() => import('@/components/questions/DrawingStudent'),       { ssr: false })
+const LabelDragStudent     = dynamic(() => import('@/components/questions/LabelDragStudent'),     { ssr: false })
+const LabelFillStudent     = dynamic(() => import('@/components/questions/LabelFillStudent'),     { ssr: false })
+const HotspotStudent       = dynamic(() => import('@/components/questions/HotspotStudent'),       { ssr: false })
+const AudioResponseStudent = dynamic(() => import('@/components/questions/AudioResponseStudent'), { ssr: false })
 
 interface Question {
   id: string
@@ -312,6 +317,46 @@ export default function TakeTestPage() {
 
           {currentQuestion.type === 'DESMOS' && currentQuestion.config && (
             <DesmosStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'DRAWING' && currentQuestion.config && (
+            <DrawingStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'LABEL_DRAG' && currentQuestion.config && (
+            <LabelDragStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'LABEL_FILL' && currentQuestion.config && (
+            <LabelFillStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'HOTSPOT' && currentQuestion.config && (
+            <HotspotStudent
+              config={currentQuestion.config}
+              value={answers[currentQuestion.id] || ''}
+              onChange={v => handleAnswerChange(currentQuestion.id, v)}
+            />
+          )}
+
+          {currentQuestion.type === 'AUDIO_RESPONSE' && currentQuestion.config && (
+            <AudioResponseStudent
               config={currentQuestion.config}
               value={answers[currentQuestion.id] || ''}
               onChange={v => handleAnswerChange(currentQuestion.id, v)}

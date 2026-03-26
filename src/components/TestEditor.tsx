@@ -2,8 +2,13 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import GeoGebraEditor, { GeoGebraConfig } from './questions/GeoGebraEditor'
-import DesmosEditor, { DesmosConfig } from './questions/DesmosEditor'
+import GeoGebraEditor,      { GeoGebraConfig }      from './questions/GeoGebraEditor'
+import DesmosEditor,         { DesmosConfig }         from './questions/DesmosEditor'
+import DrawingEditor,        { DrawingConfig }        from './questions/DrawingEditor'
+import LabelDragEditor,      { LabelDragConfig }      from './questions/LabelDragEditor'
+import LabelFillEditor,      { LabelFillConfig }      from './questions/LabelFillEditor'
+import HotspotEditor,        { HotspotConfig }        from './questions/HotspotEditor'
+import AudioResponseEditor,  { AudioResponseConfig }  from './questions/AudioResponseEditor'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type QType =
@@ -86,7 +91,7 @@ const B_TYPES: { value: BType; label: string; icon: string }[] = [
   { value: 'EMBED',      label: 'Custom Embed',        icon: '</>' },
 ]
 
-const ADVANCED_TYPES: QType[] = ['DRAWING','LABEL_DRAG','LABEL_FILL','HOTSPOT','AUDIO_RESPONSE','GROUP']
+const ADVANCED_TYPES: QType[] = ['GROUP']
 
 const uid = () => Math.random().toString(36).slice(2)
 
@@ -590,6 +595,36 @@ function QuestionEditor({ item, onUpdate }: { item: QItem; onUpdate: (p:any)=>vo
           {item.type === 'DESMOS' && (
             <DesmosEditor
               config={item.config as DesmosConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'DRAWING' && (
+            <DrawingEditor
+              config={item.config as DrawingConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'LABEL_DRAG' && (
+            <LabelDragEditor
+              config={item.config as LabelDragConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'LABEL_FILL' && (
+            <LabelFillEditor
+              config={item.config as LabelFillConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'HOTSPOT' && (
+            <HotspotEditor
+              config={item.config as HotspotConfig | undefined}
+              onChange={cfg => onUpdate({ config: cfg })}
+            />
+          )}
+          {item.type === 'AUDIO_RESPONSE' && (
+            <AudioResponseEditor
+              config={item.config as AudioResponseConfig | undefined}
               onChange={cfg => onUpdate({ config: cfg })}
             />
           )}
