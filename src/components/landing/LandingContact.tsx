@@ -38,12 +38,19 @@ export default function LandingContact() {
     return errs
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setErrors({})
     trackEvent('demo_request', 'conversion', form.studentCount || 'unknown')
+    try {
+      await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+    } catch { /* ignore — show success regardless */ }
     setSubmitted(true)
   }
 
