@@ -30,7 +30,7 @@ const nextConfig = {
           { key: 'X-DNS-Prefetch-Control',  value: 'on' },
           {
             key: 'Content-Security-Policy',
-            value: "frame-src 'self' https://www.geogebra.org https://geogebra.org https://www.desmos.com https://desmos.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.desmos.com https://www.googletagmanager.com;",
+            value: "frame-src 'self' blob: https://www.geogebra.org https://geogebra.org https://www.desmos.com https://desmos.com; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.desmos.com https://www.googletagmanager.com; worker-src 'self' blob:;",
           },
         ],
       },

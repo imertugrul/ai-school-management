@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import GeoGebraEditor,      { GeoGebraConfig }      from './questions/GeoGebraEditor'
 import DesmosEditor,         { DesmosConfig }         from './questions/DesmosEditor'
@@ -128,6 +128,8 @@ interface TestEditorProps {
 
 export default function TestEditor({ mode, testId, initialMeta, initialItems }: TestEditorProps) {
   const router = useRouter()
+  const titleRef = useRef<HTMLInputElement>(null)
+  const [titleError, setTitleError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveToLibrary, setSaveToLibrary] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(mode === 'create')
@@ -202,7 +204,13 @@ export default function TestEditor({ mode, testId, initialMeta, initialItems }: 
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!meta.title.trim()) { alert('Test title is required'); return }
+    if (!meta.title.trim()) {
+      setTitleError(true)
+      titleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      titleRef.current?.focus()
+      return
+    }
+    setTitleError(false)
     setSaving(true)
     const questions = items
       .filter(i => i.kind === 'question')
@@ -250,12 +258,20 @@ export default function TestEditor({ mode, testId, initialMeta, initialItems }: 
               <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm shrink-0">
                 <span className="text-white text-base">📝</span>
               </div>
-              <input
-                className="text-lg font-bold text-gray-900 bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none truncate min-w-0 w-64 md:w-96"
-                placeholder="Test title..."
-                value={meta.title}
-                onChange={e => setMeta(m => ({ ...m, title: e.target.value }))}
-              />
+              <div className="min-w-0 flex-1">
+                <input
+                  ref={titleRef}
+                  className={`text-lg font-bold text-gray-900 bg-transparent border-b-2 outline-none truncate min-w-0 w-64 md:w-96 transition-colors ${
+                    titleError ? 'border-red-500 placeholder-red-400' : 'border-transparent focus:border-blue-500'
+                  }`}
+                  placeholder={titleError ? 'Test başlığı zorunludur!' : 'Test title...'}
+                  value={meta.title}
+                  onChange={e => { setMeta(m => ({ ...m, title: e.target.value })); if (e.target.value.trim()) setTitleError(false) }}
+                />
+                {titleError && (
+                  <p className="text-xs text-red-500 font-medium mt-0.5">Test başlığı zorunludur</p>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="hidden md:flex text-xs text-gray-400 gap-3">

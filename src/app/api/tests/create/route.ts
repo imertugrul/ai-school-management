@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
         createdById: user.id,
         isPublished: true,
         isActive:    isActive    || false,
+        status:      'DRAFT',
         startDate:   startDate   ? new Date(startDate) : null,
         endDate:     endDate     ? new Date(endDate)   : null,
         accessCode:  generateAccessCode(),
