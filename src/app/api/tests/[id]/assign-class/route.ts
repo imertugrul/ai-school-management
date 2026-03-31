@@ -68,6 +68,12 @@ export async function POST(
       }
     }
 
+    // Update test status to ASSIGNED if still DRAFT
+    await prisma.test.update({
+      where: { id: params.id },
+      data: { status: assignedCount > 0 ? 'ASSIGNED' : undefined }
+    }).catch(() => {})
+
     return NextResponse.json({
       success: true,
       assignedCount,

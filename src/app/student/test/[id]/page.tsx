@@ -37,6 +37,8 @@ export default function TakeTestPage() {
   const [answers, setAnswers] = useState<{ [key: string]: string }>({})
   const [loading, setLoading] = useState(true)
   const [tabSwitches, setTabSwitches] = useState(0)
+  const [violations, setViolations] = useState<{type: string; count: number}[]>([])
+  const [warningMsg, setWarningMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -44,25 +46,48 @@ export default function TakeTestPage() {
     }
   }, [session, testId])
 
+  const reportViolation = (type: string) => {
+    if (!submission) return
+    fetch(`/api/submissions/${submission.id}/suspicious`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, timestamp: new Date().toISOString(), questionIndex: currentIndex }),
+    })
+    setViolations(prev => {
+      const existing = prev.find(v => v.type === type)
+      if (existing) return prev.map(v => v.type === type ? { ...v, count: v.count + 1 } : v)
+      return [...prev, { type, count: 1 }]
+    })
+    const messages: Record<string, string> = {
+      TAB_SWITCH: '⚠️ Sekme değiştirme kopya girişimi olarak kaydedildi!',
+      WINDOW_BLUR: '⚠️ Pencere odağı kaybı kopya girişimi olarak kaydedildi!',
+      COPY_PASTE: '⚠️ Kopyalama/yapıştırma kopya girişimi olarak kaydedildi!',
+    }
+    setWarningMsg(messages[type] ?? '⚠️ Bu eylem kopya girişimi olarak kaydedildi!')
+    setTimeout(() => setWarningMsg(null), 4000)
+  }
+
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && submission) {
-        setTabSwitches(prev => prev + 1)
-        
-        fetch(`/api/submissions/${submission.id}/suspicious`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'TAB_SWITCH',
-            timestamp: new Date().toISOString(),
-            questionIndex: currentIndex,
-          }),
-        })
-      }
+      if (document.hidden) { setTabSwitches(prev => prev + 1); reportViolation('TAB_SWITCH') }
     }
+    const handleBlur = () => reportViolation('WINDOW_BLUR')
+    const handleCopy = (e: ClipboardEvent) => { e.preventDefault(); reportViolation('COPY_PASTE') }
+    const handlePaste = (e: ClipboardEvent) => { e.preventDefault(); reportViolation('COPY_PASTE') }
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault()
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('blur', handleBlur)
+    document.addEventListener('copy', handleCopy)
+    document.addEventListener('paste', handlePaste)
+    document.addEventListener('contextmenu', handleContextMenu)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('copy', handleCopy)
+      document.removeEventListener('paste', handlePaste)
+      document.removeEventListener('contextmenu', handleContextMenu)
+    }
   }, [submission, currentIndex])
 
   useEffect(() => {
@@ -221,10 +246,18 @@ export default function TakeTestPage() {
         </div>
       </nav>
 
-      {tabSwitches > 0 && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
-          <p className="text-yellow-800 text-center text-sm">
-            ⚠️ Warning: Tab switches detected ({tabSwitches} times). Your teacher can see this.
+      {/* Violation toast */}
+      {warningMsg && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-5 py-3 rounded-xl shadow-xl text-sm font-semibold animate-pulse max-w-sm text-center">
+          {warningMsg}
+        </div>
+      )}
+
+      {violations.length > 0 && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2">
+          <p className="text-red-700 text-center text-sm font-medium">
+            ⚠️ {violations.reduce((s, v) => s + v.count, 0)} ihlal kaydedildi — öğretmenin görebilir.
+            {' '}({violations.map(v => `${v.count} ${v.type === 'TAB_SWITCH' ? 'sekme' : v.type === 'WINDOW_BLUR' ? 'pencere' : 'kopya'}`).join(', ')})
           </p>
         </div>
       )}
