@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
         questions: true,
         _count: {
           select: {
-            submissions: true
+            submissions: true,
+            testAssignments: true
           }
         }
       },

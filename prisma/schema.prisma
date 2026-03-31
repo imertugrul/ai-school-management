@@ -167,26 +167,36 @@ model Class {
   updatedAt   DateTime @updatedAt
 }
 
+enum TestStatus {
+  DRAFT
+  ASSIGNED
+  ACTIVE
+  COMPLETED
+}
+
 model Test {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   subject     String?
   description String?
-  isPublished Boolean  @default(false)
-  isActive    Boolean  @default(false)
+  isPublished Boolean    @default(false)
+  isActive    Boolean    @default(false)
+  status      TestStatus @default(DRAFT)
   startDate   DateTime?
   endDate     DateTime?
-  accessCode  String   @unique
-  
+  startedAt   DateTime?
+  endedAt     DateTime?
+  accessCode  String     @unique
+
   createdById String
-  createdBy   User     @relation("CreatedTests", fields: [createdById], references: [id])
-  
+  createdBy   User       @relation("CreatedTests", fields: [createdById], references: [id])
+
   questions      Question[]
   contentBlocks  ContentBlock[]
   submissions    Submission[]
   testAssignments TestAssignment[]
   scannedTests   ScannedTest[]
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

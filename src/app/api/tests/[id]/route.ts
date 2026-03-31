@@ -24,6 +24,57 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    const test = await prisma.test.findUnique({ where: { id: params.id } })
+    if (!test) return NextResponse.json({ error: 'Test not found' }, { status: 404 })
+    if (test.createdById !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const body = await request.json()
+    const { status, startedAt, endedAt } = body
+
+    const data: any = {}
+    if (status !== undefined) {
+      data.status = status
+      data.isActive = status === 'ACTIVE'
+    }
+    if (startedAt !== undefined) data.startedAt = new Date(startedAt)
+    if (endedAt !== undefined) data.endedAt = new Date(endedAt)
+
+    const updated = await prisma.test.update({ where: { id: params.id }, data })
+    return NextResponse.json({ success: true, test: updated })
+  } catch (error) {
+    console.error('Patch test error:', error)
+    return NextResponse.json({ error: 'Failed to update test' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    const test = await prisma.test.findUnique({ where: { id: params.id } })
+    if (!test) return NextResponse.json({ error: 'Test not found' }, { status: 404 })
+    if (test.createdById !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    await prisma.test.delete({ where: { id: params.id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Delete test error:', error)
+    return NextResponse.json({ error: 'Failed to delete test' }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
