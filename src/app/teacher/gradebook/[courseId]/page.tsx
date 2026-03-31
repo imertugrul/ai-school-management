@@ -10,6 +10,7 @@ interface GradeComponent {
   weight: number
   maxScore: number
   date: string | null
+  testId: string | null
 }
 
 interface Student {
@@ -22,18 +23,34 @@ interface Course {
   id: string
   code: string
   name: string
-  class: {
-    id: string
-    name: string
-  } | null
+  class: { id: string; name: string } | null
+}
+
+interface AvailableTest {
+  id: string
+  title: string
+  subject: string | null
+  category: string
+  endedAt: string | null
+  _count: { submissions: number; questions: number }
 }
 
 const TYPE_COLORS: Record<string, string> = {
   EXAM: 'bg-red-100 text-red-800',
   QUIZ: 'bg-blue-100 text-blue-800',
   HOMEWORK: 'bg-yellow-100 text-yellow-800',
+  ASSIGNMENT: 'bg-orange-100 text-orange-800',
   PROJECT: 'bg-purple-100 text-purple-800',
   PARTICIPATION: 'bg-green-100 text-green-800',
+}
+
+const CATEGORY_TO_TYPE: Record<string, string> = {
+  EXAM: 'EXAM',
+  QUIZ: 'QUIZ',
+  HOMEWORK: 'HOMEWORK',
+  ASSIGNMENT: 'ASSIGNMENT',
+  PROJECT: 'PROJECT',
+  PARTICIPATION: 'PARTICIPATION',
 }
 
 export default function CourseGradeBookPage() {
@@ -45,35 +62,37 @@ export default function CourseGradeBookPage() {
   const [components, setComponents] = useState<GradeComponent[]>([])
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
-  const [showComponentForm, setShowComponentForm] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'EXAM',
-    weight: '30',
-    maxScore: '100',
-    date: ''
-  })
 
-  useEffect(() => {
-    fetchCourseData()
-  }, [courseId])
+  // Add component form
+  const [showComponentForm, setShowComponentForm] = useState(false)
+  const [formData, setFormData] = useState({ name: '', type: 'EXAM', weight: '30', maxScore: '100', date: '' })
+
+  // Add test modal
+  const [showTestModal, setShowTestModal] = useState(false)
+  const [availableTests, setAvailableTests] = useState<AvailableTest[]>([])
+  const [testsLoading, setTestsLoading] = useState(false)
+  const [selectedTest, setSelectedTest] = useState<AvailableTest | null>(null)
+  const [testWeight, setTestWeight] = useState('30')
+  const [testType, setTestType] = useState('EXAM')
+  const [testName, setTestName] = useState('')
+  const [addingTest, setAddingTest] = useState(false)
+  const [addTestResult, setAddTestResult] = useState<string | null>(null)
+
+  useEffect(() => { fetchCourseData() }, [courseId])
 
   const fetchCourseData = async () => {
     try {
       const [courseRes, componentsRes, studentsRes] = await Promise.all([
         fetch(`/api/teacher/courses/${courseId}`),
         fetch(`/api/teacher/courses/${courseId}/components`),
-        fetch(`/api/teacher/courses/${courseId}/students`)
+        fetch(`/api/teacher/courses/${courseId}/students`),
       ])
-
       const courseData = await courseRes.json()
       const componentsData = await componentsRes.json()
       const studentsData = await studentsRes.json()
-
       if (courseData.success) setCourse(courseData.course)
       if (componentsData.success) setComponents(componentsData.components)
       if (studentsData.success) setStudents(studentsData.students)
-
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -83,26 +102,60 @@ export default function CourseGradeBookPage() {
 
   const handleCreateComponent = async (e: React.FormEvent) => {
     e.preventDefault()
-
     try {
       const response = await fetch(`/api/teacher/courses/${courseId}/components`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          weight: parseFloat(formData.weight) / 100,
-          maxScore: parseFloat(formData.maxScore)
-        })
+        body: JSON.stringify({ ...formData, weight: parseFloat(formData.weight) / 100, maxScore: parseFloat(formData.maxScore) }),
       })
-
       if (response.ok) {
         setShowComponentForm(false)
         setFormData({ name: '', type: 'EXAM', weight: '30', maxScore: '100', date: '' })
         fetchCourseData()
       }
-    } catch (error) {
-      console.error('Error:', error)
-    }
+    } catch (error) { console.error('Error:', error) }
+  }
+
+  const openTestModal = async () => {
+    setShowTestModal(true)
+    setSelectedTest(null)
+    setAddTestResult(null)
+    setTestsLoading(true)
+    try {
+      const res = await fetch(`/api/teacher/gradebook/${courseId}/available-tests`)
+      const data = await res.json()
+      if (data.success) setAvailableTests(data.tests)
+    } catch { /* ignore */ }
+    finally { setTestsLoading(false) }
+  }
+
+  const handleSelectTest = (t: AvailableTest) => {
+    setSelectedTest(t)
+    setTestName(t.title)
+    setTestType(CATEGORY_TO_TYPE[t.category] ?? 'EXAM')
+  }
+
+  const handleAddTest = async () => {
+    if (!selectedTest) return
+    setAddingTest(true)
+    setAddTestResult(null)
+    try {
+      const res = await fetch(`/api/teacher/gradebook/${courseId}/add-test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testId: selectedTest.id, name: testName, weight: testWeight, type: testType }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAddTestResult(`✅ "${testName}" eklendi — ${data.filledCount} öğrenci notu otomatik dolduruldu.`)
+        fetchCourseData()
+        setAvailableTests(prev => prev.filter(t => t.id !== selectedTest.id))
+        setSelectedTest(null)
+      } else {
+        setAddTestResult(`❌ Hata: ${data.error}`)
+      }
+    } catch { setAddTestResult('❌ Bağlantı hatası') }
+    finally { setAddingTest(false) }
   }
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -124,9 +177,7 @@ export default function CourseGradeBookPage() {
         <div className="text-center py-16">
           <div className="text-6xl mb-4">📚</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Course not found</h3>
-          <button onClick={() => router.push('/teacher/gradebook')} className="btn-primary mt-4">
-            ← Back to Courses
-          </button>
+          <button onClick={() => router.push('/teacher/gradebook')} className="btn-primary mt-4">← Back to Courses</button>
         </div>
       </div>
     )
@@ -171,19 +222,21 @@ export default function CourseGradeBookPage() {
               <h2 className="text-xl font-bold text-gray-900">Grade Components</h2>
               <p className="text-sm text-gray-500 mt-1">
                 Total Weight: <span className="font-semibold">{(totalWeight * 100).toFixed(0)}%</span>
-                {totalWeight !== 1 && (
+                {Math.abs(totalWeight - 1) > 0.01 && (
                   <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
                     ⚠ Should equal 100%
                   </span>
                 )}
               </p>
             </div>
-            <button
-              onClick={() => setShowComponentForm(true)}
-              className="btn-primary text-sm"
-            >
-              + Add Component
-            </button>
+            <div className="flex gap-2">
+              <button onClick={openTestModal} className="btn-secondary text-sm">
+                🧪 Test Ekle
+              </button>
+              <button onClick={() => setShowComponentForm(true)} className="btn-primary text-sm">
+                + Add Component
+              </button>
+            </div>
           </div>
 
           {showComponentForm && (
@@ -191,91 +244,40 @@ export default function CourseGradeBookPage() {
               <h3 className="font-semibold text-gray-900 mb-4">New Grade Component</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="input-field"
-                    placeholder="e.g., Midterm Exam"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <input type="text" required className="input-field" placeholder="e.g., Midterm Exam"
+                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type *
-                  </label>
-                  <select
-                    className="input-field"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                  <select className="input-field" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
                     <option value="EXAM">Exam</option>
                     <option value="QUIZ">Quiz</option>
                     <option value="HOMEWORK">Homework</option>
+                    <option value="ASSIGNMENT">Assignment</option>
                     <option value="PROJECT">Project</option>
                     <option value="PARTICIPATION">Participation</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Weight (%) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    max="100"
-                    className="input-field"
-                    placeholder="30"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Weight (%) *</label>
+                  <input type="number" required min="0" max="100" className="input-field" placeholder="30"
+                    value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Score *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    className="input-field"
-                    placeholder="100"
-                    value={formData.maxScore}
-                    onChange={(e) => setFormData({ ...formData, maxScore: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Score *</label>
+                  <input type="number" required min="0" className="input-field" placeholder="100"
+                    value={formData.maxScore} onChange={e => setFormData({ ...formData, maxScore: e.target.value })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    className="input-field"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input type="date" className="input-field" value={formData.date}
+                    onChange={e => setFormData({ ...formData, date: e.target.value })} />
                 </div>
               </div>
-
               <div className="flex gap-2 mt-4">
-                <button type="submit" className="btn-primary text-sm">
-                  Create Component
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowComponentForm(false)}
-                  className="btn-secondary text-sm"
-                >
-                  Cancel
-                </button>
+                <button type="submit" className="btn-primary text-sm">Create Component</button>
+                <button type="button" onClick={() => setShowComponentForm(false)} className="btn-secondary text-sm">Cancel</button>
               </div>
             </form>
           )}
@@ -296,27 +298,29 @@ export default function CourseGradeBookPage() {
                     <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Weight</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Max Score</th>
                     <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Date</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Source</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {components.map((component) => (
                     <tr key={component.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                        {component.name}
-                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{component.name}</td>
                       <td className="px-6 py-4 text-sm">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${TYPE_COLORS[component.type] || 'bg-gray-100 text-gray-700'}`}>
                           {component.type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-700">
-                        {(component.weight * 100).toFixed(0)}%
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {component.maxScore}
-                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-700">{(component.weight * 100).toFixed(0)}%</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{component.maxScore}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {component.date ? new Date(component.date).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {component.testId ? (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                            🧪 Test
+                          </span>
+                        ) : '—'}
                       </td>
                     </tr>
                   ))}
@@ -333,10 +337,7 @@ export default function CourseGradeBookPage() {
               Students <span className="text-sm font-normal text-gray-400">({students.length})</span>
             </h2>
             {components.length > 0 && (
-              <button
-                onClick={() => router.push(`/teacher/gradebook/${courseId}/enter-grades`)}
-                className="btn-primary text-sm"
-              >
+              <button onClick={() => router.push(`/teacher/gradebook/${courseId}/enter-grades`)} className="btn-primary text-sm">
                 📝 Enter Grades
               </button>
             )}
@@ -369,12 +370,8 @@ export default function CourseGradeBookPage() {
                           <span className="text-sm font-medium text-gray-900">{student.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {student.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        —
-                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{student.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-400">—</td>
                     </tr>
                   ))}
                 </tbody>
@@ -383,6 +380,107 @@ export default function CourseGradeBookPage() {
           )}
         </div>
       </div>
+
+      {/* Test Ekle Modal */}
+      {showTestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">🧪 Grade Book'a Test Ekle</h2>
+              <button onClick={() => { setShowTestModal(false); setAddTestResult(null) }} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {addTestResult && (
+                <div className={`p-3 rounded-xl text-sm font-medium ${addTestResult.startsWith('✅') ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
+                  {addTestResult}
+                </div>
+              )}
+
+              {testsLoading ? (
+                <div className="text-center py-8 text-gray-500">Yükleniyor...</div>
+              ) : availableTests.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-5xl mb-3">🧪</p>
+                  <p className="text-gray-500 font-medium">Eklenebilecek tamamlanmış test yok.</p>
+                  <p className="text-gray-400 text-sm mt-1">Testlerin "Tamamlandı" durumunda olması gerekiyor.</p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Test Seç</label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {availableTests.map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => handleSelectTest(t)}
+                          className={`w-full text-left p-3 rounded-xl border transition-all ${
+                            selectedTest?.id === t.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <p className="text-sm font-semibold text-gray-900">{t.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {t.subject && `${t.subject} · `}
+                            {t._count.questions} soru · {t._count.submissions} teslim
+                            {t.endedAt && ` · ${new Date(t.endedAt).toLocaleDateString('tr-TR')}`}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedTest && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bileşen Adı</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={testName}
+                          onChange={e => setTestName(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tür</label>
+                          <select className="input-field" value={testType} onChange={e => setTestType(e.target.value)}>
+                            <option value="EXAM">Exam</option>
+                            <option value="QUIZ">Quiz</option>
+                            <option value="HOMEWORK">Homework</option>
+                            <option value="ASSIGNMENT">Assignment</option>
+                            <option value="PROJECT">Project</option>
+                            <option value="PARTICIPATION">Participation</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Ağırlık (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="input-field"
+                            value={testWeight}
+                            onChange={e => setTestWeight(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAddTest}
+                        disabled={addingTest || !testName.trim()}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors"
+                      >
+                        {addingTest ? 'Ekleniyor...' : '✓ Grade Book\'a Ekle ve Notları Otomatik Doldur'}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

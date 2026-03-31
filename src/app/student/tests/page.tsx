@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Test {
@@ -21,6 +21,105 @@ interface Test {
     maxScore: number | null
     submittedAt: string | null
   } | null
+}
+
+const CODE_LEN = 6
+
+function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
+  const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(''))
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const refs = useRef<(HTMLInputElement | null)[]>([])
+
+  const code = digits.join('')
+
+  const handleChange = (idx: number, val: string) => {
+    const ch = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(-1)
+    const next = [...digits]
+    next[idx] = ch
+    setDigits(next)
+    setError(null)
+    if (ch && idx < CODE_LEN - 1) refs.current[idx + 1]?.focus()
+  }
+
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !digits[idx] && idx > 0) {
+      refs.current[idx - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, CODE_LEN)
+    const next = Array(CODE_LEN).fill('')
+    for (let i = 0; i < text.length; i++) next[i] = text[i]
+    setDigits(next)
+    refs.current[Math.min(text.length, CODE_LEN - 1)]?.focus()
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (code.length < CODE_LEN) { setError('Lütfen 6 haneli kodu tam girin.'); return }
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/tests/join?code=${code}`)
+      const data = await res.json()
+      if (data.success) {
+        onJoin(data.testId)
+      } else {
+        setError(data.error || 'Bilinmeyen hata')
+      }
+    } catch {
+      setError('Bağlantı hatası. Lütfen tekrar dene.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+          <span className="text-xl">🔑</span>
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Test Kodunu Gir</h2>
+          <p className="text-xs text-gray-500">Öğretmeninden aldığın 6 haneli kodu gir</p>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div className="flex gap-2 justify-center mb-4" onPaste={handlePaste}>
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={el => { refs.current[i] = el }}
+              type="text"
+              inputMode="text"
+              maxLength={1}
+              value={d}
+              onChange={e => handleChange(i, e.target.value)}
+              onKeyDown={e => handleKeyDown(i, e)}
+              className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-xl outline-none transition-colors uppercase
+                ${d ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-gray-50 text-gray-900'}
+                focus:border-blue-500 focus:bg-blue-50
+              `}
+            />
+          ))}
+        </div>
+        {error && (
+          <p className="text-sm text-red-600 text-center mb-3 font-medium">⚠️ {error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading || code.length < CODE_LEN}
+          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+        >
+          {loading ? 'Aranıyor...' : 'Teste Gir →'}
+        </button>
+      </form>
+    </div>
+  )
 }
 
 export default function StudentTestsPage() {
@@ -82,6 +181,8 @@ export default function StudentTestsPage() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <CodeEntry onJoin={(testId) => router.push(`/student/test/${testId}`)} />
+
         {tests.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-5xl mb-4">📝</p>

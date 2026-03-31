@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const body = await request.json()
-    const { title, subject, description, questions = [], contentBlocks = [], startDate, endDate, isActive, saveToLibrary } = body
+    const { title, subject, description, questions = [], contentBlocks = [], startDate, endDate, isActive, category, saveToLibrary } = body
 
     if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 })
 
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
         isPublished: true,
         isActive:    isActive    || false,
         status:      'DRAFT',
+        category:    category    || 'QUIZ',
         startDate:   startDate   ? new Date(startDate) : null,
         endDate:     endDate     ? new Date(endDate)   : null,
         accessCode:  generateAccessCode(),

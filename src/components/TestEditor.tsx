@@ -47,6 +47,7 @@ export type TestItem = QItem | BItem
 interface TestMeta {
   title: string; subject: string; description: string
   startDate: string; endDate: string; isActive: boolean
+  category: string
 }
 
 interface LibraryQ {
@@ -137,6 +138,7 @@ export default function TestEditor({ mode, testId, initialMeta, initialItems }: 
   const [meta, setMeta] = useState<TestMeta>({
     title: '', subject: '', description: '',
     startDate: '', endDate: '', isActive: false,
+    category: 'QUIZ',
     ...initialMeta,
   })
 
@@ -319,6 +321,32 @@ export default function TestEditor({ mode, testId, initialMeta, initialItems }: 
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</label>
                     <input type="datetime-local" className="input-field" value={meta.endDate} onChange={e => setMeta(m => ({ ...m, endDate: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 'EXAM', label: 'Sınav', color: 'bg-red-100 text-red-700 border-red-200' },
+                      { value: 'QUIZ', label: 'Quiz', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+                      { value: 'HOMEWORK', label: 'Ödev', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                      { value: 'ASSIGNMENT', label: 'Proje Ödevi', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                      { value: 'PARTICIPATION', label: 'Katılım', color: 'bg-green-100 text-green-700 border-green-200' },
+                      { value: 'PROJECT', label: 'Proje', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+                    ].map(cat => (
+                      <button
+                        key={cat.value}
+                        type="button"
+                        onClick={() => setMeta(m => ({ ...m, category: cat.value }))}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                          meta.category === cat.value
+                            ? cat.color + ' ring-2 ring-offset-1 ring-current'
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-4">

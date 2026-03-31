@@ -25,6 +25,7 @@ export default function EditTestPage() {
           startDate:   t.startDate   ? new Date(t.startDate).toISOString().slice(0, 16) : '',
           endDate:     t.endDate     ? new Date(t.endDate).toISOString().slice(0, 16)   : '',
           isActive:    t.isActive    ?? false,
+          category:    t.category    ?? 'QUIZ',
         })
 
         // Build unified item list ordered by orderIndex

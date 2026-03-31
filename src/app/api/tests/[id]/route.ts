@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { title, subject, description, questions = [], contentBlocks = [], startDate, endDate, isActive } = body
+    const { title, subject, description, questions = [], contentBlocks = [], startDate, endDate, isActive, category } = body
 
     // Delete + recreate questions and content blocks
     await prisma.question.deleteMany({ where: { testId: params.id } })
@@ -96,6 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         startDate:   startDate   ? new Date(startDate) : null,
         endDate:     endDate     ? new Date(endDate)   : null,
         isActive:    isActive    || false,
+        category:    category    || 'QUIZ',
         questions: {
           create: questions.map((q: any, i: number) => ({
             orderIndex:    i,

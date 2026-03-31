@@ -175,28 +175,39 @@ enum TestStatus {
   COMPLETED
 }
 
+enum TestCategory {
+  EXAM
+  QUIZ
+  HOMEWORK
+  ASSIGNMENT
+  PARTICIPATION
+  PROJECT
+}
+
 model Test {
-  id          String     @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
   subject     String?
   description String?
-  isPublished Boolean    @default(false)
-  isActive    Boolean    @default(false)
-  status      TestStatus @default(DRAFT)
+  isPublished Boolean      @default(false)
+  isActive    Boolean      @default(false)
+  status      TestStatus   @default(DRAFT)
+  category    TestCategory @default(QUIZ)
   startDate   DateTime?
   endDate     DateTime?
   startedAt   DateTime?
   endedAt     DateTime?
-  accessCode  String     @unique
+  accessCode  String       @unique
 
   createdById String
-  createdBy   User       @relation("CreatedTests", fields: [createdById], references: [id])
+  createdBy   User         @relation("CreatedTests", fields: [createdById], references: [id])
 
-  questions      Question[]
-  contentBlocks  ContentBlock[]
-  submissions    Submission[]
+  questions       Question[]
+  contentBlocks   ContentBlock[]
+  submissions     Submission[]
   testAssignments TestAssignment[]
-  scannedTests   ScannedTest[]
+  scannedTests    ScannedTest[]
+  gradeComponents GradeComponent[] @relation("TestGradeComponent")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -534,20 +545,34 @@ model CourseAssignment {
 
 model GradeComponent {
   id          String   @id @default(cuid())
-  
+
   courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
+
   name        String   // "Midterm Exam", "Final Exam", "Homework 1"
   type        GradeType // EXAM, QUIZ, HOMEWORK, PROJECT, PARTICIPATION
   weight      Float    // 0.3 = 30%
   maxScore    Float    // 100
   date        DateTime?
-  
+
+  testId      String?
+  test        Test?    @relation("TestGradeComponent", fields: [testId], references: [id], onDelete: SetNull)
+
   grades      Grade[]
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model GradeBookSettings {
+  id                  String @id @default(cuid())
+  courseId            String @unique
+  examWeight          Float  @default(40)
+  quizWeight          Float  @default(20)
+  homeworkWeight      Float  @default(20)
+  assignmentWeight    Float  @default(10)
+  participationWeight Float  @default(5)
+  projectWeight       Float  @default(5)
 }
 
 model Grade {
@@ -572,6 +597,7 @@ enum GradeType {
   EXAM
   QUIZ
   HOMEWORK
+  ASSIGNMENT
   PROJECT
   PARTICIPATION
   ATTENDANCE
