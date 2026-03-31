@@ -462,6 +462,12 @@ export default function TestsListPage() {
                         >
                           📋 Assign Et
                         </button>
+                        <button
+                          onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
+                          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
+                        >
+                          🔴 Canlı İzle
+                        </button>
                       </>
                     )}
 
@@ -495,6 +501,12 @@ export default function TestsListPage() {
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                         >
                           📊 Sonuçlar
+                        </button>
+                        <button
+                          onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
+                          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
+                        >
+                          🔴 Aktivite Raporu
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}`)}
