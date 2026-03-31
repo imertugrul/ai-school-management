@@ -1,20 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function LoginPage() {
-  const router = useRouter()
+function LoginErrorReader({ setError }: { setError: (e: string) => void }) {
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  // Pre-fill error from URL params (e.g., after Google OAuth rejection)
   useEffect(() => {
     const urlError = searchParams?.get('error')
     if (urlError === 'PENDING_APPROVAL') {
@@ -22,7 +14,17 @@ export default function LoginPage() {
     } else if (urlError === 'ACCOUNT_SUSPENDED') {
       setError('ACCOUNT_SUSPENDED')
     }
-  }, [searchParams])
+  }, [searchParams, setError])
+  return null
+}
+
+export default function LoginPage() {
+  const router = useRouter()
+  const { data: session, status } = useSession()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   function roleRedirect(role: string) {
     if (role === 'ADMIN') return '/manage-panel'
@@ -108,6 +110,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-12 px-4">
+      <Suspense fallback={null}>
+        <LoginErrorReader setError={setError} />
+      </Suspense>
+
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
