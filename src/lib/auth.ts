@@ -15,16 +15,18 @@ export async function createUser(data: {
   password: string
   role: 'STUDENT' | 'TEACHER' | 'ADMIN'
   classId?: string
+  status?: 'PENDING' | 'ACTIVE'
 }) {
   const hashedPassword = await hashPassword(data.password)
-  
+
   return prisma.user.create({
     data: {
-      name: data.name,
-      email: data.email,
+      name:     data.name,
+      email:    data.email,
       password: hashedPassword,
-      role: data.role,
-      classId: data.classId
+      role:     data.role,
+      classId:  data.classId,
+      status:   data.status ?? 'PENDING',
     }
   })
 }

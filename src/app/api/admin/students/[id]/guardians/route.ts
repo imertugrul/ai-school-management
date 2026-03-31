@@ -90,6 +90,7 @@ export async function POST(
             name,
             password: await hashPassword(tempPassword),
             role:     'PARENT',
+            status:   'ACTIVE',
             schoolId: admin.schoolId ?? undefined,
           },
         })

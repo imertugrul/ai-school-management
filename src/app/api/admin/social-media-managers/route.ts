@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         email,
         password:   hashed,
         role:       'SOCIAL_MEDIA_MANAGER',
+        status:     'ACTIVE',
         department: department || null,
         schoolId:   admin.schoolId ?? null,
       },

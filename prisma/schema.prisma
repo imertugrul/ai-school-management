@@ -42,7 +42,8 @@ model User {
   password          String?
   emailVerified     DateTime?
   image             String?
-  role              UserRole  @default(STUDENT)
+  role              UserRole   @default(STUDENT)
+  status            UserStatus @default(PENDING)
   subject           String?
   classId           String?
 
@@ -115,6 +116,12 @@ enum UserRole {
   VICE_PRINCIPAL
   COUNSELOR
   SECRETARY
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
 }
 
 model School {

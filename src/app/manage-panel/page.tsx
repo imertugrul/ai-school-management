@@ -198,6 +198,18 @@ const ACTION_CARDS = [
     link: 'text-red-600',
   },
   {
+    href: '/manage-panel/users/pending',
+    icon: '⏳',
+    title: 'Kullanıcı Onayları',
+    description: 'Onay bekleyen kullanıcıları onayla veya reddet',
+    gradient: 'from-amber-500 to-orange-500',
+    shadow: 'shadow-amber-500/30',
+    hover: 'hover:border-amber-300',
+    bg: 'from-amber-50/0 to-amber-50/80',
+    text: 'hover:text-amber-700',
+    link: 'text-amber-600',
+  },
+  {
     href: '/manage-panel/gdpr',
     icon: '🛡️',
     title: 'GDPR & Privacy',
@@ -227,6 +239,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [missingGuardians, setMissingGuardians] = useState<number | null>(null)
   const [pendingAbsences, setPendingAbsences]   = useState<number | null>(null)
+  const [pendingUsers, setPendingUsers]         = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/guardians')
@@ -240,6 +253,11 @@ export default function AdminPage() {
     fetch('/api/admin/absence-notifications?status=PENDING')
       .then(r => r.json())
       .then(data => setPendingAbsences(data.summary?.pending ?? 0))
+      .catch(() => {})
+
+    fetch('/api/admin/users/pending?status=PENDING')
+      .then(r => r.json())
+      .then(data => setPendingUsers(data.counts?.pending ?? 0))
       .catch(() => {})
   }, [])
 
@@ -277,6 +295,22 @@ export default function AdminPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Admin Dashboard</h2>
           <p className="text-gray-500">Manage your school operations from one place</p>
         </div>
+
+        {/* Pending users alert banner */}
+        {pendingUsers !== null && pendingUsers > 0 && (
+          <button
+            onClick={() => router.push('/manage-panel/users/pending')}
+            className="w-full mb-4 flex items-center gap-3 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-4 text-left hover:bg-amber-100 transition-colors"
+          >
+            <span className="text-2xl">⏳</span>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800 text-sm">
+                {pendingUsers} kullanıcı onay bekliyor
+              </p>
+              <p className="text-xs text-amber-600">Kullanıcı Onayları sayfasına git →</p>
+            </div>
+          </button>
+        )}
 
         {/* Absence notifications alert banner */}
         {pendingAbsences !== null && pendingAbsences > 0 && (
@@ -319,8 +353,15 @@ export default function AdminPage() {
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${card.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl`} />
               <div className="relative">
-                <div className={`w-14 h-14 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg ${card.shadow} group-hover:scale-110 transition-transform duration-300`}>
-                  <span className="text-white text-2xl">{card.icon}</span>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-14 h-14 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center shadow-lg ${card.shadow} group-hover:scale-110 transition-transform duration-300`}>
+                    <span className="text-white text-2xl">{card.icon}</span>
+                  </div>
+                  {card.href === '/manage-panel/users/pending' && pendingUsers !== null && pendingUsers > 0 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                      {pendingUsers} bekliyor
+                    </span>
+                  )}
                 </div>
                 <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{card.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>

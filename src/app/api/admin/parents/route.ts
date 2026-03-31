@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
           name: parentName || parentEmail.split('@')[0],
           password: hashedPassword,
           role: 'PARENT',
+          status: 'ACTIVE',
           schoolId: admin.schoolId
         }
       })

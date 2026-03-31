@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         role: 'STUDENT',
+        status: 'ACTIVE',
         schoolId: user.schoolId,
         classId: classId || null
       }

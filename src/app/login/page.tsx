@@ -2,16 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import { signIn, useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: session, status } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Pre-fill error from URL params (e.g., after Google OAuth rejection)
+  useEffect(() => {
+    const urlError = searchParams?.get('error')
+    if (urlError === 'PENDING_APPROVAL') {
+      setError('PENDING_APPROVAL')
+    } else if (urlError === 'ACCOUNT_SUSPENDED') {
+      setError('ACCOUNT_SUSPENDED')
+    }
+  }, [searchParams])
 
   function roleRedirect(role: string) {
     if (role === 'ADMIN') return '/manage-panel'
@@ -53,7 +64,13 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
+        if (result.error === 'PENDING_APPROVAL') {
+          setError('PENDING_APPROVAL')
+        } else if (result.error === 'ACCOUNT_SUSPENDED') {
+          setError('ACCOUNT_SUSPENDED')
+        } else {
+          setError('Invalid email or password')
+        }
         setLoading(false)
         return
       }
@@ -138,7 +155,19 @@ export default function LoginPage() {
 
           {/* Email/Password Login */}
           <form onSubmit={handleEmailLogin} className="space-y-6">
-            {error && (
+            {error === 'PENDING_APPROVAL' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-4">
+                <p className="text-amber-800 font-semibold text-sm mb-1">⏳ Hesabınız onay bekliyor</p>
+                <p className="text-amber-700 text-sm">Yönetici hesabınızı onayladıktan sonra giriş yapabilirsiniz.</p>
+              </div>
+            )}
+            {error === 'ACCOUNT_SUSPENDED' && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-4">
+                <p className="text-red-800 font-semibold text-sm mb-1">🚫 Hesabınız askıya alınmıştır</p>
+                <p className="text-red-700 text-sm">Lütfen yönetici ile iletişime geçin.</p>
+              </div>
+            )}
+            {error && error !== 'PENDING_APPROVAL' && error !== 'ACCOUNT_SUSPENDED' && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                 {error}
               </div>
