@@ -95,6 +95,11 @@ model User {
   mediaLibrary          MediaLibraryItem[] @relation("MediaLibrary")
   universityProfile     UniversityProfile?  @relation("StudentUniversityProfile")
 
+  uploadedDocuments     SchoolDocument[]      @relation("DocumentUploader")
+  chatMessages          ParentChatMessage[]
+  parentAppointments    AppointmentRequest[]  @relation("ParentAppointments")
+  assigneeAppointments  AppointmentRequest[]  @relation("AssigneeAppointments")
+
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
@@ -1031,4 +1036,55 @@ model UniversityProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── School Documents ───────────────────────────────────────────────────────
+model SchoolDocument {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String
+  fileType    String   // pdf, doc, etc
+  category    String   // yonetmelik, duyuru, form, kilavuz, diger
+  uploadedBy  String
+  uploader    User     @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+  schoolId    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schoolId, isActive])
+}
+
+// ─── Parent Chat Messages ────────────────────────────────────────────────────
+model ParentChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // user | assistant
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ─── Appointment Requests ────────────────────────────────────────────────────
+model AppointmentRequest {
+  id            String    @id @default(cuid())
+  parentId      String
+  parent        User      @relation("ParentAppointments", fields: [parentId], references: [id])
+  studentName   String
+  subject       String
+  message       String    @db.Text
+  preferredDate DateTime?
+  preferredTime String?
+  status        String    @default("PENDING") // PENDING, CONFIRMED, REJECTED
+  assignedTo    String?
+  assignee      User?     @relation("AssigneeAppointments", fields: [assignedTo], references: [id])
+  response      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([parentId])
+  @@index([status])
 }

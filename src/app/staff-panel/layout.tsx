@@ -8,6 +8,7 @@ import { ROLE_LABELS } from '@/lib/permissions'
 const NAV_ITEMS = [
   { href: '/staff-panel',                   icon: '🏠', label: 'Home'                },
   { href: '/staff-panel/attendance-review', icon: '📋', label: 'Attendance Approval', badgeKey: 'attendance' },
+  { href: '/staff-panel/appointments',      icon: '🗓️', label: 'Randevular',          badgeKey: 'appointments' },
   { href: '/staff-panel/students',          icon: '👥', label: 'Students'             },
   { href: '/staff-panel/announcements',     icon: '📢', label: 'Announcements'        },
   { href: '/staff-panel/events',            icon: '📅', label: 'Events'               },
@@ -24,13 +25,18 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
   const roleLabel = ROLE_LABELS[role] ?? role
   const initials  = (session?.user?.name ?? 'S').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
-  const [pendingCount, setPendingCount] = useState(0)
+  const [pendingCount, setPendingCount]         = useState(0)
+  const [pendingApptCount, setPendingApptCount] = useState(0)
 
   useEffect(() => {
     function fetchPending() {
       fetch('/api/admin/absence-notifications?status=PENDING')
         .then(r => r.json())
         .then(d => setPendingCount(d.summary?.pending ?? 0))
+        .catch(() => {})
+      fetch('/api/staff/appointments?status=PENDING')
+        .then(r => r.json())
+        .then((d: unknown[]) => setPendingApptCount(Array.isArray(d) ? d.length : 0))
         .catch(() => {})
     }
     fetchPending()
@@ -61,7 +67,11 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
             const active = item.href === '/staff-panel'
               ? pathname === '/staff-panel'
               : pathname.startsWith(item.href)
-            const badge = item.badgeKey === 'attendance' && pendingCount > 0 ? pendingCount : null
+            const badge = item.badgeKey === 'attendance' && pendingCount > 0
+              ? pendingCount
+              : item.badgeKey === 'appointments' && pendingApptCount > 0
+              ? pendingApptCount
+              : null
             return (
               <button
                 key={item.href}

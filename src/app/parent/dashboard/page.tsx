@@ -86,6 +86,23 @@ export default function ParentDashboard() {
         </div>
       </div>
 
+      {/* AI Asistan banner */}
+      <button
+        onClick={() => router.push('/parent/chat')}
+        className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-4 shadow-md text-white text-left active:scale-[0.99] transition-transform"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">🤖</div>
+          <div className="flex-1">
+            <p className="font-bold text-sm">AI Okul Asistanı</p>
+            <p className="text-indigo-100 text-xs mt-0.5">Notlar, devamsızlık, randevu — hepsi burada</p>
+          </div>
+          <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -122,14 +139,14 @@ export default function ParentDashboard() {
           )}
         </button>
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-2xl mb-1">📝</p>
-          <p className="text-2xl font-bold text-gray-900">{data.upcomingTests.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Upcoming Exam</p>
-          {data.upcomingTests[0] && (
-            <p className="text-xs text-gray-400 mt-1 truncate">{data.upcomingTests[0].title}</p>
-          )}
-        </div>
+        <button
+          onClick={() => router.push('/parent/documents')}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left active:scale-95 transition-transform"
+        >
+          <p className="text-2xl mb-1">📄</p>
+          <p className="text-xl font-bold text-gray-900">Belgeler</p>
+          <p className="text-xs text-gray-500 mt-0.5">Yönetmelikler & formlar</p>
+        </button>
       </div>
 
       {/* Upcoming tests */}

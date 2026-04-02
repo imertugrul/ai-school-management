@@ -210,6 +210,18 @@ const ACTION_CARDS = [
     link: 'text-amber-600',
   },
   {
+    href: '/manage-panel/documents',
+    icon: '📄',
+    title: 'Okul Belgeleri',
+    description: 'Veliler için belge ve yönetmelik yükle',
+    gradient: 'from-cyan-500 to-teal-600',
+    shadow: 'shadow-cyan-500/30',
+    hover: 'hover:border-cyan-300',
+    bg: 'from-cyan-50/0 to-teal-50/80',
+    text: 'hover:text-cyan-700',
+    link: 'text-cyan-600',
+  },
+  {
     href: '/manage-panel/gdpr',
     icon: '🛡️',
     title: 'GDPR & Privacy',

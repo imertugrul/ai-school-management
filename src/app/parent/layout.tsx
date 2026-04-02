@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: '/parent/dashboard',     icon: '🏠', label: 'Home'       },
   { href: '/parent/grades',        icon: '📊', label: 'Grades'     },
   { href: '/parent/attendance',    icon: '📅', label: 'Attendance' },
-  { href: '/parent/bulletins',     icon: '📋', label: 'Bulletins'  },
+  { href: '/parent/chat',          icon: '🤖', label: 'AI Asistan' },
   { href: '/parent/profile',       icon: '👤', label: 'Profile'    },
 ]
 
