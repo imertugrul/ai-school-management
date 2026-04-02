@@ -4,7 +4,7 @@
  */
 import { Resend } from 'resend'
 
-const FROM = process.env.EMAIL_FROM ?? 'noreply@schoolpro.ai'
+const FROM = process.env.EMAIL_FROM ?? 'noreply@schoolproai.com'
 
 export interface SendEmailParams {
   to:      string

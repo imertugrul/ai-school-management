@@ -45,12 +45,22 @@ export default function LandingContact() {
     setErrors({})
     trackEvent('demo_request', 'conversion', form.studentCount || 'unknown')
     try {
-      await fetch('/api/contact', {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-    } catch { /* ignore — show success regardless */ }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        console.error('[Contact] API error:', data)
+        alert(data.error || 'Mesaj gönderilemedi. Lütfen tekrar deneyin.')
+        return
+      }
+    } catch (err) {
+      console.error('[Contact] Network error:', err)
+      alert('Bağlantı hatası. Lütfen tekrar deneyin.')
+      return
+    }
     setSubmitted(true)
   }
 

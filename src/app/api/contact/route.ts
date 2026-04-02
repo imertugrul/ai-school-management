@@ -40,11 +40,15 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
-    await sendEmail({
+    const sent = await sendEmail({
       to,
       subject: `Demo Talebi: ${name} — ${school}`,
       html,
     })
+
+    if (!sent) {
+      return NextResponse.json({ error: 'Email gönderilemedi' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
