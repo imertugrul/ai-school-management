@@ -53,34 +53,31 @@ export async function GET(request: NextRequest) {
       reason: 'No guardian has receivesSMS=true AND a phone number. Enable SMS in the guardian settings.',
     }
   } else {
-    const sid      = process.env.TWILIO_ACCOUNT_SID
-    const token    = process.env.TWILIO_AUTH_TOKEN
-    const rawFrom  = process.env.TWILIO_WHATSAPP_FROM
-    if (!sid || !token || !rawFrom) {
-      results.whatsapp = { status: 'ERROR', reason: 'Twilio env vars missing (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_WHATSAPP_FROM)' }
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
+    const authToken  = process.env.TWILIO_AUTH_TOKEN
+    const rawFrom    = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'
+    if (!accountSid || !authToken) {
+      results.whatsapp = { status: 'ERROR', reason: 'Twilio env vars missing (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN)' }
     } else {
-      const fromNumber = rawFrom.replace(/^whatsapp:/, '')
+      const g = smsGuardians[0]
+      const cleanNumber  = '+' + g.phone!.replace(/[^0-9]/g, '')
+      const toWhatsApp   = `whatsapp:${cleanNumber}`
+      const fromWhatsApp = rawFrom.startsWith('whatsapp:') ? rawFrom : `whatsapp:${rawFrom}`
+      console.log('[DEBUG] Twilio sending:', { from: fromWhatsApp, to: toWhatsApp })
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const client = require('twilio')(sid, token)
-        const g = smsGuardians[0]
-        const digits = g.phone!.replace(/\D/g, '')
-        const e164 = digits.startsWith('90') && digits.length === 12 ? `+${digits}`
-          : digits.startsWith('0') && digits.length === 11 ? `+90${digits.slice(1)}`
-          : digits.length === 10 ? `+90${digits}`
-          : null
-        if (!e164) {
-          results.whatsapp = { status: 'ERROR', reason: `Cannot convert "${g.phone}" to E.164 format` }
-        } else {
-          await client.messages.create({
-            from: `whatsapp:${fromNumber}`,
-            to:   `whatsapp:${e164}`,
-            body: `[TEST] SchoolPro AI bildirim testi — ${student.name} için veli bildirimleri çalışıyor. ✅`,
-          })
-          results.whatsapp = { status: 'SENT', to: e164, guardian: g.name }
-        }
-      } catch (err: unknown) {
-        results.whatsapp = { status: 'ERROR', reason: err instanceof Error ? err.message : String(err) }
+        const client = require('twilio')(accountSid, authToken)
+        const msg = await client.messages.create({
+          from: fromWhatsApp,
+          to:   toWhatsApp,
+          body: `[TEST] SchoolPro AI bildirim testi — ${student.name} için veli bildirimleri çalışıyor. ✅`,
+        })
+        console.log('[DEBUG] Twilio success:', msg.sid)
+        results.whatsapp = { status: 'SENT', to: toWhatsApp, guardian: g.name, sid: msg.sid }
+      } catch (err: any) {
+        console.error('[DEBUG] Twilio error full:', JSON.stringify(err))
+        console.error('[DEBUG] Twilio error code:', err.code)
+        results.whatsapp = { status: 'ERROR', reason: err.message ?? String(err), code: err.code }
       }
     }
   }
