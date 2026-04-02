@@ -16,10 +16,14 @@ function toE164(phone: string): string | null {
 
 async function sendWhatsApp(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const sid   = process.env.TWILIO_ACCOUNT_SID
-    const token = process.env.TWILIO_AUTH_TOKEN
-    const from  = process.env.TWILIO_WHATSAPP_FROM
-    if (!sid || !token || !from) return { ok: false, error: 'Twilio credentials not configured' }
+    const sid    = process.env.TWILIO_ACCOUNT_SID
+    const token  = process.env.TWILIO_AUTH_TOKEN
+    const rawFrom = process.env.TWILIO_WHATSAPP_FROM
+    if (!sid || !token || !rawFrom) return { ok: false, error: 'Twilio credentials not configured' }
+
+    // Normalize: strip any existing whatsapp: prefix before re-adding, to avoid
+    // "whatsapp:whatsapp:+14155238886" when the env var already includes the prefix.
+    const fromNumber = rawFrom.replace(/^whatsapp:/, '')
 
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const client = require('twilio')(sid, token)
@@ -27,13 +31,15 @@ async function sendWhatsApp(to: string, body: string): Promise<{ ok: boolean; er
     if (!e164) return { ok: false, error: `Invalid phone number: ${to}` }
 
     await client.messages.create({
-      from: `whatsapp:${from}`,
+      from: `whatsapp:${fromNumber}`,
       to:   `whatsapp:${e164}`,
       body,
     })
     return { ok: true }
   } catch (err: unknown) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[WhatsApp] Twilio error:', msg)
+    return { ok: false, error: msg }
   }
 }
 
@@ -196,23 +202,33 @@ export async function sendAbsenceNotification(notificationId: string): Promise<{
     emailError = 'No guardian configured to receive email'
   } else {
     try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      const { subject, html } = buildAbsenceEmailHtml({ ...msgOpts, schoolEmail })
-      const toEmails = emailGuardians.map(g => g.email!).filter(Boolean)
-      const { error: resendErr } = await resend.emails.send({
-        from:    `${schoolName} <${schoolEmail || 'noreply@school.edu.tr'}>`,
-        to:      toEmails,
-        subject,
-        html,
-      })
-      if (resendErr) {
-        emailError = resendErr.message
+      const resendKey = process.env.RESEND_API_KEY
+      if (!resendKey) {
+        emailError = 'RESEND_API_KEY not configured'
+        console.error('[Email] RESEND_API_KEY not set')
       } else {
-        emailSent = true
+        const { Resend } = await import('resend')
+        const resend = new Resend(resendKey)
+        const { subject, html } = buildAbsenceEmailHtml({ ...msgOpts, schoolEmail })
+        const toEmails = emailGuardians.map(g => g.email!).filter(Boolean)
+        // Use EMAIL_FROM (Resend-verified sender domain) not SCHOOL_EMAIL
+        const fromAddress = process.env.EMAIL_FROM || 'noreply@schoolproai.com'
+        const { error: resendErr } = await resend.emails.send({
+          from:    `${schoolName} <${fromAddress}>`,
+          to:      toEmails,
+          subject,
+          html,
+        })
+        if (resendErr) {
+          emailError = resendErr.message
+          console.error('[Email] Resend error:', resendErr)
+        } else {
+          emailSent = true
+        }
       }
     } catch (err: unknown) {
       emailError = err instanceof Error ? err.message : String(err)
+      console.error('[Email] Unexpected error:', emailError)
     }
   }
 
