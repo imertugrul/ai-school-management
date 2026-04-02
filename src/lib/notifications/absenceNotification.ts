@@ -4,13 +4,24 @@
  */
 import { prisma } from '@/lib/prisma'
 
-// Convert Turkish phone numbers to E.164 format
+// Convert phone numbers to E.164 format
 function toE164(phone: string): string | null {
-  const digits = phone.replace(/\D/g, '')
+  // Strip spaces, dashes, parentheses — keep digits and leading +
+  const cleaned = phone.trim().replace(/[\s\-().]/g, '')
+
+  // Already valid E.164 (e.g. +4917622631316, +905321234567)
+  if (/^\+\d{7,15}$/.test(cleaned)) return cleaned
+
+  const digits = cleaned.replace(/\D/g, '')
+
+  // Turkish local formats → +90
   if (digits.startsWith('90') && digits.length === 12) return `+${digits}`
-  if (digits.startsWith('0') && digits.length === 11) return `+90${digits.slice(1)}`
-  if (digits.length === 10) return `+90${digits}`
-  if (digits.startsWith('9') && digits.length === 12) return `+${digits}`
+  if (digits.startsWith('0') && digits.length === 11)  return `+90${digits.slice(1)}`
+  if (digits.length === 10)                             return `+90${digits}`
+
+  // Any other international number that starts with country code (no leading 0)
+  if (digits.length >= 7 && digits.length <= 15) return `+${digits}`
+
   return null
 }
 
@@ -30,15 +41,15 @@ async function sendWhatsApp(to: string, body: string): Promise<{ ok: boolean; er
     const e164 = toE164(to)
     if (!e164) return { ok: false, error: `Invalid phone number: ${to}` }
 
-    await client.messages.create({
-      from: `whatsapp:${fromNumber}`,
-      to:   `whatsapp:${e164}`,
-      body,
-    })
+    const fromAddr = `whatsapp:${fromNumber}`
+    const toAddr   = `whatsapp:${e164}`
+    console.log('[WhatsApp] Sending:', { from: fromAddr, to: toAddr })
+
+    await client.messages.create({ from: fromAddr, to: toAddr, body })
     return { ok: true }
   } catch (err: unknown) {
+    console.error('[WhatsApp] Twilio error:', JSON.stringify(err))
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('[WhatsApp] Twilio error:', msg)
     return { ok: false, error: msg }
   }
 }
