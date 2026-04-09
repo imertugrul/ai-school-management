@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Profile {
   id: string; name: string; email: string; phone: string
@@ -8,6 +9,7 @@ interface Profile {
 }
 
 export default function ParentProfile() {
+  const { language, setLanguage } = useLanguage()
   const [profile, setProfile]   = useState<Profile | null>(null)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
@@ -139,6 +141,36 @@ export default function ParentProfile() {
           {saving ? 'Kaydediliyor…' : 'Kaydet'}
         </button>
       </form>
+
+      {/* Language selector */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <h3 className="font-semibold text-gray-900 text-sm">
+          {language === 'tr' ? 'Arayüz Dili' : 'Interface Language'}
+        </h3>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { code: 'tr', flag: '🇹🇷', label: 'Türkçe' },
+            { code: 'en', flag: '🇬🇧', label: 'English' },
+          ] as const).map(({ code, flag, label }) => (
+            <button
+              key={code}
+              onClick={async () => {
+                await setLanguage(code)
+                showToast(code === 'tr' ? 'Dil güncellendi' : 'Language updated')
+              }}
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                language === code
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span className="text-xl">{flag}</span>
+              <span>{label}</span>
+              {language === code && <span className="ml-auto text-blue-500 text-xs">✓</span>}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Password change */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

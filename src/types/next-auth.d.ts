@@ -7,6 +7,7 @@ declare module 'next-auth' {
     email:             string
     name:              string
     role:              string
+    language?:         string
     twoFactorEnabled?: boolean
     twoFactorVerified?: boolean
   }
@@ -17,6 +18,7 @@ declare module 'next-auth' {
       email:             string
       name:              string
       role:              string
+      language?:         string
       twoFactorEnabled?: boolean
       twoFactorPassed?:  boolean
     } & DefaultSession['user']
@@ -27,6 +29,7 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id:                string
     role:              string
+    language?:         string
     twoFactorEnabled?: boolean
     twoFactorPassed?:  boolean
   }

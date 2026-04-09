@@ -73,6 +73,8 @@ model User {
 
   department            String?
 
+  language              String   @default("tr")
+
   // 2FA fields
   twoFactorEnabled      Boolean  @default(false)
   twoFactorSecret       String?

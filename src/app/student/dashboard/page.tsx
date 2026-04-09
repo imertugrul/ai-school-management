@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function StudentDashboard() {
   const { data: session } = useSession()
@@ -146,6 +147,7 @@ export default function StudentDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <LanguageSwitcher />
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="btn-secondary text-sm"

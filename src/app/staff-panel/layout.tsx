@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ROLE_LABELS } from '@/lib/permissions'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const NAV_ITEMS = [
   { href: '/staff-panel',                   icon: '🏠', label: 'Home'                },
@@ -104,6 +105,9 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
               <p className="text-sm font-semibold text-gray-900 truncate">{session?.user?.name}</p>
               <p className="text-xs text-gray-400">{roleLabel}</p>
             </div>
+          </div>
+          <div className="mb-2">
+            <LanguageSwitcher variant="full" />
           </div>
           <button
             onClick={() => signOut({ callbackUrl: '/' })}

@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where:  { email: credentials.email },
           select: { id: true, email: true, name: true, role: true, password: true,
-                    status: true, twoFactorEnabled: true, twoFactorVerified: true },
+                    status: true, language: true, twoFactorEnabled: true, twoFactorVerified: true },
         })
 
         if (!user || !user.password) return null
@@ -41,6 +41,7 @@ export const authOptions: NextAuthOptions = {
           email:             user.email,
           name:              user.name,
           role:              user.role,
+          language:          user.language ?? 'tr',
           twoFactorEnabled:  user.twoFactorEnabled,
           twoFactorVerified: user.twoFactorVerified,
         }
@@ -80,10 +81,13 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, account, trigger, session }) {
-      // ── Handle session.update() calls (e.g., after 2FA verification) ──
+      // ── Handle session.update() calls (e.g., after 2FA verification or language change) ──
       if (trigger === 'update' && session) {
         if (typeof session.twoFactorPassed === 'boolean') {
           token.twoFactorPassed = session.twoFactorPassed
+        }
+        if (typeof session.language === 'string') {
+          token.language = session.language
         }
         return token
       }
@@ -92,6 +96,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role             = (user as any).role
         token.id               = user.id
+        token.language         = (user as any).language ?? 'tr'
         token.twoFactorEnabled = (user as any).twoFactorEnabled ?? false
         token.twoFactorPassed  = !((user as any).twoFactorEnabled && (user as any).twoFactorVerified)
       }
@@ -101,11 +106,12 @@ export const authOptions: NextAuthOptions = {
         if (token.email) {
           const dbUser = await prisma.user.findUnique({
             where:  { email: token.email as string },
-            select: { role: true, id: true, twoFactorEnabled: true, twoFactorVerified: true },
+            select: { role: true, id: true, language: true, twoFactorEnabled: true, twoFactorVerified: true },
           })
           if (dbUser) {
             token.role             = dbUser.role
             token.id               = dbUser.id
+            token.language         = dbUser.language ?? 'tr'
             token.twoFactorEnabled = dbUser.twoFactorEnabled
             token.twoFactorPassed  = !(dbUser.twoFactorEnabled && dbUser.twoFactorVerified)
           }
@@ -119,6 +125,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.role             = token.role as string
         session.user.id               = token.id as string
+        session.user.language         = (token.language as string) ?? 'tr'
         session.user.twoFactorEnabled = token.twoFactorEnabled as boolean
         session.user.twoFactorPassed  = token.twoFactorPassed  as boolean
       }
