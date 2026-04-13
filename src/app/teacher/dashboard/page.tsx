@@ -4,10 +4,12 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function TeacherDashboard() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { t } = useLanguage()
   const [stats, setStats] = useState({
     testsCreated: 0,
     studentsGraded: 0,
@@ -25,10 +27,10 @@ export default function TeacherDashboard() {
   const initials = (session?.user?.name || 'T').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const statCards = [
-    { icon: '📝', label: 'Tests Created', value: stats.testsCreated, color: 'from-blue-500 to-blue-600', bg: 'bg-blue-50 group-hover:bg-blue-100', accent: 'from-blue-50' },
-    { icon: '👥', label: 'Submissions', value: stats.studentsGraded, color: 'from-purple-500 to-purple-600', bg: 'bg-purple-50 group-hover:bg-purple-100', accent: 'from-purple-50' },
-    { icon: '🎓', label: 'Classes', value: stats.classesCount, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50 group-hover:bg-emerald-100', accent: 'from-emerald-50' },
-    { icon: '📊', label: 'Average Score', value: stats.averageScore > 0 ? `${stats.averageScore}%` : 'N/A', color: 'from-orange-500 to-orange-600', bg: 'bg-orange-50 group-hover:bg-orange-100', accent: 'from-orange-50' },
+    { icon: '📝', label: t('dashboard.teacher.testsCreated'), value: stats.testsCreated, color: 'from-blue-500 to-blue-600', bg: 'bg-blue-50 group-hover:bg-blue-100', accent: 'from-blue-50' },
+    { icon: '👥', label: t('dashboard.teacher.submissions'), value: stats.studentsGraded, color: 'from-purple-500 to-purple-600', bg: 'bg-purple-50 group-hover:bg-purple-100', accent: 'from-purple-50' },
+    { icon: '🎓', label: t('dashboard.teacher.classes'), value: stats.classesCount, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50 group-hover:bg-emerald-100', accent: 'from-emerald-50' },
+    { icon: '📊', label: t('dashboard.teacher.averageScore'), value: stats.averageScore > 0 ? `${stats.averageScore}%` : 'N/A', color: 'from-orange-500 to-orange-600', bg: 'bg-orange-50 group-hover:bg-orange-100', accent: 'from-orange-50' },
   ]
 
   const actionCards = [
@@ -164,8 +166,8 @@ export default function TeacherDashboard() {
                 <span className="text-white font-bold text-base">S</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Teacher Dashboard</h1>
-                <p className="text-xs text-gray-500">Teaching Portal</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.teacher.title')}</h1>
+                <p className="text-xs text-gray-500">{t('dashboard.teacher.teachingPortal')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -174,7 +176,7 @@ export default function TeacherDashboard() {
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="btn-secondary text-sm"
               >
-                Logout
+                {t('dashboard.common.logout')}
               </button>
               <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center cursor-pointer">
                 <span className="text-white text-sm font-semibold">{initials}</span>
@@ -187,9 +189,9 @@ export default function TeacherDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {session?.user?.name}!
+            {t('dashboard.teacher.welcome')}, {session?.user?.name}!
           </h2>
-          <p className="text-gray-500">Here's what's happening with your classes</p>
+          <p className="text-gray-500">{t('dashboard.teacher.welcomeSub')}</p>
         </div>
 
         {/* Quick Stats */}

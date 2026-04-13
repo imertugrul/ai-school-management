@@ -19,9 +19,10 @@ const LanguageContext = createContext<LanguageContextType>({
 })
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const [language, setLanguageState] = useState<Language>('tr')
 
+  // Sync with session when it loads or changes
   useEffect(() => {
     const sessionLang = (session?.user as any)?.language
     if (sessionLang === 'tr' || sessionLang === 'en') {
@@ -30,12 +31,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [session])
 
   const setLanguage = async (lang: Language) => {
-    setLanguageState(lang)
+    // 1. Update DB
     await fetch('/api/user/language', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ language: lang }),
     })
+    // 2. Update NextAuth JWT token so the new language persists after reload
+    await updateSession({ language: lang })
+    // 3. Hard reload — server renders with new language from session
+    window.location.reload()
   }
 
   const t = (key: string): string => {

@@ -4,10 +4,12 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function StudentDashboard() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { t } = useLanguage()
   const [stats, setStats] = useState({
     coursesEnrolled: 0,
     averageGrade: 0,
@@ -27,10 +29,10 @@ export default function StudentDashboard() {
   const initials = (session?.user?.name || 'S').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const statCards = [
-    { icon: '📚', label: 'Courses', value: stats.coursesEnrolled, accent: 'from-blue-50' },
-    { icon: '📊', label: 'Average Grade', value: stats.averageGrade > 0 ? `${stats.averageGrade}%` : 'N/A', accent: 'from-emerald-50' },
-    { icon: '✅', label: 'Attendance', value: stats.attendanceRate > 0 ? `${stats.attendanceRate}%` : 'N/A', accent: 'from-green-50' },
-    { icon: '📝', label: 'Pending Tests', value: stats.pendingTests, accent: 'from-orange-50' },
+    { icon: '📚', label: t('dashboard.student.courses'), value: stats.coursesEnrolled, accent: 'from-blue-50' },
+    { icon: '📊', label: t('dashboard.student.averageGrade'), value: stats.averageGrade > 0 ? `${stats.averageGrade}%` : 'N/A', accent: 'from-emerald-50' },
+    { icon: '✅', label: t('dashboard.student.attendance'), value: stats.attendanceRate > 0 ? `${stats.attendanceRate}%` : 'N/A', accent: 'from-green-50' },
+    { icon: '📝', label: t('dashboard.student.pendingTests'), value: stats.pendingTests, accent: 'from-orange-50' },
   ]
 
   const actionCards = [
@@ -142,8 +144,8 @@ export default function StudentDashboard() {
                 <span className="text-white font-bold text-base">S</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Student Dashboard</h1>
-                <p className="text-xs text-gray-500">Student Portal</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.student.title')}</h1>
+                <p className="text-xs text-gray-500">{t('dashboard.student.studentPortal')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -152,7 +154,7 @@ export default function StudentDashboard() {
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="btn-secondary text-sm"
               >
-                Logout
+                {t('dashboard.common.logout')}
               </button>
               <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full flex items-center justify-center cursor-pointer">
                 <span className="text-white text-sm font-semibold">{initials}</span>
@@ -165,9 +167,9 @@ export default function StudentDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {session?.user?.name}!
+            {t('dashboard.student.welcome')}, {session?.user?.name}!
           </h2>
-          <p className="text-gray-500">Here's your academic overview</p>
+          <p className="text-gray-500">{t('dashboard.student.welcomeSub')}</p>
         </div>
 
         {/* Quick Stats */}

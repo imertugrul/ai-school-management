@@ -3,19 +3,21 @@
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChildProvider, useChild } from '@/context/ChildContext'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-const NAV_ITEMS = [
-  { href: '/parent/dashboard',     icon: '🏠', label: 'Home'       },
-  { href: '/parent/grades',        icon: '📊', label: 'Grades'     },
-  { href: '/parent/attendance',    icon: '📅', label: 'Attendance' },
-  { href: '/parent/chat',          icon: '🤖', label: 'AI Asistan' },
-  { href: '/parent/profile',       icon: '👤', label: 'Profile'    },
+const NAV_HREFS = [
+  { href: '/parent/dashboard', icon: '🏠', key: 'dashboard.parent.navHome'       },
+  { href: '/parent/grades',    icon: '📊', key: 'dashboard.parent.navGrades'     },
+  { href: '/parent/attendance',icon: '📅', key: 'dashboard.parent.navAttendance' },
+  { href: '/parent/chat',      icon: '🤖', key: 'dashboard.parent.navAI'         },
+  { href: '/parent/profile',   icon: '👤', key: 'dashboard.parent.navProfile'    },
 ]
 
 function ParentLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session }                   = useSession()
   const pathname                            = usePathname()
   const router                              = useRouter()
+  const { t }                               = useLanguage()
   const { children: childList, selectedChild, setSelectedChildId, loading } = useChild()
 
   return (
@@ -30,9 +32,9 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
                 <span className="text-white font-bold text-sm">S</span>
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-bold text-gray-900 leading-tight">Parent Portal</p>
+                <p className="text-xs font-bold text-gray-900 leading-tight">{t('dashboard.parent.portalTitle')}</p>
                 <p className="text-xs text-gray-400">
-                  Welcome, {session?.user?.name?.split(' ')[0]}
+                  {t('dashboard.parent.welcome')}, {session?.user?.name?.split(' ')[0]}
                 </p>
               </div>
             </div>
@@ -66,7 +68,7 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
               onClick={() => signOut({ callbackUrl: '/' })}
               className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1"
             >
-              Sign Out
+              {t('dashboard.common.signOut')}
             </button>
           </div>
         </div>
@@ -81,7 +83,7 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-200 safe-area-bottom">
         <div className="max-w-2xl mx-auto">
           <div className="flex">
-            {NAV_ITEMS.map(item => {
+            {NAV_HREFS.map(item => {
               const active = item.href === '/parent/dashboard'
                 ? pathname === '/parent/dashboard'
                 : pathname.startsWith(item.href)
@@ -95,7 +97,7 @@ function ParentLayoutInner({ children }: { children: React.ReactNode }) {
                 >
                   <span className="text-xl leading-none">{item.icon}</span>
                   <span className={`text-[10px] font-medium ${active ? 'text-blue-600' : ''}`}>
-                    {item.label}
+                    {t(item.key)}
                   </span>
                 </button>
               )

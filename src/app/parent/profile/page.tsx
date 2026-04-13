@@ -9,7 +9,7 @@ interface Profile {
 }
 
 export default function ParentProfile() {
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   const [profile, setProfile]   = useState<Profile | null>(null)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
@@ -46,15 +46,15 @@ export default function ParentProfile() {
       })
       const d = await r.json()
       if (!r.ok) { showToast(d.error || 'Hata', false); return }
-      showToast('Profil güncellendi')
+      showToast(t('dashboard.parent.profileUpdated'))
     } finally { setSaving(false) }
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault()
     setPwError('')
-    if (pwForm.next !== pwForm.confirm) { setPwError('Şifreler eşleşmiyor'); return }
-    if (pwForm.next.length < 8) { setPwError('Şifre en az 8 karakter olmalı'); return }
+    if (pwForm.next !== pwForm.confirm) { setPwError(t('dashboard.parent.passwordMismatch')); return }
+    if (pwForm.next.length < 8) { setPwError(t('dashboard.parent.passwordTooShort')); return }
     setSaving(true)
     try {
       const r = await fetch('/api/auth/change-password', {
@@ -64,7 +64,7 @@ export default function ParentProfile() {
       })
       const d = await r.json()
       if (!r.ok) { setPwError(d.error || 'Hata'); return }
-      showToast('Şifre değiştirildi')
+      showToast(t('dashboard.parent.passwordChanged'))
       setShowPwForm(false)
       setPwForm({ current: '', next: '', confirm: '' })
     } finally { setSaving(false) }
@@ -77,8 +77,8 @@ export default function ParentProfile() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Profil</h1>
-        <p className="text-sm text-gray-400">Hesap ve bildirim ayarları</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('dashboard.parent.profileTitle')}</h1>
+        <p className="text-sm text-gray-400">{t('dashboard.parent.profileSubtitle')}</p>
       </div>
 
       {/* Avatar */}
@@ -95,23 +95,23 @@ export default function ParentProfile() {
 
       {/* Profile form */}
       <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
-        <h3 className="font-semibold text-gray-900 text-sm">Kişisel Bilgiler</h3>
+        <h3 className="font-semibold text-gray-900 text-sm">{t('dashboard.parent.personalInfo')}</h3>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Ad Soyad</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.nameLabel')}</label>
           <input
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             className="input-field text-sm w-full"
-            placeholder="Adınız Soyadınız"
+            placeholder={t('dashboard.parent.nameLabel')}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">E-posta (salt okunur)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.emailLabel')}</label>
           <input value={profile?.email ?? ''} readOnly className="input-field text-sm w-full bg-gray-50 text-gray-400" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Telefon</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.phoneLabel')}</label>
           <input
             value={form.phone}
             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -120,12 +120,12 @@ export default function ParentProfile() {
           />
         </div>
 
-        <h3 className="font-semibold text-gray-900 text-sm pt-2">Bildirim Tercihleri</h3>
+        <h3 className="font-semibold text-gray-900 text-sm pt-2">{t('dashboard.parent.notifications')}</h3>
 
-        {[
-          { key: 'receivesEmail', label: 'E-posta bildirimleri' },
-          { key: 'receivesSMS',   label: 'WhatsApp bildirimleri' },
-        ].map(({ key, label }) => (
+        {([
+          { key: 'receivesEmail', tKey: 'dashboard.parent.emailNotif' },
+          { key: 'receivesSMS',   tKey: 'dashboard.parent.whatsappNotif' },
+        ] as const).map(({ key, tKey }) => (
           <label key={key} className="flex items-center gap-3 cursor-pointer">
             <div
               onClick={() => setForm(f => ({ ...f, [key]: !f[key as keyof typeof f] }))}
@@ -133,20 +133,18 @@ export default function ParentProfile() {
             >
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form[key as keyof typeof form] ? 'translate-x-6' : 'translate-x-1'}`} />
             </div>
-            <span className="text-sm text-gray-700">{label}</span>
+            <span className="text-sm text-gray-700">{t(tKey)}</span>
           </label>
         ))}
 
         <button type="submit" disabled={saving} className="w-full btn-primary text-sm py-2.5 disabled:opacity-50">
-          {saving ? 'Kaydediliyor…' : 'Kaydet'}
+          {saving ? t('dashboard.common.saving') : t('dashboard.common.save')}
         </button>
       </form>
 
       {/* Language selector */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
-        <h3 className="font-semibold text-gray-900 text-sm">
-          {language === 'tr' ? 'Arayüz Dili' : 'Interface Language'}
-        </h3>
+        <h3 className="font-semibold text-gray-900 text-sm">{t('dashboard.common.language')}</h3>
         <div className="grid grid-cols-2 gap-2">
           {([
             { code: 'tr', flag: '🇹🇷', label: 'Türkçe' },
@@ -154,10 +152,7 @@ export default function ParentProfile() {
           ] as const).map(({ code, flag, label }) => (
             <button
               key={code}
-              onClick={async () => {
-                await setLanguage(code)
-                showToast(code === 'tr' ? 'Dil güncellendi' : 'Language updated')
-              }}
+              onClick={() => setLanguage(code)}
               className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                 language === code
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -178,26 +173,26 @@ export default function ParentProfile() {
           onClick={() => setShowPwForm(v => !v)}
           className="w-full flex items-center justify-between px-4 py-3.5 text-left"
         >
-          <span className="text-sm font-medium text-gray-900">🔒 Şifre Değiştir</span>
+          <span className="text-sm font-medium text-gray-900">🔒 {t('dashboard.parent.changePassword')}</span>
           <span className="text-gray-400 text-sm">{showPwForm ? '▲' : '▼'}</span>
         </button>
         {showPwForm && (
           <form onSubmit={handlePasswordChange} className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-3">
             {pwError && <p className="text-xs text-red-600">{pwError}</p>}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Mevcut Şifre</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.currentPassword')}</label>
               <input type="password" value={pwForm.current} onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))} className="input-field text-sm w-full" required />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Yeni Şifre</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.newPassword')}</label>
               <input type="password" value={pwForm.next} onChange={e => setPwForm(f => ({ ...f, next: e.target.value }))} className="input-field text-sm w-full" minLength={8} required />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Yeni Şifre (Tekrar)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('dashboard.parent.confirmPassword')}</label>
               <input type="password" value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))} className="input-field text-sm w-full" minLength={8} required />
             </div>
             <button type="submit" disabled={saving} className="w-full btn-primary text-sm py-2.5 disabled:opacity-50">
-              {saving ? 'Kaydediliyor…' : 'Şifreyi Değiştir'}
+              {saving ? t('dashboard.common.saving') : t('dashboard.parent.changePassword')}
             </button>
           </form>
         )}

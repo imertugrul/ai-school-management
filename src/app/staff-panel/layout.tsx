@@ -5,22 +5,24 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ROLE_LABELS } from '@/lib/permissions'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 const NAV_ITEMS = [
-  { href: '/staff-panel',                   icon: '🏠', label: 'Home'                },
-  { href: '/staff-panel/attendance-review', icon: '📋', label: 'Attendance Approval', badgeKey: 'attendance' },
-  { href: '/staff-panel/appointments',      icon: '🗓️', label: 'Randevular',          badgeKey: 'appointments' },
-  { href: '/staff-panel/students',          icon: '👥', label: 'Students'             },
-  { href: '/staff-panel/announcements',     icon: '📢', label: 'Announcements'        },
-  { href: '/staff-panel/events',            icon: '📅', label: 'Events'               },
-  { href: '/staff-panel/schedule',          icon: '🗓️', label: 'Schedule'             },
-  { href: '/staff-panel/analytics',         icon: '📊', label: 'Reports'              },
+  { href: '/staff-panel',                   icon: '🏠', tKey: 'dashboard.staff.navHome'               },
+  { href: '/staff-panel/attendance-review', icon: '📋', tKey: 'dashboard.staff.navAttendanceApproval', badgeKey: 'attendance' },
+  { href: '/staff-panel/appointments',      icon: '🗓️', tKey: 'dashboard.staff.navAppointments',       badgeKey: 'appointments' },
+  { href: '/staff-panel/students',          icon: '👥', tKey: 'dashboard.staff.navStudents'            },
+  { href: '/staff-panel/announcements',     icon: '📢', tKey: 'dashboard.staff.navAnnouncements'       },
+  { href: '/staff-panel/events',            icon: '📅', tKey: 'dashboard.staff.navEvents'              },
+  { href: '/staff-panel/schedule',          icon: '🗓️', tKey: 'dashboard.staff.navSchedule'            },
+  { href: '/staff-panel/analytics',         icon: '📊', tKey: 'dashboard.staff.navReports'             },
 ]
 
 export default function StaffPanelLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router   = useRouter()
+  const { t }    = useLanguage()
 
   const role      = (session?.user as { role?: string })?.role ?? ''
   const roleLabel = ROLE_LABELS[role] ?? role
@@ -56,7 +58,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
               <span className="text-white font-bold text-base">S</span>
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Staff Panel</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">{t('dashboard.staff.panelTitle')}</p>
               <p className="text-xs text-gray-400">{roleLabel}</p>
             </div>
           </div>
@@ -84,7 +86,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
                 }`}
               >
                 <span className="text-base">{item.icon}</span>
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="flex-1 text-left">{t(item.tKey)}</span>
                 {badge !== null && (
                   <span className="bg-red-500 text-white text-xs font-bold min-w-[20px] h-5 flex items-center justify-center rounded-full px-1">
                     {badge > 99 ? '99+' : badge}
@@ -113,7 +115,7 @@ export default function StaffPanelLayout({ children }: { children: React.ReactNo
             onClick={() => signOut({ callbackUrl: '/' })}
             className="w-full text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-xl transition-colors font-medium"
           >
-            Sign Out
+            {t('dashboard.common.signOut')}
           </button>
         </div>
       </aside>
