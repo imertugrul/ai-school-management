@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Answer {
   id: string
@@ -34,6 +35,7 @@ interface Submission {
 export default function TestResultsPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useLanguage()
   const testId = params.id as string
 
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -53,7 +55,6 @@ export default function TestResultsPage() {
     try {
       const response = await fetch(`/api/tests/${testId}/results`)
       const data = await response.json()
-      
       if (data.success) {
         setSubmissions(data.submissions)
       }
@@ -65,48 +66,41 @@ export default function TestResultsPage() {
   }
 
   const handleGradeWithAI = async (submissionId: string) => {
-    if (!confirm('Grade this submission with AI? This may take 15-30 seconds.')) return
-    
+    if (!confirm(t('dashboard.teacher.gradeWithAI') + '?')) return
+
     setGrading(submissionId)
     try {
       const response = await fetch(`/api/submissions/${submissionId}/grade`, {
         method: 'POST'
       })
       const data = await response.json()
-      
+
       if (data.success) {
-        alert(`AI Grading complete! Score: ${data.totalScore}/${data.maxScore}`)
+        alert(`${t('dashboard.teacher.averageScoreLabel')}: ${data.totalScore}/${data.maxScore}`)
         fetchResults()
-      } else {
-        alert('Error grading')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Error occurred')
     } finally {
       setGrading(null)
     }
   }
 
   const handleRelease = async (submissionId: string) => {
-    if (!confirm('Release results to student? They will be able to see their score and feedback.')) return
-    
+    if (!confirm(t('dashboard.teacher.releaseResultsBtn') + '?')) return
+
     setReleasing(submissionId)
     try {
       const response = await fetch(`/api/submissions/${submissionId}/release`, {
         method: 'POST'
       })
       const data = await response.json()
-      
+
       if (data.success) {
-        alert('Results released!')
         fetchResults()
-      } else {
-        alert('Error releasing')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Error occurred')
     } finally {
       setReleasing(null)
     }
@@ -126,20 +120,16 @@ export default function TestResultsPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert('Score updated!')
         setEditingAnswer(null)
         fetchResults()
-      } else {
-        alert('Error updating score')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('Error occurred')
     }
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen flex items-center justify-center">{t('dashboard.teacher.loading')}</div>
   }
 
   const gradedSubmissions = submissions.filter(s => s.status === 'GRADED' || s.status === 'RELEASED')
@@ -152,9 +142,9 @@ export default function TestResultsPage() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">Test Results</h1>
+            <h1 className="text-2xl font-bold text-primary-600">{t('dashboard.teacher.testResultsTitle')}</h1>
             <button onClick={() => router.push('/teacher/tests')} className="btn-secondary">
-              ← Back
+              {t('dashboard.teacher.back')}
             </button>
           </div>
         </div>
@@ -164,24 +154,19 @@ export default function TestResultsPage() {
         {/* Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Total Submissions</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">{t('dashboard.teacher.totalSubmissionsLabel')}</h3>
             <p className="text-3xl font-bold text-gray-900">{submissions.length}</p>
           </div>
-
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Graded</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">{t('dashboard.teacher.gradedLabel')}</h3>
             <p className="text-3xl font-bold text-green-600">{gradedSubmissions.length}</p>
           </div>
-
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Average Score</h3>
-            <p className="text-3xl font-bold text-primary-600">
-              {averageScore.toFixed(1)}
-            </p>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">{t('dashboard.teacher.averageScoreLabel')}</h3>
+            <p className="text-3xl font-bold text-primary-600">{averageScore.toFixed(1)}</p>
           </div>
-
           <div className="card">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Pass Rate</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">{t('dashboard.teacher.passRateLabel')}</h3>
             <p className="text-3xl font-bold text-blue-600">
               {gradedSubmissions.length > 0
                 ? Math.round((gradedSubmissions.filter(s => (s.totalScore || 0) >= (s.maxScore || 0) * 0.6).length / gradedSubmissions.length) * 100)
@@ -193,10 +178,10 @@ export default function TestResultsPage() {
         {/* Submissions List */}
         <div className="grid md:grid-cols-2 gap-6">
           <div className="card">
-            <h2 className="text-xl font-bold mb-4">Student Submissions</h2>
-            
+            <h2 className="text-xl font-bold mb-4">{t('dashboard.teacher.studentSubmissionsTitle')}</h2>
+
             {submissions.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">No submissions yet</p>
+              <p className="text-center text-gray-500 py-8">{t('dashboard.teacher.noSubmissionsYet')}</p>
             ) : (
               <div className="space-y-3">
                 {submissions.map((submission) => (
@@ -222,9 +207,9 @@ export default function TestResultsPage() {
                               ${submission.status === 'GRADED' ? 'bg-blue-100 text-blue-800' : ''}
                               ${submission.status === 'RELEASED' ? 'bg-green-100 text-green-800' : ''}
                             `}>
-                              {submission.status === 'SUBMITTED' ? '📝 Submitted' : ''}
-                              {submission.status === 'GRADED' ? '📊 Graded' : ''}
-                              {submission.status === 'RELEASED' ? '✅ Released' : ''}
+                              {submission.status === 'SUBMITTED' ? t('dashboard.teacher.statusSubmittedText') : ''}
+                              {submission.status === 'GRADED' ? t('dashboard.teacher.statusGradedText') : ''}
+                              {submission.status === 'RELEASED' ? t('dashboard.teacher.statusReleasedText') : ''}
                             </span>
                           </div>
                         </div>
@@ -249,7 +234,7 @@ export default function TestResultsPage() {
                           disabled={grading === submission.id}
                           className="btn-primary flex-1 text-sm disabled:opacity-50"
                         >
-                          {grading === submission.id ? '⏳ Grading...' : '🤖 Grade with AI'}
+                          {grading === submission.id ? t('dashboard.teacher.gradingProgress') : t('dashboard.teacher.gradeWithAI')}
                         </button>
                       )}
 
@@ -259,13 +244,13 @@ export default function TestResultsPage() {
                           disabled={releasing === submission.id}
                           className="btn-primary flex-1 text-sm bg-green-600 hover:bg-green-700 disabled:opacity-50"
                         >
-                          {releasing === submission.id ? 'Releasing...' : '✅ Release Results'}
+                          {releasing === submission.id ? t('dashboard.teacher.releasingProgress') : t('dashboard.teacher.releaseResultsBtn')}
                         </button>
                       )}
 
                       {submission.status === 'RELEASED' && (
                         <div className="text-sm text-green-600 font-medium px-4 py-2 bg-green-50 rounded-lg">
-                          ✓ Results released to student
+                          {t('dashboard.teacher.resultsReleasedText')}
                         </div>
                       )}
                     </div>
@@ -277,31 +262,30 @@ export default function TestResultsPage() {
 
           {/* Answer Details */}
           <div className="card">
-            <h2 className="text-xl font-bold mb-4">Answer Details</h2>
+            <h2 className="text-xl font-bold mb-4">{t('dashboard.teacher.answerDetailsTitle')}</h2>
 
             {!selectedSubmission ? (
-              <p className="text-center text-gray-500 py-8">Select a submission to view details</p>
+              <p className="text-center text-gray-500 py-8">{t('dashboard.teacher.selectSubmissionHint')}</p>
             ) : (
               <div className="space-y-4">
                 {selectedSubmission.answers.map((answer, idx) => (
                   <div key={answer.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="mb-2">
-                      <span className="font-semibold">Question {idx + 1}</span>
+                      <span className="font-semibold">{t('dashboard.teacher.questionN')} {idx + 1}</span>
                       <span className="ml-2 text-sm text-gray-500">({answer.question.type})</span>
                     </div>
                     <p className="text-sm text-gray-700 mb-2">{answer.question.content}</p>
-                    
+
                     <div className="bg-gray-50 p-3 rounded mb-2">
-                      <p className="text-sm font-medium text-gray-700 mb-1">Student Answer:</p>
-                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{answer.response || 'No answer'}</p>
+                      <p className="text-sm font-medium text-gray-700 mb-1">{t('dashboard.teacher.studentAnswerLabel')}</p>
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">{answer.response || t('dashboard.teacher.noAnswerText')}</p>
                     </div>
 
                     {editingAnswer === answer.id ? (
-                      // EDIT MODE
                       <div className="space-y-3 bg-blue-50 p-3 rounded border border-blue-200">
                         <div>
                           <label className="text-sm font-medium text-gray-700 block mb-1">
-                            Score (max: {answer.question.points})
+                            {t('dashboard.teacher.score')} (max: {answer.question.points})
                           </label>
                           <input
                             type="number"
@@ -315,38 +299,31 @@ export default function TestResultsPage() {
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-700 block mb-1">
-                            Feedback
+                            {t('dashboard.teacher.feedbackPlaceholder')}
                           </label>
                           <textarea
                             value={editFeedback}
                             onChange={(e) => setEditFeedback(e.target.value)}
                             rows={3}
                             className="input-field"
-                            placeholder="Add your feedback..."
+                            placeholder={t('dashboard.teacher.feedbackPlaceholder')}
                           />
                         </div>
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditAnswer(answer.id)}
-                            className="btn-primary text-sm"
-                          >
-                            Save
+                          <button onClick={() => handleEditAnswer(answer.id)} className="btn-primary text-sm">
+                            {t('dashboard.common.save')}
                           </button>
-                          <button
-                            onClick={() => setEditingAnswer(null)}
-                            className="btn-secondary text-sm"
-                          >
-                            Cancel
+                          <button onClick={() => setEditingAnswer(null)} className="btn-secondary text-sm">
+                            {t('dashboard.common.cancel')}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      // VIEW MODE
                       <>
                         <div className="flex justify-between items-center mb-2">
                           <div className="text-sm">
                             <span className="font-semibold text-primary-600">
-                              {answer.teacherScore !== null 
+                              {answer.teacherScore !== null
                                 ? `${answer.teacherScore}/${answer.question.points} (Teacher)`
                                 : `${answer.aiScore || 0}/${answer.question.points} (AI)`
                               }
@@ -366,21 +343,21 @@ export default function TestResultsPage() {
                               }}
                               className="text-sm text-primary-600 hover:text-primary-800"
                             >
-                              ✏️ Edit
+                              {t('dashboard.teacher.editBtn')}
                             </button>
                           )}
                         </div>
 
                         {answer.aiFeedback && answer.teacherScore === null && (
                           <div className="p-2 bg-blue-50 border border-blue-200 rounded mb-2">
-                            <p className="text-xs font-medium text-blue-900 mb-1">AI Feedback:</p>
+                            <p className="text-xs font-medium text-blue-900 mb-1">{t('dashboard.teacher.aiFeedbackLabel')}</p>
                             <p className="text-xs text-blue-800">{answer.aiFeedback}</p>
                           </div>
                         )}
 
                         {answer.teacherFeedback && (
                           <div className="p-2 bg-green-50 border border-green-200 rounded">
-                            <p className="text-xs font-medium text-green-900 mb-1">Teacher Feedback:</p>
+                            <p className="text-xs font-medium text-green-900 mb-1">{t('dashboard.teacher.teacherFeedbackLabel')}</p>
                             <p className="text-xs text-green-800">{answer.teacherFeedback}</p>
                           </div>
                         )}

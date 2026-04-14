@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useChild } from '@/context/ChildContext'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface AttendanceRecord {
   id: string; date: string; status: string; notes: string | null
@@ -12,9 +13,6 @@ interface Summary { present: number; absent: number; late: number; excused: numb
 const STATUS_COLOR: Record<string, string> = {
   PRESENT: 'bg-green-100 text-green-700', ABSENT: 'bg-red-100 text-red-700',
   LATE: 'bg-amber-100 text-amber-700', EXCUSED: 'bg-blue-100 text-blue-700',
-}
-const STATUS_LABEL: Record<string, string> = {
-  PRESENT: 'Present', ABSENT: 'Absent', LATE: 'Late', EXCUSED: 'Excused',
 }
 const STATUS_DOT: Record<string, string> = {
   PRESENT: 'bg-green-400', ABSENT: 'bg-red-500', LATE: 'bg-amber-400', EXCUSED: 'bg-blue-400',
@@ -36,10 +34,18 @@ function shiftMonth(ym: string, delta: number) {
 
 export default function ParentAttendance() {
   const { selectedChild, loading: childLoading } = useChild()
+  const { t } = useLanguage()
   const [month, setMonth]     = useState(currentMonth())
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [summary, setSummary] = useState<Summary>({ present: 0, absent: 0, late: 0, excused: 0 })
   const [loading, setLoading] = useState(false)
+
+  const STATUS_LABEL: Record<string, string> = {
+    PRESENT: t('dashboard.parent.present'),
+    ABSENT:  t('dashboard.parent.absent'),
+    LATE:    t('dashboard.parent.late'),
+    EXCUSED: t('dashboard.parent.excused'),
+  }
 
   useEffect(() => {
     if (!selectedChild) return
@@ -67,7 +73,7 @@ export default function ParentAttendance() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Attendance</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('dashboard.parent.attendanceTitle')}</h1>
         <p className="text-sm text-gray-400">{selectedChild?.name}</p>
       </div>
 
@@ -81,14 +87,14 @@ export default function ParentAttendance() {
       {/* Summary */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Present', value: summary.present, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Absent', value: summary.absent, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Late', value: summary.late, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Excused', value: summary.excused, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { key: 'PRESENT', value: summary.present, color: 'text-green-600', bg: 'bg-green-50' },
+          { key: 'ABSENT',  value: summary.absent,  color: 'text-red-600',   bg: 'bg-red-50' },
+          { key: 'LATE',    value: summary.late,    color: 'text-amber-600', bg: 'bg-amber-50' },
+          { key: 'EXCUSED', value: summary.excused, color: 'text-blue-600',  bg: 'bg-blue-50' },
         ].map(c => (
-          <div key={c.label} className={`${c.bg} rounded-2xl p-3 text-center`}>
+          <div key={c.key} className={`${c.bg} rounded-2xl p-3 text-center`}>
             <p className={`text-xl font-bold ${c.color}`}>{c.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{STATUS_LABEL[c.key]}</p>
           </div>
         ))}
       </div>
@@ -96,7 +102,7 @@ export default function ParentAttendance() {
       {/* Rate bar */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Attendance Rate</span>
+          <span className="text-sm font-medium text-gray-700">{t('dashboard.parent.attendanceRate')}</span>
           <span className={`text-lg font-bold ${attendRate >= 90 ? 'text-green-600' : attendRate >= 80 ? 'text-amber-600' : 'text-red-600'}`}>%{attendRate}</span>
         </div>
         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -127,10 +133,10 @@ export default function ParentAttendance() {
           </div>
         )}
         <div className="flex gap-3 mt-3 flex-wrap">
-          {[['PRESENT','Present'],['ABSENT','Absent'],['LATE','Late'],['EXCUSED','Excused']].map(([s,l]) => (
+          {(['PRESENT','ABSENT','LATE','EXCUSED'] as const).map(s => (
             <div key={s} className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded-full ${STATUS_DOT[s]}`} />
-              <span className="text-xs text-gray-400">{l}</span>
+              <span className="text-xs text-gray-400">{STATUS_LABEL[s]}</span>
             </div>
           ))}
         </div>
@@ -139,7 +145,7 @@ export default function ParentAttendance() {
       {/* Detail list */}
       {nonPresent.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">Absence Detail</h3></div>
+          <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">{t('dashboard.parent.absenceDetail')}</h3></div>
           {nonPresent.map(r => (
             <div key={r.id} className="px-4 py-3 flex items-start gap-3 border-b border-gray-50 last:border-0">
               <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[r.status]}`} />
@@ -152,10 +158,10 @@ export default function ParentAttendance() {
                 {r.notification && (
                   <p className="text-xs mt-0.5">
                     {r.notification.whatsappSent || r.notification.emailSent
-                      ? <span className="text-green-600">✓ Parent notified</span>
+                      ? <span className="text-green-600">{t('dashboard.parent.parentNotified')}</span>
                       : r.notification.status === 'PENDING'
-                        ? <span className="text-amber-600">⏳ Pending approval</span>
-                        : <span className="text-gray-400">Not yet notified</span>
+                        ? <span className="text-amber-600">{t('dashboard.parent.pendingApprovalMsg')}</span>
+                        : <span className="text-gray-400">{t('dashboard.parent.notYetNotified')}</span>
                     }
                   </p>
                 )}
@@ -166,7 +172,7 @@ export default function ParentAttendance() {
       )}
 
       {!loading && records.length === 0 && (
-        <div className="text-center py-10"><div className="text-4xl mb-2">📅</div><p className="text-sm text-gray-400">No attendance records for this month.</p></div>
+        <div className="text-center py-10"><div className="text-4xl mb-2">📅</div><p className="text-sm text-gray-400">{t('dashboard.parent.noAttendanceMonth')}</p></div>
       )}
     </div>
   )

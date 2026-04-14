@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface CourseGrade {
   course: {
@@ -33,6 +34,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function StudentGradesPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [courses, setCourses] = useState<CourseGrade[]>([])
   const [loading, setLoading] = useState(true)
   const [overallGPA, setOverallGPA] = useState<number | null>(null)
@@ -98,7 +100,7 @@ export default function StudentGradesPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading...</p>
+          <p className="text-gray-500 font-medium">{t('dashboard.teacher.loading')}</p>
         </div>
       </div>
     )
@@ -114,15 +116,15 @@ export default function StudentGradesPage() {
                 <span className="text-white text-lg">🎓</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">My Grades</h1>
-                <p className="text-xs text-gray-500">Course grades and averages</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.student.gradesTitle')}</h1>
+                <p className="text-xs text-gray-500">{t('dashboard.student.gradesSubtitle')}</p>
               </div>
             </div>
             <button
               onClick={() => router.push('/student/dashboard')}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              ← Dashboard
+              {t('dashboard.student.back')}
             </button>
           </div>
         </div>
@@ -134,7 +136,7 @@ export default function StudentGradesPage() {
           <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-600 p-6 mb-8 text-white shadow-xl shadow-emerald-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-100 text-sm font-medium mb-1">Overall Average</p>
+                <p className="text-emerald-100 text-sm font-medium mb-1">{t('dashboard.student.overallAverage')}</p>
                 <p className="text-6xl font-bold tracking-tight">{overallGPA.toFixed(1)}%</p>
                 <p className="text-2xl font-semibold text-white/90 mt-2">
                   Grade: {getGradeLetter(overallGPA)}
@@ -158,8 +160,8 @@ export default function StudentGradesPage() {
         {courses.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📚</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No grades available yet</h3>
-            <p className="text-gray-500 text-sm">Your grades will appear here once your teacher enters them</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.student.noGrades')}</h3>
+            <p className="text-gray-500 text-sm">{t('dashboard.student.noGradesDesc')}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -177,7 +179,7 @@ export default function StudentGradesPage() {
                     <p className="text-gray-500 text-sm">{courseGrade.course.name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500 mb-1">Current Grade</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('dashboard.student.currentGrade')}</p>
                     <p className={`text-3xl font-bold ${getGradeColor(courseGrade.average)}`}>
                       {courseGrade.average !== null ? `${courseGrade.average.toFixed(1)}%` : '—'}
                     </p>
@@ -205,7 +207,7 @@ export default function StudentGradesPage() {
                   <div className="mx-6 mt-4">
                     <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
                       <span>⚠</span>
-                      <span>Grade weights total {(courseGrade.totalWeight * 100).toFixed(0)}% (should be 100%)</span>
+                      <span>{t('dashboard.student.gradeWeightWarning')} {(courseGrade.totalWeight * 100).toFixed(0)}% ({t('dashboard.student.gradeWeightShouldBe')})</span>
                     </div>
                   </div>
                 )}
@@ -215,11 +217,11 @@ export default function StudentGradesPage() {
                   <table className="min-w-full">
                     <thead className="bg-gray-50/80">
                       <tr>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Assignment</th>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">Type</th>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Score</th>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Weight</th>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Percentage</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">{t('dashboard.student.assignment')}</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-left">{t('dashboard.student.type')}</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">{t('dashboard.student.score')}</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">{t('dashboard.student.weight')}</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">{t('dashboard.student.percentage')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -243,7 +245,7 @@ export default function StudentGradesPage() {
                                   {score} / {component.maxScore}
                                 </span>
                               ) : (
-                                <span className="text-gray-400 text-xs">Not graded</span>
+                                <span className="text-gray-400 text-xs">{t('dashboard.student.notGraded')}</span>
                               )}
                             </td>
                             <td className="px-6 py-3 text-sm text-gray-500 text-center">

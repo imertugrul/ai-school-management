@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Message {
   id?: string
@@ -17,15 +18,6 @@ interface AppointmentCard {
   message: string
 }
 
-const QUICK_QUESTIONS = [
-  { label: '📊 Notlar',       text: 'Çocuğumun son not durumu nedir?' },
-  { label: '📅 Devamsızlık',  text: 'Çocuğumun devamsızlık bilgisini verir misin?' },
-  { label: '📋 Dersler',      text: 'Hangi derslere kayıtlı?' },
-  { label: '🗓 Randevu',      text: 'Öğretmenle görüşmek için randevu almak istiyorum.' },
-  { label: '📄 Belgeler',     text: 'Okul belgeleri ve yönetmelikler hakkında bilgi verir misin?' },
-  { label: '👨‍🏫 Öğretmen',    text: 'Sınıf öğretmeni kimdir?' },
-]
-
 function parseAppointment(content: string): { clean: string; appt: AppointmentCard | null } {
   const match = content.match(/\|\|\|APPOINTMENT_REQUEST\|\|\|(.+?)\|\|\|/)
   if (!match) return { clean: content, appt: null }
@@ -40,12 +32,22 @@ function parseAppointment(content: string): { clean: string; appt: AppointmentCa
 
 export default function ParentChatPage() {
   const { data: session } = useSession()
+  const { t } = useLanguage()
   const [messages, setMessages]   = useState<Message[]>([])
   const [input, setInput]         = useState('')
   const [streaming, setStreaming] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLTextAreaElement>(null)
+
+  const QUICK_QUESTIONS = [
+    { label: t('dashboard.parent.quickGrades'),      text: 'Çocuğumun son not durumu nedir?' },
+    { label: t('dashboard.parent.quickAttendance'),  text: 'Çocuğumun devamsızlık bilgisini verir misin?' },
+    { label: t('dashboard.parent.quickCourses'),     text: 'Hangi derslere kayıtlı?' },
+    { label: t('dashboard.parent.quickAppointment'), text: 'Öğretmenle görüşmek için randevu almak istiyorum.' },
+    { label: t('dashboard.parent.quickDocuments'),   text: 'Okul belgeleri ve yönetmelikler hakkında bilgi verir misin?' },
+    { label: t('dashboard.parent.quickTeacher'),     text: 'Sınıf öğretmeni kimdir?' },
+  ]
 
   // Load chat history
   useEffect(() => {
@@ -135,11 +137,11 @@ export default function ParentChatPage() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">🤖</div>
           <div>
-            <p className="font-bold text-base">SchoolPro AI Asistan</p>
+            <p className="font-bold text-base">{t('dashboard.parent.aiAssistant')}</p>
             <p className="text-blue-100 text-xs">Merhaba {firstName}, size nasıl yardımcı olabilirim?</p>
           </div>
           <div className="ml-auto">
-            <span className="text-xs bg-green-400/30 text-green-100 px-2 py-1 rounded-full">Çevrimiçi</span>
+            <span className="text-xs bg-green-400/30 text-green-100 px-2 py-1 rounded-full">{t('dashboard.parent.aiOnline')}</span>
           </div>
         </div>
       </div>
@@ -149,7 +151,7 @@ export default function ParentChatPage() {
         {messages.length === 0 && (
           <div className="text-center py-8 text-gray-400 text-sm">
             <p className="text-4xl mb-3">💬</p>
-            <p>Aşağıdaki hızlı sorulardan birini seçin veya mesajınızı yazın.</p>
+            <p>{t('dashboard.parent.chatEmpty')}</p>
           </div>
         )}
 
@@ -174,15 +176,15 @@ export default function ParentChatPage() {
                 </div>
                 {appt && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm shadow-sm">
-                    <p className="font-semibold text-amber-800 mb-1.5">📅 Randevu Talebi Oluşturuldu</p>
-                    <p className="text-amber-700"><span className="font-medium">Öğrenci:</span> {appt.studentName}</p>
-                    <p className="text-amber-700"><span className="font-medium">Konu:</span> {appt.subject}</p>
+                    <p className="font-semibold text-amber-800 mb-1.5">{t('dashboard.parent.appointmentCreated')}</p>
+                    <p className="text-amber-700"><span className="font-medium">{t('dashboard.parent.appointmentStudentLabel')}</span> {appt.studentName}</p>
+                    <p className="text-amber-700"><span className="font-medium">{t('dashboard.parent.appointmentSubjectLabel')}</span> {appt.subject}</p>
                     {appt.preferredTime && (
-                      <p className="text-amber-700"><span className="font-medium">Tercih:</span> {appt.preferredTime}</p>
+                      <p className="text-amber-700"><span className="font-medium">{t('dashboard.parent.appointmentPreferenceLabel')}</span> {appt.preferredTime}</p>
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
                       <span className="text-amber-500 text-xs">⏳</span>
-                      <span className="text-xs text-amber-600 font-medium">Onay bekleniyor</span>
+                      <span className="text-xs text-amber-600 font-medium">{t('dashboard.parent.appointmentPendingMsg')}</span>
                     </div>
                   </div>
                 )}
@@ -229,7 +231,7 @@ export default function ParentChatPage() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Mesajınızı yazın..."
+          placeholder={t('dashboard.parent.messagePlaceholder')}
           disabled={streaming}
           className="flex-1 resize-none rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
           style={{ maxHeight: '120px' }}

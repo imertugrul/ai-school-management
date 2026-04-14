@@ -34,126 +34,16 @@ export default function TeacherDashboard() {
   ]
 
   const actionCards = [
-    {
-      href: '/teacher/tests',
-      icon: '📝',
-      title: 'Tests',
-      description: 'Create tests, assign to classes and review submissions',
-      gradient: 'from-blue-500 to-blue-600',
-      shadow: 'shadow-blue-500/30',
-      hover: 'hover:border-blue-300',
-      bg: 'from-blue-50/0 to-blue-50/80',
-      text: 'hover:text-blue-700',
-      link: 'text-blue-600',
-    },
-    {
-      href: '/teacher/gradebook',
-      icon: '📚',
-      title: 'Grade Book',
-      description: 'Manage grade components and enter student scores',
-      gradient: 'from-purple-500 to-purple-600',
-      shadow: 'shadow-purple-500/30',
-      hover: 'hover:border-purple-300',
-      bg: 'from-purple-50/0 to-purple-50/80',
-      text: 'hover:text-purple-700',
-      link: 'text-purple-600',
-    },
-    {
-      href: '/teacher/schedule',
-      icon: '📅',
-      title: 'My Schedule',
-      description: 'View your weekly teaching schedule',
-      gradient: 'from-green-500 to-green-600',
-      shadow: 'shadow-green-500/30',
-      hover: 'hover:border-green-300',
-      bg: 'from-green-50/0 to-green-50/80',
-      text: 'hover:text-green-700',
-      link: 'text-green-600',
-    },
-    {
-      href: '/teacher/attendance',
-      icon: '📋',
-      title: 'Attendance',
-      description: 'Mark and manage student attendance',
-      gradient: 'from-orange-500 to-orange-600',
-      shadow: 'shadow-orange-500/30',
-      hover: 'hover:border-orange-300',
-      bg: 'from-orange-50/0 to-orange-50/80',
-      text: 'hover:text-orange-700',
-      link: 'text-orange-600',
-    },
-    {
-      href: '/teacher/analytics',
-      icon: '📊',
-      title: 'Analytics',
-      description: 'View class performance and insights',
-      gradient: 'from-indigo-500 to-indigo-600',
-      shadow: 'shadow-indigo-500/30',
-      hover: 'hover:border-indigo-300',
-      bg: 'from-indigo-50/0 to-indigo-50/80',
-      text: 'hover:text-indigo-700',
-      link: 'text-indigo-600',
-    },
-    {
-      href: '/teacher/lesson-plans',
-      icon: '📋',
-      title: 'Lesson Plans',
-      description: 'Create manual or AI-generated lesson plans',
-      gradient: 'from-violet-600 to-purple-700',
-      shadow: 'shadow-violet-500/30',
-      hover: 'hover:border-violet-300',
-      bg: 'from-violet-50/0 to-purple-50/80',
-      text: 'hover:text-violet-700',
-      link: 'text-violet-600',
-    },
-    {
-      href: '/teacher/notes',
-      icon: '🗒️',
-      title: 'Teaching Notes',
-      description: 'Quick notes, observations and student records',
-      gradient: 'from-amber-500 to-amber-600',
-      shadow: 'shadow-amber-500/30',
-      hover: 'hover:border-amber-300',
-      bg: 'from-amber-50/0 to-amber-50/80',
-      text: 'hover:text-amber-700',
-      link: 'text-amber-600',
-    },
-    {
-      href: '/teacher/library',
-      icon: '📚',
-      title: 'Question Library',
-      description: 'Browse and reuse your saved questions',
-      gradient: 'from-blue-500 to-indigo-600',
-      shadow: 'shadow-blue-500/30',
-      hover: 'hover:border-blue-300',
-      bg: 'from-blue-50/0 to-indigo-50/80',
-      text: 'hover:text-blue-700',
-      link: 'text-blue-600',
-    },
-    {
-      href: '/announcements',
-      icon: '📢',
-      title: 'Announcements',
-      description: 'View and post school announcements',
-      gradient: 'from-orange-500 to-orange-600',
-      shadow: 'shadow-orange-500/30',
-      hover: 'hover:border-orange-300',
-      bg: 'from-orange-50/0 to-orange-50/80',
-      text: 'hover:text-orange-700',
-      link: 'text-orange-600',
-    },
-    {
-      href: '/teacher/bulletins',
-      icon: '📨',
-      title: 'Performance Bulletins',
-      description: 'Create and send monthly performance reports to parents',
-      gradient: 'from-teal-500 to-cyan-600',
-      shadow: 'shadow-teal-500/30',
-      hover: 'hover:border-teal-300',
-      bg: 'from-teal-50/0 to-cyan-50/80',
-      text: 'hover:text-teal-700',
-      link: 'text-teal-600',
-    },
+    { href: '/teacher/tests',        icon: '📝', titleKey: 'dashboard.teacher.cardTests',        descKey: 'dashboard.teacher.cardTestsDesc',        gradient: 'from-blue-500 to-blue-600',   shadow: 'shadow-blue-500/30',   hover: 'hover:border-blue-300',   bg: 'from-blue-50/0 to-blue-50/80',     text: 'hover:text-blue-700',   link: 'text-blue-600'   },
+    { href: '/teacher/gradebook',    icon: '📚', titleKey: 'dashboard.teacher.cardGradeBook',    descKey: 'dashboard.teacher.cardGradeBookDesc',    gradient: 'from-purple-500 to-purple-600',shadow: 'shadow-purple-500/30', hover: 'hover:border-purple-300', bg: 'from-purple-50/0 to-purple-50/80', text: 'hover:text-purple-700', link: 'text-purple-600' },
+    { href: '/teacher/schedule',     icon: '📅', titleKey: 'dashboard.teacher.cardSchedule',     descKey: 'dashboard.teacher.cardScheduleDesc',     gradient: 'from-green-500 to-green-600',  shadow: 'shadow-green-500/30',  hover: 'hover:border-green-300',  bg: 'from-green-50/0 to-green-50/80',   text: 'hover:text-green-700',  link: 'text-green-600'  },
+    { href: '/teacher/attendance',   icon: '📋', titleKey: 'dashboard.teacher.cardAttendance',   descKey: 'dashboard.teacher.cardAttendanceDesc',   gradient: 'from-orange-500 to-orange-600',shadow: 'shadow-orange-500/30', hover: 'hover:border-orange-300', bg: 'from-orange-50/0 to-orange-50/80', text: 'hover:text-orange-700', link: 'text-orange-600' },
+    { href: '/teacher/analytics',    icon: '📊', titleKey: 'dashboard.teacher.cardAnalytics',    descKey: 'dashboard.teacher.cardAnalyticsDesc',    gradient: 'from-indigo-500 to-indigo-600',shadow: 'shadow-indigo-500/30', hover: 'hover:border-indigo-300', bg: 'from-indigo-50/0 to-indigo-50/80', text: 'hover:text-indigo-700', link: 'text-indigo-600' },
+    { href: '/teacher/lesson-plans', icon: '📋', titleKey: 'dashboard.teacher.cardLessonPlans', descKey: 'dashboard.teacher.cardLessonPlansDesc', gradient: 'from-violet-600 to-purple-700', shadow: 'shadow-violet-500/30', hover: 'hover:border-violet-300', bg: 'from-violet-50/0 to-purple-50/80', text: 'hover:text-violet-700', link: 'text-violet-600' },
+    { href: '/teacher/notes',        icon: '🗒️', titleKey: 'dashboard.teacher.cardNotes',        descKey: 'dashboard.teacher.cardNotesDesc',        gradient: 'from-amber-500 to-amber-600',  shadow: 'shadow-amber-500/30',  hover: 'hover:border-amber-300',  bg: 'from-amber-50/0 to-amber-50/80',   text: 'hover:text-amber-700',  link: 'text-amber-600'  },
+    { href: '/teacher/library',      icon: '📚', titleKey: 'dashboard.teacher.cardLibrary',      descKey: 'dashboard.teacher.cardLibraryDesc',      gradient: 'from-blue-500 to-indigo-600',  shadow: 'shadow-blue-500/30',   hover: 'hover:border-blue-300',   bg: 'from-blue-50/0 to-indigo-50/80',   text: 'hover:text-blue-700',   link: 'text-blue-600'   },
+    { href: '/announcements',        icon: '📢', titleKey: 'dashboard.teacher.cardAnnouncements',descKey: 'dashboard.teacher.cardAnnouncementsDesc',gradient: 'from-orange-500 to-orange-600',shadow: 'shadow-orange-500/30', hover: 'hover:border-orange-300', bg: 'from-orange-50/0 to-orange-50/80', text: 'hover:text-orange-700', link: 'text-orange-600' },
+    { href: '/teacher/bulletins',    icon: '📨', titleKey: 'dashboard.teacher.cardBulletins',    descKey: 'dashboard.teacher.cardBulletinsDesc',    gradient: 'from-teal-500 to-cyan-600',    shadow: 'shadow-teal-500/30',   hover: 'hover:border-teal-300',   bg: 'from-teal-50/0 to-cyan-50/80',     text: 'hover:text-teal-700',   link: 'text-teal-600'   },
   ]
 
   return (
@@ -225,10 +115,10 @@ export default function TeacherDashboard() {
                 <div className={`w-14 h-14 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg ${card.shadow} group-hover:scale-110 transition-transform duration-300`}>
                   <span className="text-white text-2xl">{card.icon}</span>
                 </div>
-                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{card.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>
+                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{t(card.titleKey)}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{t(card.descKey)}</p>
                 <div className={`mt-4 flex items-center ${card.link} text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  Open <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
+                  {t('dashboard.teacher.open')} <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
                 </div>
               </div>
             </button>

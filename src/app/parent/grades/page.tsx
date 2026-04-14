@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useChild } from '@/context/ChildContext'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface GradeComponent {
   id: string; name: string; type: string; weight: number
@@ -27,15 +28,21 @@ function textColor(avg: number | null) {
   if (avg === null) return 'text-gray-400'
   if (avg >= 85) return 'text-green-600'; if (avg >= 70) return 'text-amber-600'; return 'text-red-600'
 }
-const TYPE_LABELS: Record<string, string> = {
-  EXAM: 'Exam', QUIZ: 'Quiz', HOMEWORK: 'Assignment',
-  PROJECT: 'Project', PARTICIPATION: 'Participation', ATTENDANCE: 'Attendance',
-}
 
 export default function ParentGrades() {
   const { selectedChild, loading: childLoading } = useChild()
+  const { t } = useLanguage()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
+
+  const TYPE_LABELS: Record<string, string> = {
+    EXAM:          t('dashboard.parent.typeExam'),
+    QUIZ:          t('dashboard.parent.typeQuiz'),
+    HOMEWORK:      t('dashboard.parent.typeHomework'),
+    PROJECT:       t('dashboard.parent.typeProject'),
+    PARTICIPATION: t('dashboard.parent.typeParticipation'),
+    ATTENDANCE:    t('dashboard.parent.typeAttendance'),
+  }
 
   useEffect(() => {
     if (!selectedChild) return
@@ -57,26 +64,26 @@ export default function ParentGrades() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Grade Tracker</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('dashboard.parent.gradeTrackerTitle')}</h1>
         <p className="text-sm text-gray-400">{selectedChild?.name}</p>
       </div>
 
       {overallAvg !== null && (
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white flex items-center gap-4">
           <div>
-            <p className="text-xs text-indigo-200">Overall Average</p>
+            <p className="text-xs text-indigo-200">{t('dashboard.parent.overallAverage')}</p>
             <p className="text-4xl font-bold">{overallAvg}</p>
           </div>
           <div className="flex-1" />
           <div className="text-right">
             <p className="text-3xl font-bold">{letterGrade(overallAvg)}</p>
-            <p className="text-xs text-indigo-200">{withAvg.length} subject{withAvg.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-indigo-200">{withAvg.length} {t('dashboard.parent.subjectsLabel')}</p>
           </div>
         </div>
       )}
 
       {courses.length === 0 ? (
-        <div className="text-center py-16"><div className="text-4xl mb-3">📊</div><p className="text-gray-500 text-sm">No grades entered yet.</p></div>
+        <div className="text-center py-16"><div className="text-4xl mb-3">📊</div><p className="text-gray-500 text-sm">{t('dashboard.parent.noGradesYet')}</p></div>
       ) : courses.map(course => (
         <div key={course.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
@@ -117,7 +124,7 @@ export default function ParentGrades() {
                 <div className="text-right shrink-0 w-16">
                   {comp.score !== null
                     ? <p className={`text-sm font-bold ${textColor(comp.percentage)}`}>{comp.score}/{comp.maxScore}</p>
-                    : <p className="text-xs text-gray-300">Not entered</p>
+                    : <p className="text-xs text-gray-300">{t('dashboard.parent.notEntered')}</p>
                   }
                 </div>
               </div>

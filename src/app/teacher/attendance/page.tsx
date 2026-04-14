@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 type AttStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'
 type ScheduleStatus = 'UPCOMING' | 'ACTIVE' | 'PAST'
@@ -49,18 +50,36 @@ interface WeekDay {
   schedules: WeekScheduleItem[]
 }
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const DAY_NAMES_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const DAY_NAMES_TR = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+const DAY_NAMES_DE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+const MONTH_NAMES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const MONTH_NAMES_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+const MONTH_NAMES_DE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
 
-function formatDateLong(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  const dow = d.getDay() === 0 ? 6 : d.getDay() - 1
-  return `${DAY_NAMES[dow]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+function getDayNames(lang: string) {
+  if (lang === 'tr') return DAY_NAMES_TR
+  if (lang === 'de') return DAY_NAMES_DE
+  return DAY_NAMES_EN
+}
+function getMonthNames(lang: string) {
+  if (lang === 'tr') return MONTH_NAMES_TR
+  if (lang === 'de') return MONTH_NAMES_DE
+  return MONTH_NAMES_EN
 }
 
-function formatDateShort(dateStr: string): string {
+function formatDateLong(dateStr: string, lang: string): string {
   const d = new Date(dateStr + 'T12:00:00')
-  return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
+  const dow = d.getDay() === 0 ? 6 : d.getDay() - 1
+  const dayNames = getDayNames(lang)
+  const monthNames = getMonthNames(lang)
+  return `${dayNames[dow]}, ${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+function formatDateShort(dateStr: string, lang: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  const monthNames = getMonthNames(lang)
+  return `${monthNames[d.getMonth()].slice(0, 3)} ${d.getDate()}`
 }
 
 function getMonday(d: Date): string {
@@ -98,6 +117,7 @@ function AttendanceGrid({
   saving: boolean
   readOnly: boolean
 }) {
+  const { t } = useLanguage()
   const [rows, setRows] = useState<StudentRow[]>(initialStudents)
 
   const stats = {
@@ -114,10 +134,10 @@ function AttendanceGrid({
     setRows(prev => prev.map(r => r.id === id ? { ...r, notes } : r))
 
   const STATUS_CFG = {
-    PRESENT: { label: '✓', title: 'Present', active: 'bg-emerald-600 text-white border-emerald-600', inactive: 'text-gray-400 border-gray-200 hover:border-emerald-400 hover:text-emerald-600' },
-    ABSENT:  { label: '✗', title: 'Absent',  active: 'bg-red-600 text-white border-red-600',     inactive: 'text-gray-400 border-gray-200 hover:border-red-400 hover:text-red-600' },
-    LATE:    { label: '⏰', title: 'Late',    active: 'bg-amber-500 text-white border-amber-500', inactive: 'text-gray-400 border-gray-200 hover:border-amber-400 hover:text-amber-600' },
-    EXCUSED: { label: '📋', title: 'Excused', active: 'bg-blue-600 text-white border-blue-600',   inactive: 'text-gray-400 border-gray-200 hover:border-blue-400 hover:text-blue-600' },
+    PRESENT: { label: '✓', title: t('dashboard.teacher.present'), active: 'bg-emerald-600 text-white border-emerald-600', inactive: 'text-gray-400 border-gray-200 hover:border-emerald-400 hover:text-emerald-600' },
+    ABSENT:  { label: '✗', title: t('dashboard.teacher.absent'),  active: 'bg-red-600 text-white border-red-600',     inactive: 'text-gray-400 border-gray-200 hover:border-red-400 hover:text-red-600' },
+    LATE:    { label: '⏰', title: t('dashboard.teacher.late'),    active: 'bg-amber-500 text-white border-amber-500', inactive: 'text-gray-400 border-gray-200 hover:border-amber-400 hover:text-amber-600' },
+    EXCUSED: { label: '📋', title: t('dashboard.teacher.excused'), active: 'bg-blue-600 text-white border-blue-600',   inactive: 'text-gray-400 border-gray-200 hover:border-blue-400 hover:text-blue-600' },
   }
 
   return (
@@ -130,21 +150,21 @@ function AttendanceGrid({
               onClick={() => setRows(prev => prev.map(r => ({ ...r, status: 'PRESENT' })))}
               className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
             >
-              ✓ All Present
+              {t('dashboard.teacher.allPresent')}
             </button>
             <button
               onClick={() => setRows(prev => prev.map(r => ({ ...r, status: 'ABSENT' })))}
               className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
             >
-              ✗ All Absent
+              {t('dashboard.teacher.allAbsent')}
             </button>
           </div>
         )}
         <div className="flex gap-4 text-xs font-bold ml-auto">
-          <span className="text-emerald-600">{stats.present} Present</span>
-          <span className="text-red-500">{stats.absent} Absent</span>
-          <span className="text-amber-500">{stats.late} Late</span>
-          {stats.excused > 0 && <span className="text-blue-500">{stats.excused} Excused</span>}
+          <span className="text-emerald-600">{stats.present} {t('dashboard.teacher.present')}</span>
+          <span className="text-red-500">{stats.absent} {t('dashboard.teacher.absent')}</span>
+          <span className="text-amber-500">{stats.late} {t('dashboard.teacher.late')}</span>
+          {stats.excused > 0 && <span className="text-blue-500">{stats.excused} {t('dashboard.teacher.excused')}</span>}
         </div>
       </div>
 
@@ -179,7 +199,7 @@ function AttendanceGrid({
             {!readOnly && (row.status === 'ABSENT' || row.status === 'LATE') && (
               <input
                 type="text"
-                placeholder="Add notes (optional)..."
+                placeholder={t('dashboard.teacher.notesPlaceholder')}
                 value={row.notes}
                 onChange={e => setNotes(row.id, e.target.value)}
                 className="mt-2 w-full text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300"
@@ -199,7 +219,7 @@ function AttendanceGrid({
           className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50 hover:opacity-90"
           style={{ backgroundColor: 'var(--primary)' }}
         >
-          {saving ? 'Saving…' : `💾 Save Attendance — ${schedule.courseName}${schedule.className ? ` · ${schedule.className}` : ''}`}
+          {saving ? t('dashboard.teacher.saving') : `💾 ${t('dashboard.teacher.saveAttendance')} — ${schedule.courseName}${schedule.className ? ` · ${schedule.className}` : ''}`}
         </button>
       )}
     </div>
@@ -209,6 +229,7 @@ function AttendanceGrid({
 // ─── Main Page ─────────────────────────────────────────────────────────────
 function AttendancePage() {
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const [activeTab, setActiveTab] = useState<'today' | 'week'>('today')
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -242,8 +263,8 @@ function AttendancePage() {
         const newStatus = computeStatus(s.startTime, s.endTime, now)
         const prev = prevStatusesRef.current[s.id]
         if (prev && prev !== newStatus) {
-          if (newStatus === 'ACTIVE') showToast(`${s.courseName} has started! 🟢`)
-          else if (newStatus === 'PAST') showToast(`${s.courseName} class ended.`)
+          if (newStatus === 'ACTIVE') showToast(`${s.courseName} ${t('dashboard.teacher.classStarted')} 🟢`)
+          else if (newStatus === 'PAST') showToast(`${s.courseName} ${t('dashboard.teacher.classEnded')}`)
         }
         prevStatusesRef.current[s.id] = newStatus
       })
@@ -317,16 +338,16 @@ function AttendancePage() {
       if (data.success) {
         const absentLate = rows.filter(r => r.status === 'ABSENT' || r.status === 'LATE').length
         showToast(absentLate > 0
-          ? `Attendance saved. ${absentLate} absence notification${absentLate > 1 ? 's' : ''} pending approval.`
-          : 'Attendance saved successfully.')
+          ? t('dashboard.teacher.absencePending').replace('{{count}}', String(absentLate))
+          : t('dashboard.teacher.attendanceSaved'))
         setExpandedId(null)
         setWeekData(null) // force weekly refresh on next tab visit
         fetchSchedules(selectedDate)
       } else {
-        showToast('Error: ' + (data.error ?? 'Failed to save'))
+        showToast(t('dashboard.teacher.attendanceError') + (data.error ? ': ' + data.error : ''))
       }
     } catch {
-      showToast('Error saving attendance.')
+      showToast(t('dashboard.teacher.attendanceSaveError'))
     } finally {
       setSaving(false)
     }
@@ -361,8 +382,8 @@ function AttendancePage() {
                 📋
               </div>
               <div>
-                <h1 className="text-base font-bold text-gray-900">Attendance</h1>
-                <p className="text-xs text-gray-400">Smart schedule-based tracking</p>
+                <h1 className="text-base font-bold text-gray-900">{t('dashboard.teacher.attendanceTitle')}</h1>
+                <p className="text-xs text-gray-400">{t('dashboard.teacher.attendanceSubtitle')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -375,13 +396,13 @@ function AttendancePage() {
                 onClick={() => router.push('/teacher/attendance/history')}
                 className="text-sm font-semibold px-3 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                History
+                {t('dashboard.teacher.history')}
               </button>
               <button
                 onClick={() => router.push('/teacher/dashboard')}
                 className="text-sm text-gray-500 hover:text-gray-800 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
               >
-                ← Dashboard
+                {t('dashboard.teacher.back')}
               </button>
             </div>
           </div>
@@ -391,11 +412,11 @@ function AttendancePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page header */}
         <div className="mb-5">
-          <h2 className="text-2xl font-bold text-gray-900">{formatDateLong(selectedDate)}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{formatDateLong(selectedDate, language)}</h2>
           <p className="text-gray-400 text-sm mt-0.5">
             {schedules.length > 0
-              ? `${schedules.length} class${schedules.length > 1 ? 'es' : ''} scheduled`
-              : 'No classes scheduled'}
+              ? `${schedules.length} ${t('dashboard.teacher.classesScheduled')}`
+              : t('dashboard.teacher.noClasses')}
           </p>
         </div>
 
@@ -408,7 +429,7 @@ function AttendancePage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                {tab === 'today' ? '📅 Today' : '📆 This Week'}
+                {tab === 'today' ? `📅 ${t('dashboard.teacher.todayTab')}` : `📆 ${t('dashboard.teacher.thisWeekTab')}`}
               </button>
             ))}
           </div>
@@ -431,14 +452,14 @@ function AttendancePage() {
           ) : liveSchedules.length === 0 ? (
             <div className="text-center py-20 rounded-2xl bg-white border border-gray-100 shadow-sm">
               <div className="text-5xl mb-4">📅</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">No classes scheduled for today</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">{t('dashboard.teacher.noClassesToday')}</h3>
               <p className="text-gray-400 text-sm mb-5">
                 {new Date(selectedDate + 'T12:00:00').getDay() === 0 || new Date(selectedDate + 'T12:00:00').getDay() === 6
-                  ? "It's the weekend!"
-                  : 'No classes assigned for this day.'}
+                  ? t('dashboard.teacher.weekend')
+                  : t('dashboard.teacher.noClassesDay')}
               </p>
               <button onClick={() => setActiveTab('week')} className="text-sm font-semibold text-blue-600 hover:underline">
-                View weekly schedule →
+                {t('dashboard.teacher.viewSchedule')}
               </button>
             </div>
           ) : (
@@ -465,19 +486,19 @@ function AttendancePage() {
                 const badge =
                   status === 'ACTIVE' ? (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
-                      🟢 ACTIVE NOW
+                      🟢 {t('dashboard.teacher.activeNow')}
                     </span>
                   ) : status === 'UPCOMING' ? (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-                      ⏰ UPCOMING — starts at {sched.startTime}
+                      ⏰ {t('dashboard.teacher.upcoming')} — {t('dashboard.teacher.startsAt')} {sched.startTime}
                     </span>
                   ) : existing ? (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
-                      ✓ COMPLETED — {sched.startTime}–{sched.endTime}
+                      ✓ {t('dashboard.teacher.completed')} — {sched.startTime}–{sched.endTime}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                      ⚠️ NOT RECORDED — {sched.startTime}–{sched.endTime}
+                      ⚠️ {t('dashboard.teacher.notRecorded')} — {sched.startTime}–{sched.endTime}
                     </span>
                   )
 
@@ -495,7 +516,7 @@ function AttendancePage() {
                       <div className="flex items-center gap-3 mb-3 flex-wrap">
                         {badge}
                         {sched.isLateEntry && status === 'PAST' && !existing && (
-                          <span className="text-xs text-amber-500 font-medium">⚡ Late entry mode</span>
+                          <span className="text-xs text-amber-500 font-medium">{t('dashboard.teacher.lateEntryMode')}</span>
                         )}
                       </div>
 
@@ -511,7 +532,7 @@ function AttendancePage() {
                           <p className="text-sm text-gray-500 mt-0.5">
                             🕐 {sched.startTime}–{sched.endTime}
                             {sched.room && <span> · 🚪 {sched.room}</span>}
-                            <span> · 👥 {sched.students.length} students</span>
+                            <span> · 👥 {sched.students.length} {t('dashboard.teacher.students')}</span>
                           </p>
                         </div>
 
@@ -521,28 +542,28 @@ function AttendancePage() {
                               disabled
                               className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
                             >
-                              Not started yet
+                              {t('dashboard.teacher.notStarted')}
                             </button>
                           ) : status === 'ACTIVE' ? (
                             <button
                               onClick={() => setExpandedId(prev => prev === sched.id ? null : sched.id)}
                               className="px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all hover:scale-105 shadow-sm"
                             >
-                              {isExpanded ? 'Close' : 'Take Attendance'}
+                              {isExpanded ? t('dashboard.teacher.close') : t('dashboard.teacher.takeAttendance')}
                             </button>
                           ) : !existing ? (
                             <button
                               onClick={() => setExpandedId(prev => prev === sched.id ? null : sched.id)}
                               className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 transition-all"
                             >
-                              {isExpanded ? 'Close' : 'Record Late'}
+                              {isExpanded ? t('dashboard.teacher.close') : t('dashboard.teacher.recordLate')}
                             </button>
                           ) : (
                             <button
                               onClick={() => setExpandedId(prev => prev === sched.id ? null : sched.id)}
                               className="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
                             >
-                              {isExpanded ? 'Close' : 'View Details'}
+                              {isExpanded ? t('dashboard.teacher.close') : t('dashboard.teacher.viewDetails')}
                             </button>
                           )}
                         </div>
@@ -551,9 +572,9 @@ function AttendancePage() {
                       {/* PAST + recorded summary (collapsed) */}
                       {status === 'PAST' && existing && !isExpanded && (
                         <div className="flex gap-4 mt-3 text-sm font-semibold">
-                          <span className="text-emerald-600">✅ {presentCount} Present</span>
-                          <span className="text-red-500">❌ {absentCount} Absent</span>
-                          <span className="text-amber-500">⏰ {lateCount} Late</span>
+                          <span className="text-emerald-600">✅ {presentCount} {t('dashboard.teacher.present')}</span>
+                          <span className="text-red-500">❌ {absentCount} {t('dashboard.teacher.absent')}</span>
+                          <span className="text-amber-500">⏰ {lateCount} {t('dashboard.teacher.late')}</span>
                         </div>
                       )}
                     </div>
@@ -573,7 +594,7 @@ function AttendancePage() {
 
                     {isExpanded && !sched.classId && (
                       <div className="px-5 pb-5 text-sm text-gray-400 italic">
-                        No class assigned to this schedule entry.
+                        {t('dashboard.teacher.noClassAssigned')}
                       </div>
                     )}
                   </div>
@@ -600,20 +621,20 @@ function AttendancePage() {
                   <div className={`px-5 py-3 flex items-center justify-between ${day.isToday ? 'bg-blue-50 border-b border-blue-100' : 'bg-gray-50 border-b border-gray-100'}`}>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-gray-900 text-sm">
-                        {DAY_NAMES[day.dayOfWeek]}, {formatDateShort(day.date)}
+                        {getDayNames(language)[day.dayOfWeek]}, {formatDateShort(day.date, language)}
                       </span>
                       {day.isToday && (
-                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">TODAY</span>
+                        <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">{t('dashboard.teacher.today')}</span>
                       )}
                     </div>
                     <span className="text-xs text-gray-400">
-                      {day.schedules.length} class{day.schedules.length !== 1 ? 'es' : ''}
+                      {day.schedules.length} {t('dashboard.teacher.classesScheduled')}
                     </span>
                   </div>
 
                   {/* Schedule rows */}
                   {day.schedules.length === 0 ? (
-                    <div className="px-5 py-3 bg-white text-xs text-gray-400 italic">No classes</div>
+                    <div className="px-5 py-3 bg-white text-xs text-gray-400 italic">{t('dashboard.teacher.noClasses')}</div>
                   ) : (
                     <div className="bg-white divide-y divide-gray-50">
                       {day.schedules.map(s => {
@@ -622,13 +643,13 @@ function AttendancePage() {
                         let labelColor = 'text-gray-400'
 
                         if (day.isToday && s.todayStatus === 'ACTIVE') {
-                          icon = '🟢'; statusLabel = 'ACTIVE NOW'; labelColor = 'text-emerald-600 font-bold'
+                          icon = '🟢'; statusLabel = t('dashboard.teacher.activeNow'); labelColor = 'text-emerald-600 font-bold'
                         } else if (day.isToday && s.todayStatus === 'UPCOMING') {
-                          icon = '⏰'; statusLabel = 'Upcoming'; labelColor = 'text-gray-400'
+                          icon = '⏰'; statusLabel = t('dashboard.teacher.upcoming'); labelColor = 'text-gray-400'
                         } else if (s.recorded) {
-                          icon = '✅'; statusLabel = `${s.presentCount}/${s.totalStudents} present`; labelColor = 'text-emerald-600'
+                          icon = '✅'; statusLabel = `${s.presentCount}/${s.totalStudents} ${t('dashboard.teacher.present')}`; labelColor = 'text-emerald-600'
                         } else if (day.isPast || (day.isToday && s.todayStatus === 'PAST')) {
-                          icon = '⚠️'; statusLabel = 'Not recorded'; labelColor = 'text-amber-500'
+                          icon = '⚠️'; statusLabel = t('dashboard.teacher.notRecorded'); labelColor = 'text-amber-500'
                         }
 
                         const canRecordLate = (day.isPast || (day.isToday && s.todayStatus === 'PAST')) && !s.recorded
@@ -652,7 +673,7 @@ function AttendancePage() {
                                   onClick={() => { setSelectedDate(day.date); setActiveTab('today') }}
                                   className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-colors"
                                 >
-                                  Record Late
+                                  {t('dashboard.teacher.recordLate')}
                                 </button>
                               )}
                             </div>

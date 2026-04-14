@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface AttendanceRecord {
   id: string
@@ -24,6 +25,7 @@ interface AttendanceRecord {
 
 export default function AttendanceHistory() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedClass, setSelectedClass] = useState<string>('all')
@@ -36,7 +38,6 @@ export default function AttendanceHistory() {
     try {
       const response = await fetch('/api/attendance/history')
       const data = await response.json()
-      
       if (data.success) {
         setRecords(data.records)
       }
@@ -57,8 +58,8 @@ export default function AttendanceHistory() {
     return badges[status as keyof typeof badges] || 'bg-gray-100 text-gray-800'
   }
 
-  const filteredRecords = selectedClass === 'all' 
-    ? records 
+  const filteredRecords = selectedClass === 'all'
+    ? records
     : records.filter(r => r.class.name === selectedClass)
 
   const classes = Array.from(new Set(records.map(r => r.class.name)))
@@ -68,7 +69,7 @@ export default function AttendanceHistory() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading attendance history...</p>
+          <p className="text-gray-600">{t('dashboard.teacher.historyLoading')}</p>
         </div>
       </div>
     )
@@ -79,28 +80,28 @@ export default function AttendanceHistory() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Attendance History</h1>
-            <p className="text-gray-600 mt-1">View all attendance records and notifications</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.teacher.historyTitle')}</h1>
+            <p className="text-gray-600 mt-1">{t('dashboard.teacher.historySubtitle')}</p>
           </div>
           <button
             onClick={() => router.push('/teacher/attendance')}
             className="btn-secondary"
           >
-            ← Back to Attendance
+            {t('dashboard.teacher.historyBack')}
           </button>
         </div>
 
         {/* Filter */}
         <div className="card mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Filter by Class
+            {t('dashboard.teacher.filterByClass')}
           </label>
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
             className="input-field max-w-xs"
           >
-            <option value="all">All Classes</option>
+            <option value="all">{t('dashboard.teacher.allClasses')}</option>
             {classes.map(className => (
               <option key={className} value={className}>{className}</option>
             ))}
@@ -110,7 +111,7 @@ export default function AttendanceHistory() {
         {/* Records */}
         {filteredRecords.length === 0 ? (
           <div className="card text-center py-12">
-            <p className="text-gray-500">No attendance records found</p>
+            <p className="text-gray-500">{t('dashboard.teacher.noRecordsFound')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -137,7 +138,7 @@ export default function AttendanceHistory() {
                 {record.notes && (
                   <div className="mb-4">
                     <p className="text-sm text-gray-600">
-                      <span className="font-medium">Notes:</span> {record.notes}
+                      <span className="font-medium">{t('dashboard.teacher.notesLabel')}</span> {record.notes}
                     </p>
                   </div>
                 )}
@@ -145,7 +146,7 @@ export default function AttendanceHistory() {
                 {record.notifications.length > 0 && (
                   <div className="border-t pt-4">
                     <p className="text-sm font-medium text-gray-700 mb-2">
-                      📧 Notifications Sent:
+                      {t('dashboard.teacher.notificationsSentLabel')}
                     </p>
                     {record.notifications.map((notif, idx) => (
                       <div key={idx} className="bg-blue-50 p-3 rounded-lg mb-2">

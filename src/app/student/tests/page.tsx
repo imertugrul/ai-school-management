@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Test {
   id: string
@@ -26,6 +27,7 @@ interface Test {
 const CODE_LEN = 6
 
 function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
+  const { t } = useLanguage()
   const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(''))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +61,7 @@ function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (code.length < CODE_LEN) { setError('Lütfen 6 haneli kodu tam girin.'); return }
+    if (code.length < CODE_LEN) { setError(t('dashboard.student.invalidCode')); return }
     setLoading(true)
     setError(null)
     try {
@@ -68,10 +70,10 @@ function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
       if (data.success) {
         onJoin(data.testId)
       } else {
-        setError(data.error || 'Bilinmeyen hata')
+        setError(data.error || t('dashboard.student.connectionError'))
       }
     } catch {
-      setError('Bağlantı hatası. Lütfen tekrar dene.')
+      setError(t('dashboard.student.connectionError'))
     } finally {
       setLoading(false)
     }
@@ -84,8 +86,8 @@ function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
           <span className="text-xl">🔑</span>
         </div>
         <div>
-          <h2 className="text-base font-bold text-gray-900">Test Kodunu Gir</h2>
-          <p className="text-xs text-gray-500">Öğretmeninden aldığın 6 haneli kodu gir</p>
+          <h2 className="text-base font-bold text-gray-900">{t('dashboard.student.enterCode')}</h2>
+          <p className="text-xs text-gray-500">{t('dashboard.student.enterCodeDesc')}</p>
         </div>
       </div>
       <form onSubmit={handleSubmit}>
@@ -115,7 +117,7 @@ function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
           disabled={loading || code.length < CODE_LEN}
           className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
         >
-          {loading ? 'Aranıyor...' : 'Teste Gir →'}
+          {loading ? t('dashboard.student.searching') : t('dashboard.student.enterCodeBtn')}
         </button>
       </form>
     </div>
@@ -124,6 +126,7 @@ function CodeEntry({ onJoin }: { onJoin: (testId: string) => void }) {
 
 export default function StudentTestsPage() {
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [tests, setTests] = useState<Test[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -140,14 +143,14 @@ export default function StudentTestsPage() {
     const start = test.startDate ? new Date(test.startDate) : null
     const end = test.endDate ? new Date(test.endDate) : null
 
-    if (test.submission?.status === 'RELEASED') return { label: 'Graded', color: 'bg-green-100 text-green-800' }
-    if (test.submission?.status === 'GRADED') return { label: 'Graded', color: 'bg-green-100 text-green-800' }
-    if (test.submission?.status === 'SUBMITTED') return { label: 'Submitted', color: 'bg-blue-100 text-blue-800' }
-    if (test.submission?.status === 'IN_PROGRESS') return { label: 'In Progress', color: 'bg-yellow-100 text-yellow-800' }
-    if (end && now > end) return { label: 'Expired', color: 'bg-gray-100 text-gray-600' }
-    if (start && now < start) return { label: 'Scheduled', color: 'bg-purple-100 text-purple-800' }
-    if (!test.isActive) return { label: 'Not Active', color: 'bg-gray-100 text-gray-600' }
-    return { label: 'Available', color: 'bg-emerald-100 text-emerald-800' }
+    if (test.submission?.status === 'RELEASED') return { label: t('dashboard.student.statusGraded'), color: 'bg-green-100 text-green-800' }
+    if (test.submission?.status === 'GRADED') return { label: t('dashboard.student.statusGraded'), color: 'bg-green-100 text-green-800' }
+    if (test.submission?.status === 'SUBMITTED') return { label: t('dashboard.student.statusSubmitted'), color: 'bg-blue-100 text-blue-800' }
+    if (test.submission?.status === 'IN_PROGRESS') return { label: t('dashboard.student.statusInProgress'), color: 'bg-yellow-100 text-yellow-800' }
+    if (end && now > end) return { label: t('dashboard.student.statusExpired'), color: 'bg-gray-100 text-gray-600' }
+    if (start && now < start) return { label: t('dashboard.student.statusScheduled'), color: 'bg-purple-100 text-purple-800' }
+    if (!test.isActive) return { label: t('dashboard.student.statusNotActive'), color: 'bg-gray-100 text-gray-600' }
+    return { label: t('dashboard.student.statusAvailable'), color: 'bg-emerald-100 text-emerald-800' }
   }
 
   const canTake = (test: Test) => {
@@ -164,7 +167,7 @@ export default function StudentTestsPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen flex items-center justify-center">{t('dashboard.teacher.loading')}</div>
   }
 
   return (
@@ -172,9 +175,9 @@ export default function StudentTestsPage() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-primary-600">My Tests</h1>
+            <h1 className="text-2xl font-bold text-primary-600">{t('dashboard.student.testsTitle')}</h1>
             <button onClick={() => router.push('/student/dashboard')} className="btn-secondary">
-              ← Dashboard
+              {t('dashboard.student.back')}
             </button>
           </div>
         </div>
@@ -186,8 +189,8 @@ export default function StudentTestsPage() {
         {tests.length === 0 ? (
           <div className="card text-center py-12">
             <p className="text-5xl mb-4">📝</p>
-            <p className="text-gray-500 text-lg">No tests assigned yet.</p>
-            <p className="text-gray-400 text-sm mt-2">Your teacher will assign tests to you soon.</p>
+            <p className="text-gray-500 text-lg">{t('dashboard.student.noTestsAssigned')}</p>
+            <p className="text-gray-400 text-sm mt-2">{t('dashboard.student.noTestsAssignedDesc')}</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -217,20 +220,20 @@ export default function StudentTestsPage() {
                   </div>
 
                   <div className="flex gap-4 text-sm text-gray-500 mb-4">
-                    <span>📝 {test._count.questions} questions</span>
-                    <span>📅 Assigned {new Date(test.assignedAt).toLocaleDateString('en-US')}</span>
+                    <span>📝 {test._count.questions} {t('dashboard.student.questionsCount')}</span>
+                    <span>📅 {t('dashboard.student.assignedOn')} {new Date(test.assignedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}</span>
                     {test.startDate && (
-                      <span>🕐 Starts {new Date(test.startDate).toLocaleDateString('en-US')}</span>
+                      <span>🕐 {t('dashboard.student.startsOn')} {new Date(test.startDate).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}</span>
                     )}
                     {test.endDate && (
-                      <span>⏰ Due {new Date(test.endDate).toLocaleDateString('en-US')}</span>
+                      <span>⏰ {t('dashboard.student.dueOn')} {new Date(test.endDate).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}</span>
                     )}
                   </div>
 
                   {(test.submission?.status === 'RELEASED' || test.submission?.status === 'GRADED') && score != null && max != null && (
                     <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm font-medium text-green-800">
-                        Score: {score} / {max} ({Math.round((score / max) * 100)}%)
+                        {t('dashboard.student.score')}: {score} / {max} ({Math.round((score / max) * 100)}%)
                       </p>
                     </div>
                   )}
@@ -241,7 +244,7 @@ export default function StudentTestsPage() {
                         onClick={() => router.push(`/student/test/${test.id}`)}
                         className="btn-primary"
                       >
-                        {test.submission?.status === 'IN_PROGRESS' ? 'Continue Test' : 'Start Test'}
+                        {test.submission?.status === 'IN_PROGRESS' ? t('dashboard.student.continueTest') : t('dashboard.student.startTest')}
                       </button>
                     )}
                     {(test.submission?.status === 'RELEASED' || test.submission?.status === 'GRADED') && (
@@ -249,7 +252,7 @@ export default function StudentTestsPage() {
                         onClick={() => router.push(`/student/results/${test.submission!.id}`)}
                         className="btn-secondary"
                       >
-                        View Results
+                        {t('dashboard.student.viewResults')}
                       </button>
                     )}
                   </div>

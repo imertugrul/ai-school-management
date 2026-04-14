@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 type TestStatus = 'DRAFT' | 'ASSIGNED' | 'ACTIVE' | 'COMPLETED'
 
@@ -27,6 +28,7 @@ interface Test {
 
 // ─── Countdown Timer ──────────────────────────────────────────────────────────
 function CountdownTimer({ endDate }: { endDate: string | null }) {
+  const { t } = useLanguage()
   const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number } | null>(null)
   const [expired, setExpired] = useState(false)
 
@@ -47,12 +49,12 @@ function CountdownTimer({ endDate }: { endDate: string | null }) {
   }, [endDate])
 
   if (!endDate) {
-    return <span className="text-sm text-gray-400 italic">Süresiz</span>
+    return <span className="text-sm text-gray-400 italic">{t('dashboard.teacher.unlimited')}</span>
   }
   if (expired) {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 text-sm font-bold animate-pulse">
-        ⏱ Süre Doldu
+        ⏱ {t('dashboard.teacher.timeExpired')}
       </span>
     )
   }
@@ -69,7 +71,7 @@ function CountdownTimer({ endDate }: { endDate: string | null }) {
   const fmt = (n: number) => String(n).padStart(2, '0')
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-bold ${colorCls}`}>
-      ⏱ Kalan: {fmt(timeLeft.h)}:{fmt(timeLeft.m)}:{fmt(timeLeft.s)}
+      ⏱ {t('dashboard.teacher.timeRemaining')} {fmt(timeLeft.h)}:{fmt(timeLeft.m)}:{fmt(timeLeft.s)}
     </span>
   )
 }
@@ -85,6 +87,7 @@ interface ModalProps {
   loading?: boolean
 }
 function ConfirmModal({ title, children, confirmLabel, confirmCls, onConfirm, onCancel, loading }: ModalProps) {
+  const { t } = useLanguage()
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
@@ -96,14 +99,14 @@ function ConfirmModal({ title, children, confirmLabel, confirmCls, onConfirm, on
             disabled={loading}
             className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50"
           >
-            İptal
+            {t('dashboard.common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
             className={`px-4 py-2 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 ${confirmCls ?? 'bg-blue-600 hover:bg-blue-700'}`}
           >
-            {loading ? 'İşleniyor...' : confirmLabel}
+            {loading ? t('dashboard.common.processing') : confirmLabel}
           </button>
         </div>
       </div>
@@ -113,11 +116,17 @@ function ConfirmModal({ title, children, confirmLabel, confirmCls, onConfirm, on
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: TestStatus }) {
+  const { language } = useLanguage()
+  const labels: Record<string, Record<TestStatus, string>> = {
+    tr: { DRAFT: 'Taslak', ASSIGNED: 'Atandı', ACTIVE: 'Aktif', COMPLETED: 'Tamamlandı' },
+    en: { DRAFT: 'Draft',  ASSIGNED: 'Assigned', ACTIVE: 'Active', COMPLETED: 'Completed' },
+    de: { DRAFT: 'Entwurf',ASSIGNED: 'Zugewiesen', ACTIVE: 'Aktiv', COMPLETED: 'Abgeschlossen' },
+  }
   const map: Record<TestStatus, { label: string; cls: string; dot: string }> = {
-    DRAFT:     { label: 'Taslak',      cls: 'bg-gray-100 text-gray-600',       dot: 'bg-gray-400' },
-    ASSIGNED:  { label: 'Atandı',      cls: 'bg-blue-100 text-blue-800',        dot: 'bg-blue-500' },
-    ACTIVE:    { label: 'Aktif',        cls: 'bg-emerald-100 text-emerald-800',  dot: 'bg-emerald-500 animate-pulse' },
-    COMPLETED: { label: 'Tamamlandı',  cls: 'bg-gray-200 text-gray-700',        dot: 'bg-gray-500' },
+    DRAFT:     { label: (labels[language] ?? labels.en).DRAFT,     cls: 'bg-gray-100 text-gray-600',       dot: 'bg-gray-400' },
+    ASSIGNED:  { label: (labels[language] ?? labels.en).ASSIGNED,  cls: 'bg-blue-100 text-blue-800',        dot: 'bg-blue-500' },
+    ACTIVE:    { label: (labels[language] ?? labels.en).ACTIVE,    cls: 'bg-emerald-100 text-emerald-800',  dot: 'bg-emerald-500 animate-pulse' },
+    COMPLETED: { label: (labels[language] ?? labels.en).COMPLETED, cls: 'bg-gray-200 text-gray-700',        dot: 'bg-gray-500' },
   }
   const { label, cls, dot } = map[status] ?? map.DRAFT
   return (
@@ -131,6 +140,7 @@ function StatusBadge({ status }: { status: TestStatus }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TestsListPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [tests, setTests] = useState<Test[]>([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
@@ -170,7 +180,7 @@ export default function TestsListPage() {
     setActionLoading(true)
     try {
       await patchTest(activateModal.id, { status: 'ACTIVE', startedAt: new Date().toISOString() })
-      showToast('Test başlatıldı! 🚀')
+      showToast(t('dashboard.teacher.testStarted'))
       setActivateModal(null)
       await fetchTests()
     } finally {
@@ -183,7 +193,7 @@ export default function TestsListPage() {
     setActionLoading(true)
     try {
       await patchTest(stopModal.id, { status: 'COMPLETED', endedAt: new Date().toISOString() })
-      showToast('Test durduruldu.')
+      showToast(t('dashboard.teacher.testStopped'))
       setStopModal(null)
       await fetchTests()
     } finally {
@@ -196,7 +206,7 @@ export default function TestsListPage() {
     setActionLoading(true)
     try {
       await fetch(`/api/tests/${deleteModal.id}`, { method: 'DELETE' })
-      showToast('Test silindi.')
+      showToast(t('dashboard.teacher.testDeleted'))
       setDeleteModal(null)
       await fetchTests()
     } finally {
@@ -209,7 +219,7 @@ export default function TestsListPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Yükleniyor...</p>
+          <p className="text-gray-500 font-medium">{t('dashboard.teacher.loading')}</p>
         </div>
       </div>
     )
@@ -227,20 +237,18 @@ export default function TestsListPage() {
       {/* Activate Modal */}
       {activateModal && (
         <ConfirmModal
-          title="🚀 Testi Başlat"
-          confirmLabel="✅ Testi Başlat"
+          title={`🚀 ${t('dashboard.teacher.startTestTitle')}`}
+          confirmLabel={`✅ ${t('dashboard.teacher.startTestConfirm')}`}
           confirmCls="bg-emerald-600 hover:bg-emerald-700"
           onConfirm={handleActivate}
           onCancel={() => setActivateModal(null)}
           loading={actionLoading}
         >
-          <p>
-            <strong>"{activateModal.title}"</strong> testini şimdi başlatmak istiyor musunuz?
-          </p>
+          <p><strong>"{activateModal.title}"</strong></p>
           <ul className="list-disc list-inside space-y-1 text-gray-500 mt-2">
-            <li>Sorular düzenlenemez</li>
-            <li>Öğrenciler teste erişebilir</li>
-            {activateModal.endDate && <li>Süre başlar</li>}
+            <li>{t('dashboard.teacher.startTestNote1')}</li>
+            <li>{t('dashboard.teacher.startTestNote2')}</li>
+            {activateModal.endDate && <li>{t('dashboard.teacher.startTestNote3')}</li>}
           </ul>
         </ConfirmModal>
       )}
@@ -248,32 +256,28 @@ export default function TestsListPage() {
       {/* Stop Modal */}
       {stopModal && (
         <ConfirmModal
-          title="⏹ Testi Durdur"
-          confirmLabel="⏹ Durdur"
+          title={`⏹ ${t('dashboard.teacher.stopTestTitle')}`}
+          confirmLabel={`⏹ ${t('dashboard.teacher.stopTestConfirm')}`}
           confirmCls="bg-red-600 hover:bg-red-700"
           onConfirm={handleStop}
           onCancel={() => setStopModal(null)}
           loading={actionLoading}
         >
-          <p>Testi durdurmak istiyor musunuz?</p>
-          <p className="text-gray-500">Henüz teslim etmemiş öğrencilerin cevapları kaydedilecek.</p>
+          <p className="text-gray-600">{t('dashboard.teacher.stopTestDesc')}</p>
         </ConfirmModal>
       )}
 
       {/* Delete Modal */}
       {deleteModal && (
         <ConfirmModal
-          title="🗑️ Testi Sil"
-          confirmLabel="Sil"
+          title={`🗑️ ${t('dashboard.teacher.deleteTestTitle')}`}
+          confirmLabel={t('dashboard.teacher.deleteTestConfirm')}
           confirmCls="bg-red-600 hover:bg-red-700"
           onConfirm={handleDelete}
           onCancel={() => setDeleteModal(null)}
           loading={actionLoading}
         >
-          <p>
-            <strong>"{deleteModal.title}"</strong> testini kalıcı olarak silmek istiyor musunuz?
-          </p>
-          <p className="text-gray-500">Bu işlem geri alınamaz.</p>
+          <p><strong>"{deleteModal.title}"</strong> {t('dashboard.teacher.deleteTestDesc')}</p>
         </ConfirmModal>
       )}
 
@@ -286,7 +290,7 @@ export default function TestsListPage() {
                 <span className="text-white text-lg">📝</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">My Tests</h1>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.teacher.myTests')}</h1>
                 <p className="text-xs text-gray-500">{tests.length} test</p>
               </div>
             </div>
@@ -295,13 +299,13 @@ export default function TestsListPage() {
                 onClick={() => router.push('/teacher/tests/create')}
                 className="btn-primary"
               >
-                + Yeni Test
+                {t('dashboard.teacher.newTest')}
               </button>
               <button
                 onClick={() => router.push('/teacher/dashboard')}
                 className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
               >
-                ← Dashboard
+                {t('dashboard.teacher.back')}
               </button>
             </div>
           </div>
@@ -312,13 +316,13 @@ export default function TestsListPage() {
         {tests.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📝</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz test yok</h3>
-            <p className="text-gray-500 text-sm mb-6">İlk testini oluştur ve öğrencilerine ata</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.teacher.noTests')}</h3>
+            <p className="text-gray-500 text-sm mb-6">{t('dashboard.teacher.noTestsDesc')}</p>
             <button
               onClick={() => router.push('/teacher/tests/create')}
               className="btn-primary"
             >
-              İlk Testini Oluştur
+              {t('dashboard.teacher.createFirstTest')}
             </button>
           </div>
         ) : (
@@ -350,9 +354,9 @@ export default function TestsListPage() {
                               {test.subject}
                             </span>
                           )}
-                          <span>📝 {test.questions.length} soru</span>
+                          <span>📝 {test.questions.length} {t('dashboard.teacher.questions')}</span>
                           {total > 0 && (
-                            <span>👥 {total} öğrenci atandı</span>
+                            <span>👥 {total} {t('dashboard.teacher.studentsAssigned')}</span>
                           )}
                           <span className="text-gray-400">
                             {new Date(test.createdAt).toLocaleDateString('tr-TR')}
@@ -376,7 +380,7 @@ export default function TestsListPage() {
                     {(status === 'ACTIVE' || status === 'COMPLETED') && total > 0 && (
                       <div className="mb-3">
                         <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>👥 {submitted}/{total} öğrenci teslim etti</span>
+                          <span>👥 {submitted}/{total} {t('dashboard.teacher.studentsSubmitted')}</span>
                           <span>{progressPct}%</span>
                         </div>
                         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -393,26 +397,26 @@ export default function TestsListPage() {
                     {/* Access code */}
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-500 font-medium">Kod:</span>
+                        <span className="text-xs text-gray-500 font-medium">{t('dashboard.teacher.codeLabel')}</span>
                         <code className="ml-2 text-base font-bold text-blue-600 tracking-wider">{test.accessCode}</code>
                       </div>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(test.accessCode)
-                          showToast('Kod kopyalandı!')
+                          showToast(t('dashboard.teacher.codeCopied'))
                         }}
                         className="text-xs px-2.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                       >
-                        Kopyala
+                        {t('dashboard.teacher.copy')}
                       </button>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(`${window.location.origin}/join/${test.accessCode}`)
-                          showToast('Link kopyalandı!')
+                          showToast(t('dashboard.teacher.linkCopied'))
                         }}
                         className="text-xs px-2.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                       >
-                        Link
+                        {t('dashboard.teacher.link')}
                       </button>
                     </div>
                   </div>
@@ -425,19 +429,19 @@ export default function TestsListPage() {
                           onClick={() => router.push(`/teacher/tests/${test.id}/edit`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          ✏️ Düzenle
+                          ✏️ {t('dashboard.teacher.edit')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                         >
-                          📋 Assign Et
+                          📋 {t('dashboard.teacher.assignBtn')}
                         </button>
                         <button
                           onClick={() => setDeleteModal(test)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors ml-auto"
                         >
-                          🗑️ Sil
+                          🗑️ {t('dashboard.teacher.deleteBtn')}
                         </button>
                       </>
                     )}
@@ -448,25 +452,25 @@ export default function TestsListPage() {
                           onClick={() => setActivateModal(test)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
                         >
-                          ▶ Activate
+                          ▶ {t('dashboard.teacher.activateBtn')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}/edit`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          ✏️ Düzenle
+                          ✏️ {t('dashboard.teacher.edit')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors"
                         >
-                          📋 Assign Et
+                          📋 {t('dashboard.teacher.assignBtn')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          🔴 Canlı İzle
+                          🔴 {t('dashboard.teacher.liveMonitor')}
                         </button>
                       </>
                     )}
@@ -477,19 +481,19 @@ export default function TestsListPage() {
                           onClick={() => setStopModal(test)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
                         >
-                          ⏹ Durdur
+                          ⏹ {t('dashboard.teacher.stopBtn')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}/results`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                         >
-                          📊 Sonuçlar
+                          📊 {t('dashboard.teacher.resultsBtn')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          🔴 Canlı İzle
+                          🔴 {t('dashboard.teacher.liveMonitor')}
                         </button>
                       </>
                     )}
@@ -500,19 +504,19 @@ export default function TestsListPage() {
                           onClick={() => router.push(`/teacher/tests/${test.id}/results`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                         >
-                          📊 Sonuçlar
+                          📊 {t('dashboard.teacher.resultsBtn')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}/monitor`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          🔴 Aktivite Raporu
+                          🔴 {t('dashboard.teacher.activityReport')}
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/tests/${test.id}`)}
                           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
                         >
-                          📋 Tekrar Assign Et
+                          📋 {t('dashboard.teacher.reassign')}
                         </button>
                       </>
                     )}

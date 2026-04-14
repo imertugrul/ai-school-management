@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Submission {
   id: string
@@ -16,15 +17,9 @@ interface Submission {
   }
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; dot: string }> = {
-  IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
-  SUBMITTED:   { label: 'Submitted',   color: 'bg-blue-100 text-blue-800',   dot: 'bg-blue-500' },
-  GRADED:      { label: 'Graded',      color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
-  RELEASED:    { label: 'Graded',      color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
-}
-
 export default function StudentResultsListPage() {
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -36,12 +31,19 @@ export default function StudentResultsListPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const STATUS_MAP: Record<string, { label: string; color: string; dot: string }> = {
+    IN_PROGRESS: { label: t('dashboard.student.statusInProgress'), color: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
+    SUBMITTED:   { label: t('dashboard.student.statusSubmitted'),  color: 'bg-blue-100 text-blue-800',   dot: 'bg-blue-500' },
+    GRADED:      { label: t('dashboard.student.statusGraded'),     color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
+    RELEASED:    { label: t('dashboard.student.statusGraded'),     color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading...</p>
+          <p className="text-gray-500 font-medium">{t('dashboard.teacher.loading')}</p>
         </div>
       </div>
     )
@@ -88,9 +90,9 @@ export default function StudentResultsListPage() {
             </span>
           )}
           <div className="flex gap-4 text-xs text-gray-400 mt-1">
-            <span>Started: {new Date(s.startedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <span>{t('dashboard.student.startedAt')} {new Date(s.startedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             {s.submittedAt && (
-              <span>Submitted: {new Date(s.submittedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span>{t('dashboard.student.submittedAt')} {new Date(s.submittedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             )}
           </div>
           {percentage !== null && (
@@ -119,7 +121,7 @@ export default function StudentResultsListPage() {
               onClick={() => router.push(`/student/results/${s.id}`)}
               className="btn-primary text-sm"
             >
-              View
+              {t('dashboard.student.viewBtn')}
             </button>
           )}
         </div>
@@ -137,15 +139,15 @@ export default function StudentResultsListPage() {
                 <span className="text-white text-lg">📈</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Test Results</h1>
-                <p className="text-xs text-gray-500">{submissions.length} total submissions</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.student.resultsTitle')}</h1>
+                <p className="text-xs text-gray-500">{submissions.length} {t('dashboard.student.totalSubmissions')}</p>
               </div>
             </div>
             <button
               onClick={() => router.push('/student/dashboard')}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              ← Dashboard
+              {t('dashboard.student.back')}
             </button>
           </div>
         </div>
@@ -155,8 +157,8 @@ export default function StudentResultsListPage() {
         {submissions.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📊</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No test results yet</h3>
-            <p className="text-gray-500 text-sm">Your test results will appear here after you take tests</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.student.noResults')}</h3>
+            <p className="text-gray-500 text-sm">{t('dashboard.student.noResultsDesc')}</p>
           </div>
         )}
 
@@ -164,7 +166,7 @@ export default function StudentResultsListPage() {
           <section>
             <h2 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Graded ({released.length})
+              {t('dashboard.student.sectionGraded')} ({released.length})
             </h2>
             <div className="space-y-3">{released.map(renderCard)}</div>
           </section>
@@ -174,7 +176,7 @@ export default function StudentResultsListPage() {
           <section>
             <h2 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
-              Awaiting Grade ({pending.length})
+              {t('dashboard.student.sectionAwaiting')} ({pending.length})
             </h2>
             <div className="space-y-3">{pending.map(renderCard)}</div>
           </section>
@@ -184,7 +186,7 @@ export default function StudentResultsListPage() {
           <section>
             <h2 className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              In Progress ({ongoing.length})
+              {t('dashboard.student.sectionInProgress')} ({ongoing.length})
             </h2>
             <div className="space-y-3">{ongoing.map(renderCard)}</div>
           </section>

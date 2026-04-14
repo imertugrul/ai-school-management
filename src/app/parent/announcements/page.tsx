@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Announcement {
   id: string; title: string; content: string
@@ -16,6 +17,7 @@ const PRIORITY_BADGE: Record<string, string> = {
 }
 
 export default function ParentAnnouncements() {
+  const { t } = useLanguage()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading]             = useState(true)
 
@@ -24,7 +26,6 @@ export default function ParentAnnouncements() {
       .then(r => r.json())
       .then(d => {
         const all: Announcement[] = d.announcements ?? []
-        // Filter: targetRoles empty or includes PARENT
         const filtered = all.filter(a => {
           const roles = (a as unknown as { targetRoles: string[] }).targetRoles ?? []
           return roles.length === 0 || roles.includes('PARENT')
@@ -42,14 +43,14 @@ export default function ParentAnnouncements() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Duyurular</h1>
-        <p className="text-sm text-gray-400">Okul duyuruları</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('dashboard.parent.announcementsTitle')}</h1>
+        <p className="text-sm text-gray-400">{t('dashboard.parent.announcementsSubtitle')}</p>
       </div>
 
       {announcements.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-4xl mb-3">📢</div>
-          <p className="text-gray-500 text-sm">Henüz duyuru yok.</p>
+          <p className="text-gray-500 text-sm">{t('dashboard.parent.noAnnouncements')}</p>
         </div>
       ) : (
         announcements.map(ann => (
@@ -61,7 +62,7 @@ export default function ParentAnnouncements() {
                   <h3 className="text-sm font-semibold text-gray-900">{ann.title}</h3>
                   {ann.priority !== 'LOW' && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_BADGE[ann.priority] ?? PRIORITY_BADGE.LOW}`}>
-                      {ann.priority === 'HIGH' ? 'Önemli' : 'Orta'}
+                      {ann.priority === 'HIGH' ? t('dashboard.parent.priorityHigh') : t('dashboard.parent.priorityMedium')}
                     </span>
                   )}
                 </div>

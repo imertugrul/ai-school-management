@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Course {
   id: string
@@ -24,6 +25,7 @@ const COURSE_GRADIENTS = [
 
 export default function TeacherGradeBookPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -51,7 +53,7 @@ export default function TeacherGradeBookPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading...</p>
+          <p className="text-gray-500 font-medium">{t('dashboard.teacher.loading')}</p>
         </div>
       </div>
     )
@@ -67,15 +69,15 @@ export default function TeacherGradeBookPage() {
                 <span className="text-white text-lg">📚</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Grade Book</h1>
-                <p className="text-xs text-gray-500">Manage grades for your courses</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.teacher.gradebookTitle')}</h1>
+                <p className="text-xs text-gray-500">{t('dashboard.teacher.gradebookSubtitle')}</p>
               </div>
             </div>
             <button
               onClick={() => router.push('/teacher/dashboard')}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              ← Dashboard
+              {t('dashboard.teacher.back')}
             </button>
           </div>
         </div>
@@ -83,15 +85,15 @@ export default function TeacherGradeBookPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">My Courses</h2>
-          <p className="text-gray-500">Select a course to manage grades</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard.teacher.myCourses')}</h2>
+          <p className="text-gray-500">{t('dashboard.teacher.myCoursesSubtitle')}</p>
         </div>
 
         {courses.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📚</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No courses assigned yet</h3>
-            <p className="text-gray-500 text-sm">Contact your admin to get courses assigned to you</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.teacher.noCourses')}</h3>
+            <p className="text-gray-500 text-sm">{t('dashboard.teacher.noCoursesDesc')}</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,7 +120,7 @@ export default function TeacherGradeBookPage() {
                       </span>
                     )}
                     <div className="mt-4 flex items-center text-blue-600 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                      Open Gradebook <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
+                      {t('dashboard.teacher.openGradebook')} <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
                     </div>
                   </div>
                 </button>

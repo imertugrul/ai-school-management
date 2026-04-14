@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useChild } from '@/context/ChildContext'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Bulletin {
   id: string; month: string; sentAt: string | null; gradeAverage: number | null
@@ -12,8 +13,8 @@ interface Bulletin {
   teacher: { name: string }
 }
 
-function Stars({ n }: { n: number | null }) {
-  if (n === null) return <span className="text-gray-300 text-sm">Değerlendirilmedi</span>
+function Stars({ n, notRatedText }: { n: number | null; notRatedText: string }) {
+  if (n === null) return <span className="text-gray-300 text-sm">{notRatedText}</span>
   return (
     <span className="text-base">
       {Array.from({ length: 5 }).map((_, i) => (
@@ -30,6 +31,7 @@ function monthDisplay(ym: string) {
 
 export default function ParentBulletins() {
   const { selectedChild, loading: childLoading } = useChild()
+  const { t } = useLanguage()
   const [bulletins, setBulletins] = useState<Bulletin[]>([])
   const [selected, setSelected]   = useState<Bulletin | null>(null)
   const [loading, setLoading]     = useState(false)
@@ -54,12 +56,12 @@ export default function ParentBulletins() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Bültenler</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('dashboard.parent.bulletinsTitle')}</h1>
         <p className="text-sm text-gray-400">{selectedChild?.name}</p>
       </div>
 
       {bulletins.length === 0 ? (
-        <div className="text-center py-16"><div className="text-4xl mb-3">📋</div><p className="text-gray-500 text-sm">Henüz gönderilmiş bülten yok.</p></div>
+        <div className="text-center py-16"><div className="text-4xl mb-3">📋</div><p className="text-gray-500 text-sm">{t('dashboard.parent.noBulletins')}</p></div>
       ) : (
         <>
           {/* Month tabs */}
@@ -84,32 +86,32 @@ export default function ParentBulletins() {
             <div className="space-y-3">
               {/* Header */}
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 text-white">
-                <p className="text-xs text-blue-200 mb-1">{monthDisplay(selected.month)} Performans Bülteni</p>
+                <p className="text-xs text-blue-200 mb-1">{monthDisplay(selected.month)} {t('dashboard.parent.perfBulletin')}</p>
                 <h2 className="text-xl font-bold">{selectedChild?.name}</h2>
                 <p className="text-blue-100 text-sm mt-1">{selectedChild?.className}</p>
                 {selected.gradeAverage !== null && (
                   <div className="mt-3 inline-flex items-center gap-2 bg-white/20 rounded-xl px-3 py-1.5">
                     <span className="text-lg font-bold">{selected.gradeAverage}</span>
-                    <span className="text-sm text-blue-100">Genel Ortalama</span>
+                    <span className="text-sm text-blue-100">{t('dashboard.parent.generalAverage')}</span>
                   </div>
                 )}
               </div>
 
               {/* Attendance */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <h3 className="font-semibold text-gray-900 text-sm mb-3">Devam Durumu</h3>
+                <h3 className="font-semibold text-gray-900 text-sm mb-3">{t('dashboard.parent.attendanceSection')}</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="text-center bg-green-50 rounded-xl p-3">
                     <p className="text-xl font-bold text-green-600">{selected.attendancePresent}</p>
-                    <p className="text-xs text-gray-500">Mevcut</p>
+                    <p className="text-xs text-gray-500">{t('dashboard.parent.presentLabel')}</p>
                   </div>
                   <div className="text-center bg-red-50 rounded-xl p-3">
                     <p className="text-xl font-bold text-red-600">{selected.attendanceAbsent}</p>
-                    <p className="text-xs text-gray-500">Devamsız</p>
+                    <p className="text-xs text-gray-500">{t('dashboard.parent.absentLabel')}</p>
                   </div>
                   <div className="text-center bg-amber-50 rounded-xl p-3">
                     <p className="text-xl font-bold text-amber-600">{selected.attendanceLate}</p>
-                    <p className="text-xs text-gray-500">Geç</p>
+                    <p className="text-xs text-gray-500">{t('dashboard.parent.lateLabel')}</p>
                   </div>
                 </div>
               </div>
@@ -117,7 +119,7 @@ export default function ParentBulletins() {
               {/* Grade details */}
               {selected.gradeDetails && selected.gradeDetails.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">Ders Notları</h3></div>
+                  <div className="px-4 py-3 border-b border-gray-50"><h3 className="font-semibold text-gray-900 text-sm">{t('dashboard.parent.courseGrades')}</h3></div>
                   {selected.gradeDetails.map((g, i) => (
                     <div key={i} className="px-4 py-3 flex items-center gap-3 border-b border-gray-50 last:border-0">
                       <div className="flex-1">
@@ -139,16 +141,16 @@ export default function ParentBulletins() {
 
               {/* Teacher ratings */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <h3 className="font-semibold text-gray-900 text-sm mb-3">Öğretmen Değerlendirmesi</h3>
+                <h3 className="font-semibold text-gray-900 text-sm mb-3">{t('dashboard.parent.teacherEval')}</h3>
                 <div className="space-y-2.5">
                   {[
-                    { label: 'Katılım', value: selected.participationRating },
-                    { label: 'Davranış', value: selected.behaviorRating },
-                    { label: 'Ödev', value: selected.homeworkRating },
+                    { label: t('dashboard.parent.participationLabel'), value: selected.participationRating },
+                    { label: t('dashboard.parent.behaviorLabel'),      value: selected.behaviorRating },
+                    { label: t('dashboard.parent.homeworkLabel'),      value: selected.homeworkRating },
                   ].map(row => (
                     <div key={row.label} className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{row.label}</span>
-                      <Stars n={row.value} />
+                      <Stars n={row.value} notRatedText={t('dashboard.parent.notRated')} />
                     </div>
                   ))}
                 </div>
@@ -159,13 +161,13 @@ export default function ParentBulletins() {
                 <div className="grid grid-cols-1 gap-3">
                   {selected.strengthAreas && (
                     <div className="bg-green-50 border border-green-100 rounded-2xl p-4">
-                      <p className="text-xs font-semibold text-green-700 mb-1">💪 Güçlü Yönler</p>
+                      <p className="text-xs font-semibold text-green-700 mb-1">{t('dashboard.parent.strengths')}</p>
                       <p className="text-sm text-gray-700">{selected.strengthAreas}</p>
                     </div>
                   )}
                   {selected.improvementAreas && (
                     <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                      <p className="text-xs font-semibold text-amber-700 mb-1">📈 Gelişim Alanları</p>
+                      <p className="text-xs font-semibold text-amber-700 mb-1">{t('dashboard.parent.improvements')}</p>
                       <p className="text-sm text-gray-700">{selected.improvementAreas}</p>
                     </div>
                   )}
@@ -175,7 +177,7 @@ export default function ParentBulletins() {
               {/* Teacher comment */}
               {selected.teacherComment && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                  <p className="text-xs font-semibold text-gray-500 mb-2">Öğretmen Yorumu</p>
+                  <p className="text-xs font-semibold text-gray-500 mb-2">{t('dashboard.parent.teacherComment')}</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{selected.teacherComment}</p>
                   <p className="text-xs text-gray-400 mt-2">— {selected.teacher.name}</p>
                 </div>
@@ -183,7 +185,7 @@ export default function ParentBulletins() {
 
               {selected.sentAt && (
                 <p className="text-xs text-center text-gray-400">
-                  {new Date(selected.sentAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} tarihinde gönderildi
+                  {new Date(selected.sentAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} {t('dashboard.parent.sentOn')}
                 </p>
               )}
             </div>

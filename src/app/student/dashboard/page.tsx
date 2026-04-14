@@ -36,102 +36,14 @@ export default function StudentDashboard() {
   ]
 
   const actionCards = [
-    {
-      href: '/student/tests',
-      icon: '📝',
-      title: 'My Tests',
-      description: 'View and take your assigned tests',
-      gradient: 'from-blue-500 to-blue-600',
-      shadow: 'shadow-blue-500/30',
-      hover: 'hover:border-blue-300',
-      bg: 'from-blue-50/0 to-blue-50/80',
-      text: 'hover:text-blue-700',
-      link: 'text-blue-600',
-    },
-    {
-      href: '/student/results',
-      icon: '📈',
-      title: 'Test Results',
-      description: 'View your graded test scores and feedback',
-      gradient: 'from-rose-500 to-rose-600',
-      shadow: 'shadow-rose-500/30',
-      hover: 'hover:border-rose-300',
-      bg: 'from-rose-50/0 to-rose-50/80',
-      text: 'hover:text-rose-700',
-      link: 'text-rose-600',
-    },
-    {
-      href: '/student/grades',
-      icon: '🎓',
-      title: 'My Grades',
-      description: 'View course grades and weighted averages',
-      gradient: 'from-emerald-500 to-emerald-600',
-      shadow: 'shadow-emerald-500/30',
-      hover: 'hover:border-emerald-300',
-      bg: 'from-emerald-50/0 to-emerald-50/80',
-      text: 'hover:text-emerald-700',
-      link: 'text-emerald-600',
-    },
-    {
-      href: '/student/schedule',
-      icon: '📅',
-      title: 'My Schedule',
-      description: 'View your weekly class schedule',
-      gradient: 'from-green-500 to-green-600',
-      shadow: 'shadow-green-500/30',
-      hover: 'hover:border-green-300',
-      bg: 'from-green-50/0 to-green-50/80',
-      text: 'hover:text-green-700',
-      link: 'text-green-600',
-    },
-    {
-      href: '/student/attendance',
-      icon: '📋',
-      title: 'Attendance',
-      description: 'View your attendance record',
-      gradient: 'from-orange-500 to-orange-600',
-      shadow: 'shadow-orange-500/30',
-      hover: 'hover:border-orange-300',
-      bg: 'from-orange-50/0 to-orange-50/80',
-      text: 'hover:text-orange-700',
-      link: 'text-orange-600',
-    },
-    {
-      href: '/student/analytics',
-      icon: '📊',
-      title: 'Analytics',
-      description: 'Track your overall academic performance',
-      gradient: 'from-indigo-500 to-indigo-600',
-      shadow: 'shadow-indigo-500/30',
-      hover: 'hover:border-indigo-300',
-      bg: 'from-indigo-50/0 to-indigo-50/80',
-      text: 'hover:text-indigo-700',
-      link: 'text-indigo-600',
-    },
-    {
-      href: '/announcements',
-      icon: '📢',
-      title: 'Announcements',
-      description: 'School news, updates and notices',
-      gradient: 'from-orange-500 to-amber-500',
-      shadow: 'shadow-orange-500/30',
-      hover: 'hover:border-orange-300',
-      bg: 'from-orange-50/0 to-orange-50/80',
-      text: 'hover:text-orange-700',
-      link: 'text-orange-600',
-    },
-    {
-      href: '/events',
-      icon: '🗓️',
-      title: 'Events',
-      description: 'Upcoming school events and activities',
-      gradient: 'from-rose-500 to-pink-600',
-      shadow: 'shadow-rose-500/30',
-      hover: 'hover:border-rose-300',
-      bg: 'from-rose-50/0 to-rose-50/80',
-      text: 'hover:text-rose-700',
-      link: 'text-rose-600',
-    },
+    { href: '/student/tests',      icon: '📝',  titleKey: 'dashboard.student.cardTests',        descKey: 'dashboard.student.cardTestsDesc',        gradient: 'from-blue-500 to-blue-600',    shadow: 'shadow-blue-500/30',    hover: 'hover:border-blue-300',    bg: 'from-blue-50/0 to-blue-50/80',     text: 'hover:text-blue-700',    link: 'text-blue-600'    },
+    { href: '/student/results',    icon: '📈',  titleKey: 'dashboard.student.cardResults',       descKey: 'dashboard.student.cardResultsDesc',       gradient: 'from-rose-500 to-rose-600',    shadow: 'shadow-rose-500/30',    hover: 'hover:border-rose-300',    bg: 'from-rose-50/0 to-rose-50/80',     text: 'hover:text-rose-700',    link: 'text-rose-600'    },
+    { href: '/student/grades',     icon: '🎓',  titleKey: 'dashboard.student.cardGrades',        descKey: 'dashboard.student.cardGradesDesc',        gradient: 'from-emerald-500 to-emerald-600',shadow: 'shadow-emerald-500/30', hover: 'hover:border-emerald-300', bg: 'from-emerald-50/0 to-emerald-50/80',text: 'hover:text-emerald-700', link: 'text-emerald-600' },
+    { href: '/student/schedule',   icon: '📅',  titleKey: 'dashboard.student.cardSchedule',      descKey: 'dashboard.student.cardScheduleDesc',      gradient: 'from-green-500 to-green-600',  shadow: 'shadow-green-500/30',   hover: 'hover:border-green-300',   bg: 'from-green-50/0 to-green-50/80',   text: 'hover:text-green-700',   link: 'text-green-600'   },
+    { href: '/student/attendance', icon: '📋',  titleKey: 'dashboard.student.cardAttendance',    descKey: 'dashboard.student.cardAttendanceDesc',    gradient: 'from-orange-500 to-orange-600',shadow: 'shadow-orange-500/30',  hover: 'hover:border-orange-300',  bg: 'from-orange-50/0 to-orange-50/80', text: 'hover:text-orange-700',  link: 'text-orange-600'  },
+    { href: '/student/analytics',  icon: '📊',  titleKey: 'dashboard.student.cardAnalytics',     descKey: 'dashboard.student.cardAnalyticsDesc',     gradient: 'from-indigo-500 to-indigo-600',shadow: 'shadow-indigo-500/30',  hover: 'hover:border-indigo-300',  bg: 'from-indigo-50/0 to-indigo-50/80', text: 'hover:text-indigo-700',  link: 'text-indigo-600'  },
+    { href: '/announcements',      icon: '📢',  titleKey: 'dashboard.student.cardAnnouncements', descKey: 'dashboard.student.cardAnnouncementsDesc', gradient: 'from-orange-500 to-amber-500',  shadow: 'shadow-orange-500/30',  hover: 'hover:border-orange-300',  bg: 'from-orange-50/0 to-orange-50/80', text: 'hover:text-orange-700',  link: 'text-orange-600'  },
+    { href: '/events',             icon: '🗓️', titleKey: 'dashboard.student.cardEvents',        descKey: 'dashboard.student.cardEventsDesc',        gradient: 'from-rose-500 to-pink-600',    shadow: 'shadow-rose-500/30',    hover: 'hover:border-rose-300',    bg: 'from-rose-50/0 to-rose-50/80',     text: 'hover:text-rose-700',    link: 'text-rose-600'    },
   ]
 
   return (
@@ -204,17 +116,17 @@ export default function StudentDashboard() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">University Advisor</h3>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">NEW</span>
+                      <h3 className="font-bold text-gray-900">{t('dashboard.student.cardUnipath')}</h3>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">{t('dashboard.student.newBadge')}</span>
                     </div>
-                    <p className="text-sm text-gray-500">AI-powered university application guide</p>
+                    <p className="text-sm text-gray-500">{t('dashboard.student.cardUnipathDesc')}</p>
                   </div>
                 </div>
                 <span className="text-indigo-500 text-lg group-hover:translate-x-1 transition-transform">→</span>
               </div>
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-indigo-700">Profile Completion</span>
+                  <span className="text-xs font-semibold text-indigo-700">{t('dashboard.student.profileCompletion')}</span>
                   <span className="text-xs font-bold text-indigo-600">{stats.unipathCompletion}%</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-indigo-100 overflow-hidden">
@@ -248,10 +160,10 @@ export default function StudentDashboard() {
                 <div className={`w-14 h-14 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg ${card.shadow} group-hover:scale-110 transition-transform duration-300`}>
                   <span className="text-white text-2xl">{card.icon}</span>
                 </div>
-                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{card.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>
+                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{t(card.titleKey)}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{t(card.descKey)}</p>
                 <div className={`mt-4 flex items-center ${card.link} text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  Open <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
+                  {t('dashboard.student.open')} <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
                 </div>
               </div>
             </button>

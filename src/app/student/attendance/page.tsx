@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface AttendanceRecord {
   id: string
@@ -27,13 +28,6 @@ const STATUS_STYLE: Record<string, string> = {
   EXCUSED: 'bg-blue-100 text-blue-800',
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  PRESENT: 'Present',
-  ABSENT:  'Absent',
-  LATE:    'Late',
-  EXCUSED: 'Excused',
-}
-
 const STATUS_DOT: Record<string, string> = {
   PRESENT: 'bg-emerald-500',
   ABSENT:  'bg-red-500',
@@ -43,6 +37,7 @@ const STATUS_DOT: Record<string, string> = {
 
 export default function StudentAttendancePage() {
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,7 +60,7 @@ export default function StudentAttendancePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading...</p>
+          <p className="text-gray-500 font-medium">{t('dashboard.teacher.loading')}</p>
         </div>
       </div>
     )
@@ -89,7 +84,7 @@ export default function StudentAttendancePage() {
                 <span className="text-white text-lg">📋</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">My Attendance</h1>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.student.myAttendance')}</h1>
                 <p className="text-xs text-gray-500">{records.length} records</p>
               </div>
             </div>
@@ -97,7 +92,7 @@ export default function StudentAttendancePage() {
               onClick={() => router.push('/student/dashboard')}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              ← Dashboard
+              {t('dashboard.student.back')}
             </button>
           </div>
         </div>
@@ -109,10 +104,10 @@ export default function StudentAttendancePage() {
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Attendance Rate', value: `${stats.rate}%`, color: rateColor, bg: 'from-gray-50' },
-              { label: 'Present', value: stats.present, color: 'text-emerald-600', bg: 'from-emerald-50' },
-              { label: 'Absent',  value: stats.absent,  color: 'text-red-600',     bg: 'from-red-50' },
-              { label: 'Late',    value: stats.late,    color: 'text-amber-600',   bg: 'from-amber-50' },
+              { label: t('dashboard.student.attendanceRate'), value: `${stats.rate}%`, color: rateColor, bg: 'from-gray-50' },
+              { label: t('dashboard.teacher.present'), value: stats.present, color: 'text-emerald-600', bg: 'from-emerald-50' },
+              { label: t('dashboard.teacher.absent'),  value: stats.absent,  color: 'text-red-600',     bg: 'from-red-50' },
+              { label: t('dashboard.teacher.late'),    value: stats.late,    color: 'text-amber-600',   bg: 'from-amber-50' },
             ].map(s => (
               <div key={s.label} className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div className={`absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br ${s.bg} to-transparent rounded-full group-hover:scale-150 transition-transform duration-500 opacity-60`} />
@@ -129,7 +124,7 @@ export default function StudentAttendancePage() {
         {stats && (
           <div className="card">
             <div className="flex justify-between text-sm mb-3">
-              <span className="font-semibold text-gray-700">Overall Attendance Rate</span>
+              <span className="font-semibold text-gray-700">{t('dashboard.student.overallRate')}</span>
               <span className={`font-bold text-lg ${rateColor}`}>{stats.rate}%</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -141,8 +136,8 @@ export default function StudentAttendancePage() {
             {stats.rate < 90 && (
               <p className="text-xs text-gray-400 mt-2">
                 {stats.rate >= 75
-                  ? 'Attendance is below the recommended 90%. Try to attend more classes.'
-                  : 'Low attendance rate — please contact your school.'}
+                  ? t('dashboard.student.attendanceWarnBelow90')
+                  : t('dashboard.student.attendanceLow')}
               </p>
             )}
           </div>
@@ -151,15 +146,15 @@ export default function StudentAttendancePage() {
         {/* Records */}
         <div className="card">
           <h2 className="text-lg font-bold text-gray-900 mb-5 border-l-4 border-orange-500 pl-4">
-            Attendance Records
+            {t('dashboard.student.attendanceRecords')}
             <span className="ml-2 text-sm font-normal text-gray-400">({records.length})</span>
           </h2>
 
           {records.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No attendance records yet</h3>
-              <p className="text-gray-500 text-sm">Your attendance will appear here once recorded</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.student.noAttendanceRecords')}</h3>
+              <p className="text-gray-500 text-sm">{t('dashboard.student.noAttendanceRecordsDesc')}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
@@ -167,13 +162,13 @@ export default function StudentAttendancePage() {
                 <div key={r.id} className="py-3.5 flex items-center justify-between hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">
-                      {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(r.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">{r.class.name}{r.notes ? ` · ${r.notes}` : ''}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_STYLE[r.status]}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[r.status]}`} />
-                    {STATUS_LABEL[r.status]}
+                    {t(`dashboard.teacher.${r.status.toLowerCase()}`)}
                   </span>
                 </div>
               ))}
