@@ -33,6 +33,48 @@
              radial-gradient(ellipse at 80% 20%, rgba(196,181,253,0.25) 0%, transparent 50%),
              radial-gradient(ellipse at 60% 80%, rgba(167,243,208,0.2) 0%, transparent 50%),
              #FFFFFF;
+
+  /* ── SchoolPro AI High-Tech Dashboard Tokens ──────────────────────────── */
+  --sp-midnight: #0F172A;
+  --sp-electric: #3B82F6;
+  --sp-cyan:     #22D3EE;
+  --sp-neutral:  #94A3B8;
+  --sp-bg:       #F8FAFC;
+
+  --sp-surface:        #FFFFFF;
+  --sp-surface-hover:  #F1F5F9;
+  --sp-border:         #E2E8F0;
+
+  --sp-text-primary:   #0F172A;
+  --sp-text-secondary: #475569;
+  --sp-text-muted:     #94A3B8;
+
+  --sp-sidebar-bg:           #0F172A;
+  --sp-sidebar-text:         #94A3B8;
+  --sp-sidebar-active-bg:    rgba(59,130,246,0.15);
+  --sp-sidebar-active-text:  #93C5FD;
+  --sp-sidebar-hover-bg:     rgba(255,255,255,0.06);
+  --sp-sidebar-border:       rgba(255,255,255,0.08);
+
+  --sp-blue-bg:    #EFF6FF;  --sp-blue-text:   #3B82F6;
+  --sp-cyan-bg:    #ECFEFF;  --sp-cyan-text:   #0891B2;
+  --sp-indigo-bg:  #EEF2FF;  --sp-indigo-text: #4F46E5;
+  --sp-violet-bg:  #F5F3FF;  --sp-violet-text: #7C3AED;
+  --sp-green-bg:   #F0FDF4;  --sp-green-text:  #16A34A;
+  --sp-amber-bg:   #FFFBEB;  --sp-amber-text:  #D97706;
+  --sp-red-bg:     #FEF2F2;  --sp-red-text:    #DC2626;
+  --sp-pink-bg:    #FDF2F8;  --sp-pink-text:   #DB2777;
+
+  --sp-shadow-sm:    0 1px 3px rgba(0,0,0,0.08);
+  --sp-shadow-md:    0 4px 12px rgba(0,0,0,0.08);
+  --sp-shadow-focus: 0 0 0 3px rgba(59,130,246,0.15);
+
+  --sp-radius-sm: 6px;
+  --sp-radius-md: 8px;
+  --sp-radius-lg: 10px;
+  --sp-radius-xl: 12px;
+
+  --sp-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .font-display { font-family: 'Fraunces', Georgia, serif; }
@@ -168,7 +210,23 @@ body {
   .badge-info {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800;
   }
+
+  /* ── SchoolPro AI dashboard utility classes ─────────────────────────────── */
+  .sp-input {
+    @apply w-full h-9 px-3 text-sm bg-white text-[var(--sp-text-primary)] placeholder:text-[var(--sp-text-muted)] border border-[var(--sp-border)] rounded-lg outline-none transition-colors focus:border-[var(--sp-electric)] focus:shadow-[var(--sp-shadow-focus)];
+  }
+  .sp-textarea {
+    @apply w-full px-3 py-2 text-sm bg-white text-[var(--sp-text-primary)] placeholder:text-[var(--sp-text-muted)] border border-[var(--sp-border)] rounded-lg outline-none transition-colors focus:border-[var(--sp-electric)] focus:shadow-[var(--sp-shadow-focus)];
+  }
+  .sp-table-header {
+    @apply px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--sp-text-secondary)] bg-[var(--sp-bg)] text-left;
+  }
 }
+
+/* Sidebar dark scrollbar (scoped only to .sp-sidebar) */
+.sp-sidebar ::-webkit-scrollbar-track       { background: transparent; }
+.sp-sidebar ::-webkit-scrollbar-thumb       { background: rgba(255,255,255,0.08); border-radius: 9999px; }
+.sp-sidebar ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
 
 @media print {
   @page { margin: 1.5cm; }

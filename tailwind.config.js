@@ -8,6 +8,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ── SchoolPro AI High-Tech tokens ─────────────────────────────────
+        'sp-midnight': '#0F172A',
+        'sp-electric': '#3B82F6',
+        'sp-cyan':     '#22D3EE',
+        'sp-neutral':  '#94A3B8',
+        'sp-bg':       '#F8FAFC',
+        'sp-surface':       '#FFFFFF',
+        'sp-surface-hover': '#F1F5F9',
+        'sp-border':        '#E2E8F0',
+        'sp-text':          '#0F172A',
+        'sp-text-secondary':'#475569',
+        'sp-text-muted':    '#94A3B8',
         primary: {
           50: '#f0f4ff',
           100: '#e0e9ff',
