@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ROLE_LABELS } from '@/lib/permissions'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface DashboardData {
   pendingAbsences: number
@@ -15,47 +16,53 @@ interface DashboardData {
   upcomingEvents: { id: string; title: string; startDate: string }[]
 }
 
-function greeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
+const DATE_LOCALES: Record<string, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE' }
+
+function fillTemplate(text: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (out, [k, v]) => out.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
+    text,
+  )
 }
 
 export default function StaffDashboard() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { t, language } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
 
-  const role      = (session?.user as any)?.role ?? ''
+  const role      = (session?.user as { role?: string })?.role ?? ''
   const roleLabel = ROLE_LABELS[role] ?? role
+  const locale    = DATE_LOCALES[language] ?? 'tr-TR'
+
+  const greetingKey = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'dashboard.staff.greetingMorning'
+    if (h < 18) return 'dashboard.staff.greetingAfternoon'
+    return 'dashboard.staff.greetingEvening'
+  })()
 
   useEffect(() => {
-    // Fetch pending absences
     const pending = fetch('/api/admin/absence-notifications?status=PENDING')
       .then(r => r.json()).then(d => ({ pendingAbsences: d.summary?.pending ?? 0 })).catch(() => ({ pendingAbsences: 0 }))
 
-    // Fetch student + guardian counts
     const students = fetch('/api/admin/guardians')
       .then(r => r.json()).then(d => {
         const list = d.students ?? []
         return { totalStudents: list.length, missingGuardians: list.filter((s: any) => s.guardians.length === 0).length }
       }).catch(() => ({ totalStudents: 0, missingGuardians: 0 }))
 
-    // Fetch this week's attendance stats
     const now   = new Date()
     const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7)
     const weeklyStats = fetch(`/api/staff/attendance-stats?since=${weekAgo.toISOString().split('T')[0]}`)
       .then(r => r.json()).then(d => ({ weeklyAbsent: d.absent ?? 0, weeklyLate: d.late ?? 0 }))
       .catch(() => ({ weeklyAbsent: 0, weeklyLate: 0 }))
 
-    // Fetch announcements
     const announcements = fetch('/api/announcements')
       .then(r => r.json()).then(d => ({
         recentAnnouncements: (d.announcements ?? []).slice(0, 3).map((a: any) => ({ id: a.id, title: a.title, publishedAt: a.publishedAt }))
       })).catch(() => ({ recentAnnouncements: [] }))
 
-    // Fetch events
     const events = fetch('/api/events')
       .then(r => r.json()).then(d => ({
         upcomingEvents: (d.events ?? []).filter((e: any) => new Date(e.startDate) >= new Date()).slice(0, 3)
@@ -70,9 +77,11 @@ export default function StaffDashboard() {
   const cards = [
     {
       icon: '⏳',
-      title: 'Attendance Approval',
+      title: t('dashboard.staff.cardAttendanceApproval'),
       value: data?.pendingAbsences ?? '…',
-      subtitle: data?.pendingAbsences ? `${data.pendingAbsences} notification(s) pending approval` : 'No pending approvals',
+      subtitle: data?.pendingAbsences
+        ? fillTemplate(t('dashboard.staff.notificationsPending'), { count: data.pendingAbsences })
+        : t('dashboard.staff.noPendingApprovals'),
       urgent: (data?.pendingAbsences ?? 0) > 0,
       href: '/staff-panel/attendance-review',
       gradient: 'from-red-500 to-rose-600',
@@ -80,9 +89,11 @@ export default function StaffDashboard() {
     },
     {
       icon: '👥',
-      title: 'Students',
+      title: t('dashboard.staff.cardStudents'),
       value: data?.totalStudents ?? '…',
-      subtitle: data?.missingGuardians ? `⚠️ ${data.missingGuardians} student(s) missing guardian` : 'All guardians registered',
+      subtitle: data?.missingGuardians
+        ? fillTemplate(t('dashboard.staff.missingGuardianWarn'), { count: data.missingGuardians })
+        : t('dashboard.staff.allGuardiansRegistered'),
       urgent: (data?.missingGuardians ?? 0) > 0,
       href: '/staff-panel/students',
       gradient: 'from-teal-500 to-cyan-600',
@@ -90,9 +101,12 @@ export default function StaffDashboard() {
     },
     {
       icon: '📅',
-      title: 'Weekly Absences',
+      title: t('dashboard.staff.cardWeeklyAbsences'),
       value: data?.weeklyAbsent ?? '…',
-      subtitle: `${data?.weeklyAbsent ?? 0} absent · ${data?.weeklyLate ?? 0} late (7 days)`,
+      subtitle: fillTemplate(t('dashboard.staff.weeklySummary'), {
+        absent: data?.weeklyAbsent ?? 0,
+        late: data?.weeklyLate ?? 0,
+      }),
       urgent: false,
       href: '/staff-panel/reports',
       gradient: 'from-amber-500 to-orange-600',
@@ -100,9 +114,9 @@ export default function StaffDashboard() {
     },
     {
       icon: '📢',
-      title: 'Announcements',
+      title: t('dashboard.staff.cardAnnouncements'),
       value: data?.recentAnnouncements.length ?? '…',
-      subtitle: 'Recent announcements',
+      subtitle: t('dashboard.staff.recentAnnouncementsCaption'),
       urgent: false,
       href: '/staff-panel/announcements',
       gradient: 'from-blue-500 to-indigo-600',
@@ -115,12 +129,14 @@ export default function StaffDashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          {greeting()}, {session?.user?.name?.split(' ')[0]}! 👋
+          {t(greetingKey)}, {session?.user?.name?.split(' ')[0]}! 👋
         </h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {roleLabel} · {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {roleLabel} · {new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           {(data?.pendingAbsences ?? 0) > 0 && (
-            <span className="ml-2 text-red-600 font-semibold">📋 {data!.pendingAbsences} pending approval</span>
+            <span className="ml-2 text-red-600 font-semibold">
+              📋 {fillTemplate(t('dashboard.staff.pendingApprovalBadge'), { count: data!.pendingAbsences })}
+            </span>
           )}
         </p>
       </div>
@@ -148,11 +164,11 @@ export default function StaffDashboard() {
         {/* Recent announcements */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Recent Announcements</h2>
-            <button onClick={() => router.push('/staff-panel/announcements')} className="text-xs text-indigo-600 hover:underline">All →</button>
+            <h2 className="font-bold text-gray-900">{t('dashboard.staff.recentAnnouncements')}</h2>
+            <button onClick={() => router.push('/staff-panel/announcements')} className="text-xs text-indigo-600 hover:underline">{t('dashboard.staff.all')} →</button>
           </div>
           {data?.recentAnnouncements.length === 0 ? (
-            <p className="text-sm text-gray-400">No announcements found</p>
+            <p className="text-sm text-gray-400">{t('dashboard.staff.noAnnouncementsFound')}</p>
           ) : (
             <div className="space-y-3">
               {data?.recentAnnouncements.map(a => (
@@ -160,7 +176,7 @@ export default function StaffDashboard() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{a.title}</p>
-                    <p className="text-xs text-gray-400">{new Date(a.publishedAt).toLocaleDateString('tr-TR')}</p>
+                    <p className="text-xs text-gray-400">{new Date(a.publishedAt).toLocaleDateString(locale)}</p>
                   </div>
                 </div>
               ))}
@@ -170,18 +186,18 @@ export default function StaffDashboard() {
             onClick={() => router.push('/staff-panel/announcements')}
             className="mt-4 w-full text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 py-2 rounded-xl transition-colors"
           >
-            + New Announcement
+            {t('dashboard.staff.newAnnouncement')}
           </button>
         </div>
 
         {/* Upcoming events */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Upcoming Events</h2>
-            <button onClick={() => router.push('/staff-panel/events')} className="text-xs text-indigo-600 hover:underline">All →</button>
+            <h2 className="font-bold text-gray-900">{t('dashboard.staff.upcomingEvents')}</h2>
+            <button onClick={() => router.push('/staff-panel/events')} className="text-xs text-indigo-600 hover:underline">{t('dashboard.staff.all')} →</button>
           </div>
           {data?.upcomingEvents.length === 0 ? (
-            <p className="text-sm text-gray-400">No upcoming events</p>
+            <p className="text-sm text-gray-400">{t('dashboard.staff.noUpcomingEvents')}</p>
           ) : (
             <div className="space-y-3">
               {data?.upcomingEvents.map(e => (
@@ -191,7 +207,7 @@ export default function StaffDashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-800">{e.title}</p>
-                    <p className="text-xs text-gray-400">{new Date(e.startDate).toLocaleDateString('tr-TR', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                    <p className="text-xs text-gray-400">{new Date(e.startDate).toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                   </div>
                 </div>
               ))}
@@ -201,7 +217,7 @@ export default function StaffDashboard() {
             onClick={() => router.push('/staff-panel/events')}
             className="mt-4 w-full text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 py-2 rounded-xl transition-colors"
           >
-            + New Event
+            {t('dashboard.staff.newEvent')}
           </button>
         </div>
       </div>

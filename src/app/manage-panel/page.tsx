@@ -3,13 +3,28 @@
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-const ACTION_CARDS = [
+interface ActionCard {
+  href: string
+  icon: string
+  titleKey: string
+  descKey: string
+  gradient: string
+  shadow: string
+  hover: string
+  bg: string
+  text: string
+  link: string
+}
+
+const ACTION_CARDS: ActionCard[] = [
   {
     href: '/manage-panel/students',
     icon: '👨‍🎓',
-    title: 'Manage Students',
-    description: 'Add, edit, and manage student records',
+    titleKey: 'dashboard.admin.cardStudents',
+    descKey: 'dashboard.admin.cardStudentsDesc',
     gradient: 'from-teal-500 to-teal-600',
     shadow: 'shadow-teal-500/30',
     hover: 'hover:border-teal-300',
@@ -20,8 +35,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/classes',
     icon: '🏫',
-    title: 'Manage Classes',
-    description: 'Create and organize school classes',
+    titleKey: 'dashboard.admin.cardClasses',
+    descKey: 'dashboard.admin.cardClassesDesc',
     gradient: 'from-sky-500 to-sky-600',
     shadow: 'shadow-sky-500/30',
     hover: 'hover:border-sky-300',
@@ -32,8 +47,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/teachers',
     icon: '👨‍🏫',
-    title: 'Manage Teachers',
-    description: 'Add and manage teaching staff',
+    titleKey: 'dashboard.admin.cardTeachers',
+    descKey: 'dashboard.admin.cardTeachersDesc',
     gradient: 'from-amber-500 to-amber-600',
     shadow: 'shadow-amber-500/30',
     hover: 'hover:border-amber-300',
@@ -44,8 +59,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/courses',
     icon: '📚',
-    title: 'Manage Courses',
-    description: 'Create and organize courses',
+    titleKey: 'dashboard.admin.cardCourses',
+    descKey: 'dashboard.admin.cardCoursesDesc',
     gradient: 'from-violet-500 to-violet-600',
     shadow: 'shadow-violet-500/30',
     hover: 'hover:border-violet-300',
@@ -56,8 +71,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/course-assignments',
     icon: '📋',
-    title: 'Course Assignments',
-    description: 'Assign courses and classes to teachers',
+    titleKey: 'dashboard.admin.cardAssignments',
+    descKey: 'dashboard.admin.cardAssignmentsDesc',
     gradient: 'from-blue-500 to-blue-600',
     shadow: 'shadow-blue-500/30',
     hover: 'hover:border-blue-300',
@@ -68,8 +83,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/schedules',
     icon: '📅',
-    title: 'Manage Schedules',
-    description: 'View and manage class schedules',
+    titleKey: 'dashboard.admin.cardSchedules',
+    descKey: 'dashboard.admin.cardSchedulesDesc',
     gradient: 'from-green-500 to-green-600',
     shadow: 'shadow-green-500/30',
     hover: 'hover:border-green-300',
@@ -80,8 +95,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/school-settings',
     icon: '⚙️',
-    title: 'School Settings',
-    description: 'Configure school hours and breaks',
+    titleKey: 'dashboard.admin.cardSettings',
+    descKey: 'dashboard.admin.cardSettingsDesc',
     gradient: 'from-orange-500 to-orange-600',
     shadow: 'shadow-orange-500/30',
     hover: 'hover:border-orange-300',
@@ -92,8 +107,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/tests',
     icon: '📝',
-    title: 'Manage Tests',
-    description: 'Create and grade tests',
+    titleKey: 'dashboard.admin.cardTests',
+    descKey: 'dashboard.admin.cardTestsDesc',
     gradient: 'from-blue-500 to-blue-600',
     shadow: 'shadow-blue-500/30',
     hover: 'hover:border-blue-300',
@@ -104,8 +119,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/analytics',
     icon: '📊',
-    title: 'Analytics',
-    description: 'View school performance data',
+    titleKey: 'dashboard.admin.cardAnalytics',
+    descKey: 'dashboard.admin.cardAnalyticsDesc',
     gradient: 'from-indigo-500 to-indigo-600',
     shadow: 'shadow-indigo-500/30',
     hover: 'hover:border-indigo-300',
@@ -116,8 +131,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/announcements',
     icon: '📢',
-    title: 'Announcements',
-    description: 'Post news and updates for the school',
+    titleKey: 'dashboard.admin.cardAnnouncements',
+    descKey: 'dashboard.admin.cardAnnouncementsDesc',
     gradient: 'from-orange-500 to-amber-500',
     shadow: 'shadow-orange-500/30',
     hover: 'hover:border-orange-300',
@@ -128,8 +143,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/events',
     icon: '🗓️',
-    title: 'Events',
-    description: 'Manage school calendar and events',
+    titleKey: 'dashboard.admin.cardEvents',
+    descKey: 'dashboard.admin.cardEventsDesc',
     gradient: 'from-rose-500 to-pink-600',
     shadow: 'shadow-rose-500/30',
     hover: 'hover:border-rose-300',
@@ -140,8 +155,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/parents',
     icon: '👨‍👩‍👧',
-    title: 'Parents',
-    description: 'Link parents to students and manage access',
+    titleKey: 'dashboard.admin.cardParents',
+    descKey: 'dashboard.admin.cardParentsDesc',
     gradient: 'from-teal-500 to-cyan-600',
     shadow: 'shadow-teal-500/30',
     hover: 'hover:border-teal-300',
@@ -152,8 +167,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/lesson-plans',
     icon: '📋',
-    title: 'Lesson Plans',
-    description: "View and review all teachers' lesson plans",
+    titleKey: 'dashboard.admin.cardLessonPlans',
+    descKey: 'dashboard.admin.cardLessonPlansDesc',
     gradient: 'from-violet-600 to-purple-700',
     shadow: 'shadow-violet-500/30',
     hover: 'hover:border-violet-300',
@@ -164,8 +179,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/social-media-managers',
     icon: '📱',
-    title: 'Social Media',
-    description: 'Manage social media managers and their access',
+    titleKey: 'dashboard.admin.cardSocialMedia',
+    descKey: 'dashboard.admin.cardSocialMediaDesc',
     gradient: 'from-pink-500 to-purple-600',
     shadow: 'shadow-pink-500/30',
     hover: 'hover:border-pink-300',
@@ -176,8 +191,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/staff',
     icon: '👔',
-    title: 'Staff Management',
-    description: 'Vice principal, counselor, and secretary accounts',
+    titleKey: 'dashboard.admin.cardStaff',
+    descKey: 'dashboard.admin.cardStaffDesc',
     gradient: 'from-indigo-500 to-violet-600',
     shadow: 'shadow-indigo-500/30',
     hover: 'hover:border-indigo-300',
@@ -188,8 +203,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/attendance-review',
     icon: '📋',
-    title: 'Attendance Approval',
-    description: 'Review absence notifications and send to guardians',
+    titleKey: 'dashboard.admin.cardAttendanceApproval',
+    descKey: 'dashboard.admin.cardAttendanceApprovalDesc',
     gradient: 'from-red-500 to-rose-600',
     shadow: 'shadow-red-500/30',
     hover: 'hover:border-red-300',
@@ -200,8 +215,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/users/pending',
     icon: '⏳',
-    title: 'Kullanıcı Onayları',
-    description: 'Onay bekleyen kullanıcıları onayla veya reddet',
+    titleKey: 'dashboard.admin.cardUserApprovals',
+    descKey: 'dashboard.admin.cardUserApprovalsDesc',
     gradient: 'from-amber-500 to-orange-500',
     shadow: 'shadow-amber-500/30',
     hover: 'hover:border-amber-300',
@@ -212,8 +227,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/documents',
     icon: '📄',
-    title: 'Okul Belgeleri',
-    description: 'Veliler için belge ve yönetmelik yükle',
+    titleKey: 'dashboard.admin.cardDocuments',
+    descKey: 'dashboard.admin.cardDocumentsDesc',
     gradient: 'from-cyan-500 to-teal-600',
     shadow: 'shadow-cyan-500/30',
     hover: 'hover:border-cyan-300',
@@ -224,8 +239,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/gdpr',
     icon: '🛡️',
-    title: 'GDPR & Privacy',
-    description: 'Data deletion logs and AI audit trail',
+    titleKey: 'dashboard.admin.cardGdpr',
+    descKey: 'dashboard.admin.cardGdprDesc',
     gradient: 'from-slate-500 to-slate-700',
     shadow: 'shadow-slate-500/30',
     hover: 'hover:border-slate-300',
@@ -236,8 +251,8 @@ const ACTION_CARDS = [
   {
     href: '/manage-panel/settings/2fa',
     icon: '🔐',
-    title: '2FA Settings',
-    description: 'Enable or disable two-factor authentication',
+    titleKey: 'dashboard.admin.card2fa',
+    descKey: 'dashboard.admin.card2faDesc',
     gradient: 'from-gray-700 to-gray-900',
     shadow: 'shadow-gray-700/30',
     hover: 'hover:border-gray-400',
@@ -247,8 +262,16 @@ const ACTION_CARDS = [
   },
 ]
 
+function fillTemplate(text: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (out, [k, v]) => out.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
+    text,
+  )
+}
+
 export default function AdminPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [missingGuardians, setMissingGuardians] = useState<number | null>(null)
   const [pendingAbsences, setPendingAbsences]   = useState<number | null>(null)
   const [pendingUsers, setPendingUsers]         = useState<number | null>(null)
@@ -283,16 +306,17 @@ export default function AdminPage() {
                 <span className="text-white font-bold text-base">S</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-xs text-gray-500">School Management System</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('dashboard.admin.panelTitle')}</h1>
+                <p className="text-xs text-gray-500">{t('dashboard.admin.panelSubtitle')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <LanguageSwitcher variant="compact" />
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="btn-secondary text-sm"
               >
-                Logout
+                {t('dashboard.admin.logout')}
               </button>
               <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center cursor-pointer">
                 <span className="text-white text-sm font-semibold">A</span>
@@ -304,8 +328,8 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Admin Dashboard</h2>
-          <p className="text-gray-500">Manage your school operations from one place</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard.admin.welcome')}</h2>
+          <p className="text-gray-500">{t('dashboard.admin.subtitle')}</p>
         </div>
 
         {/* Pending users alert banner */}
@@ -317,9 +341,9 @@ export default function AdminPage() {
             <span className="text-2xl">⏳</span>
             <div className="flex-1">
               <p className="font-semibold text-amber-800 text-sm">
-                {pendingUsers} kullanıcı onay bekliyor
+                {fillTemplate(t('dashboard.admin.pendingUsersBanner'), { count: pendingUsers })}
               </p>
-              <p className="text-xs text-amber-600">Kullanıcı Onayları sayfasına git →</p>
+              <p className="text-xs text-amber-600">{t('dashboard.admin.pendingUsersLink')}</p>
             </div>
           </button>
         )}
@@ -333,9 +357,9 @@ export default function AdminPage() {
             <span className="text-2xl">⏳</span>
             <div className="flex-1">
               <p className="font-semibold text-red-800 text-sm">
-                {pendingAbsences} absence notification(s) awaiting approval
+                {fillTemplate(t('dashboard.admin.pendingAbsencesBanner'), { count: pendingAbsences })}
               </p>
-              <p className="text-xs text-red-600">Go to Attendance Approval Panel →</p>
+              <p className="text-xs text-red-600">{t('dashboard.admin.pendingAbsencesLink')}</p>
             </div>
           </button>
         )}
@@ -349,9 +373,9 @@ export default function AdminPage() {
             <span className="text-2xl">⚠️</span>
             <div className="flex-1">
               <p className="font-semibold text-amber-800 text-sm">
-                {missingGuardians} student(s) have missing guardian information
+                {fillTemplate(t('dashboard.admin.missingGuardianBanner'), { count: missingGuardians })}
               </p>
-              <p className="text-xs text-amber-600">Go to Guardian Management page →</p>
+              <p className="text-xs text-amber-600">{t('dashboard.admin.missingGuardianLink')}</p>
             </div>
           </button>
         )}
@@ -371,14 +395,14 @@ export default function AdminPage() {
                   </div>
                   {card.href === '/manage-panel/users/pending' && pendingUsers !== null && pendingUsers > 0 && (
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                      {pendingUsers} bekliyor
+                      {fillTemplate(t('dashboard.admin.pendingBadge'), { count: pendingUsers })}
                     </span>
                   )}
                 </div>
-                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{card.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>
+                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${card.text} transition-colors`}>{t(card.titleKey)}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{t(card.descKey)}</p>
                 <div className={`mt-4 flex items-center ${card.link} text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  Open <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
+                  {t('dashboard.admin.open')} <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
                 </div>
               </div>
             </button>
