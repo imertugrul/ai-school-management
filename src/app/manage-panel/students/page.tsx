@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import ResetPasswordModal from '@/components/ResetPasswordModal'
 
 interface Student {
   id: string
@@ -150,6 +151,9 @@ export default function AdminStudentsPage() {
   const [kvkkTarget, setKvkkTarget]         = useState<Student | null>(null)
   const [kvkkDeleting, setKvkkDeleting]     = useState(false)
 
+  // Reset password state
+  const [resetTarget, setResetTarget]       = useState<Student | null>(null)
+
   // Toast state
   const [toasts, setToasts]                 = useState<Toast[]>([])
   const addToast = useCallback((message: string, type: Toast['type']) => {
@@ -290,6 +294,17 @@ export default function AdminStudentsPage() {
           onConfirm={handleKvkkDelete}
           onCancel={() => setKvkkTarget(null)}
           deleting={kvkkDeleting}
+        />
+      )}
+
+      {/* Reset password modal */}
+      {resetTarget && (
+        <ResetPasswordModal
+          userId={resetTarget.id}
+          userName={resetTarget.name}
+          userEmail={resetTarget.email}
+          onClose={() => setResetTarget(null)}
+          onSuccess={() => addToast(`${resetTarget.name} için şifre sıfırlandı.`, 'success')}
         />
       )}
 
@@ -438,6 +453,14 @@ export default function AdminStudentsPage() {
                                 className="text-red-400 hover:text-red-600 font-semibold text-sm"
                               >
                                 Delete
+                              </button>
+                              {/* Reset password */}
+                              <button
+                                onClick={() => setResetTarget(student)}
+                                title="Reset password"
+                                className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border border-blue-200 hover:border-blue-300 rounded-lg text-xs font-semibold transition-all"
+                              >
+                                🔑 Şifre Sıfırla
                               </button>
                               {/* KVKK Delete */}
                               <button

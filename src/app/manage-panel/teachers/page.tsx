@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ResetPasswordModal from '@/components/ResetPasswordModal'
 
 interface Teacher {
   id: string
@@ -30,6 +31,8 @@ export default function AdminTeachersPage() {
 
   const [editingTeacher, setEditingTeacher] = useState<string | null>(null)
   const [editSubject, setEditSubject] = useState<string>('')
+
+  const [resetTarget, setResetTarget] = useState<Teacher | null>(null)
 
   useEffect(() => {
     fetchTeachers()
@@ -175,6 +178,16 @@ export default function AdminTeachersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Reset password modal */}
+      {resetTarget && (
+        <ResetPasswordModal
+          userId={resetTarget.id}
+          userName={resetTarget.name}
+          userEmail={resetTarget.email}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
+
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -318,6 +331,13 @@ export default function AdminTeachersPage() {
                                 className="text-red-500 hover:text-red-700 font-semibold"
                               >
                                 Delete
+                              </button>
+                              <button
+                                onClick={() => setResetTarget(teacher)}
+                                title="Reset password"
+                                className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border border-blue-200 hover:border-blue-300 rounded-lg text-xs font-semibold transition-all"
+                              >
+                                🔑 Şifre Sıfırla
                               </button>
                             </div>
                           )}
