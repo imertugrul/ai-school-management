@@ -171,7 +171,7 @@ export default function LessonPlansPage() {
 
   const handleSave = async () => {
     if (!form.courseId || !form.title || !form.date || !form.objectives || !form.activities) {
-      setError('Course, title, date, objectives, and activities are required.')
+      setError('Ders, başlık, tarih, kazanımlar ve aktiviteler zorunludur.')
       return
     }
     setSaving(true)
@@ -194,7 +194,7 @@ export default function LessonPlansPage() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    if (!confirm('Delete this lesson plan?')) return
+    if (!confirm('Bu ders planını silmek istediğinize emin misiniz?')) return
     await fetch(`/api/teacher/lesson-plans/${id}`, { method: 'DELETE' })
     fetchPlans()
   }
@@ -223,11 +223,11 @@ export default function LessonPlansPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-lg">📋</span>
+                <span className="text-white text-lg">📚</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Lesson Plans</h1>
-                <p className="text-xs text-gray-500">Plan and organize your lessons</p>
+                <h1 className="text-lg font-bold text-gray-900">Ders Planları</h1>
+                <p className="text-xs text-gray-500">Ders planlarınızı düzenleyin ve worksheet üretin</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -241,33 +241,60 @@ export default function LessonPlansPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-8">
 
-        {/* Create Plan Options */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        {/* ── Action Bar (3 equal buttons) ─────────────────────────────── */}
+        <div className="grid sm:grid-cols-3 gap-3 mb-8">
+          {/* Manuel Plan */}
           <button
-            onClick={() => setShowForm(!showForm)}
-            className={`group relative overflow-hidden text-left rounded-2xl bg-white p-6 shadow-sm border-2 transition-all duration-300 ${showForm ? 'border-indigo-400 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
+            onClick={() => { setShowForm(s => !s); setShowWorksheet(false) }}
+            className={`group relative overflow-hidden text-left rounded-2xl bg-white p-5 border-2 transition-all duration-300 ${
+              showForm ? 'border-gray-400 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+            }`}
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-3 shadow group-hover:scale-110 transition-transform duration-300">
-              <span className="text-white text-xl">✏️</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shrink-0 shadow">
+                <span className="text-white text-lg">✏️</span>
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-gray-900">Manuel Plan</h3>
+                <p className="text-xs text-gray-500 truncate">Kendiniz yazın</p>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Manual Plan</h3>
-            <p className="text-sm text-gray-500">Write your lesson plan from scratch with your own content</p>
           </button>
 
+          {/* AI Lesson Plan — Recommended */}
           <button
             onClick={() => router.push('/teacher/lesson-planner')}
-            className="group relative overflow-hidden text-left rounded-2xl bg-white p-6 shadow-sm border-2 border-violet-200 hover:border-violet-400 hover:shadow-md transition-all duration-300"
+            className="group relative overflow-hidden text-left rounded-2xl bg-white p-5 border-2 border-violet-200 hover:border-violet-400 hover:shadow-md transition-all duration-300"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-50/0 to-purple-50/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white text-xl">🤖</span>
+            <div className="absolute top-2 right-2">
+              <span className="text-[10px] font-bold bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Önerilen</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/30 group-hover:scale-105 transition-transform">
+                <span className="text-white text-lg">🤖</span>
               </div>
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-base font-bold text-gray-900">AI Lesson Plan</h3>
-                <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">Recommended</span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-gray-900">AI Ders Planı</h3>
+                <p className="text-xs text-gray-500 truncate">Saniyeler içinde hazır</p>
               </div>
-              <p className="text-sm text-gray-500">Let Claude AI generate a complete, ready-to-use lesson plan in seconds</p>
+            </div>
+          </button>
+
+          {/* Worksheet */}
+          <button
+            onClick={() => { setShowWorksheet(s => !s); setShowForm(false) }}
+            className={`group relative overflow-hidden text-left rounded-2xl bg-white p-5 border-2 transition-all duration-300 ${
+              showWorksheet ? 'border-amber-400 shadow-md' : 'border-amber-200 hover:border-amber-400 hover:shadow-sm'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20 group-hover:scale-105 transition-transform">
+                <span className="text-white text-lg">📝</span>
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-gray-900">Worksheet</h3>
+                <p className="text-xs text-gray-500 truncate">Çalışma kağıdı üret</p>
+              </div>
             </div>
           </button>
         </div>
@@ -275,56 +302,65 @@ export default function LessonPlansPage() {
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-6">
           <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-gray-200 transition-colors text-gray-600">←</button>
-          <h2 className="text-xl font-bold text-gray-900">{monthLabel}</h2>
+          <h2 className="text-xl font-bold text-gray-900 capitalize">{monthLabel}</h2>
           <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-gray-200 transition-colors text-gray-600">→</button>
         </div>
 
-        {/* New Plan Form */}
+        {/* Manuel Plan Form (collapsible, opens via action bar) */}
         {showForm && (
-          <div className="card mb-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-900">New Lesson Plan</h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+          <div className="rounded-2xl bg-white border-2 border-gray-200 shadow-sm mb-8 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50/60 to-transparent flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow shrink-0">
+                  <span className="text-white text-base">✏️</span>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-bold text-gray-900">Manuel Ders Planı</h2>
+                  <p className="text-xs text-gray-500 truncate">Tüm alanları kendiniz doldurun</p>
+                </div>
+              </div>
+              <button onClick={() => setShowForm(false)} className="text-sm text-gray-500 hover:text-gray-800 font-medium px-3 py-1.5 rounded-lg hover:bg-white transition-colors">✕ Kapat</button>
             </div>
+            <div className="p-6 space-y-4">
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Course *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Ders *</label>
                 <select className="input-field" value={form.courseId} onChange={e => setForm(f => ({ ...f, courseId: e.target.value }))}>
-                  <option value="">Select course</option>
+                  <option value="">Ders seçin</option>
                   {[...new Map(assignments.map(a => [a.courseId, a.course])).entries()].map(([id, c]) => (
                     <option key={id} value={id}>{c.code} – {c.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Class</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Sınıf</label>
                 <select className="input-field" value={form.classId} onChange={e => setForm(f => ({ ...f, classId: e.target.value }))}>
-                  <option value="">Any / All classes</option>
+                  <option value="">Tüm sınıflar</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
-                <input className="input-field" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Introduction to Algebra" />
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Başlık *</label>
+                <input className="input-field" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="ör. Cebire Giriş" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Date *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Tarih *</label>
                 <input type="date" className="input-field" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Duration (min)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Süre (dk)</label>
                 <input type="number" className="input-field" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: Number(e.target.value) }))} />
               </div>
             </div>
 
             {[
-              { key: 'objectives', label: 'Learning Objectives *', placeholder: 'What students will learn...' },
-              { key: 'materials', label: 'Materials Needed', placeholder: 'Books, worksheets, supplies...' },
-              { key: 'activities', label: 'Activities *', placeholder: 'Step-by-step lesson activities...' },
-              { key: 'assessment', label: 'Assessment', placeholder: 'How learning will be assessed...' },
-              { key: 'homework', label: 'Homework', placeholder: 'Assignments for students...' },
-              { key: 'notes', label: 'Teacher Notes', placeholder: 'Personal notes...' },
+              { key: 'objectives', label: 'Öğrenme Kazanımları *', placeholder: 'Öğrenciler ne öğrenecek...' },
+              { key: 'materials',  label: 'Materyaller',           placeholder: 'Kitaplar, çalışma kağıtları, malzemeler...' },
+              { key: 'activities', label: 'Aktiviteler *',         placeholder: 'Ders adım adım nasıl ilerleyecek...' },
+              { key: 'assessment', label: 'Değerlendirme',         placeholder: 'Öğrenmeyi nasıl ölçeceksiniz...' },
+              { key: 'homework',   label: 'Ödev',                   placeholder: 'Öğrencilere verilecek görevler...' },
+              { key: 'notes',      label: 'Öğretmen Notları',       placeholder: 'Kişisel notlar...' },
             ].map(({ key, label, placeholder }) => (
               <div key={key}>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
@@ -340,9 +376,10 @@ export default function LessonPlansPage() {
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">{error}</p>}
             <div className="flex gap-3">
               <button onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
-                {saving ? 'Saving...' : 'Save Plan'}
+                {saving ? 'Kaydediliyor…' : '💾 Planı Kaydet'}
               </button>
-              <button onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
+              <button onClick={() => setShowForm(false)} className="btn-secondary">İptal</button>
+            </div>
             </div>
           </div>
         )}
@@ -353,10 +390,10 @@ export default function LessonPlansPage() {
             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
           </div>
         ) : plans.length === 0 ? (
-          <div className="card text-center py-16">
-            <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No lesson plans yet</h3>
-            <p className="text-gray-500 text-sm mb-6">Create your first plan for {monthLabel} — manually or with AI</p>
+          <div className="rounded-2xl bg-white border border-dashed border-gray-200 p-12 text-center">
+            <div className="text-5xl mb-3">📚</div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Henüz ders planı yok</h3>
+            <p className="text-gray-500 text-sm">{monthLabel} için ilk planınızı oluşturun — manuel veya AI ile.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -390,17 +427,16 @@ export default function LessonPlansPage() {
                       <h3 className="text-base font-bold text-gray-900">{plan.title}</h3>
                       <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{plan.objectives}</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs px-3 py-1.5 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-lg transition-colors font-medium">
-                        Details →
-                      </span>
+                    <div className="flex items-center gap-1 shrink-0 self-center">
                       <button
                         type="button"
                         onClick={e => handleDelete(e, plan.id)}
-                        className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
+                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        aria-label="Sil"
                       >
-                        Delete
+                        🗑
                       </button>
+                      <span className="text-gray-300 group-hover:text-blue-500 transition-colors text-xl px-1">→</span>
                     </div>
                   </div>
                 </div>
@@ -409,38 +445,30 @@ export default function LessonPlansPage() {
           </div>
         )}
 
-        {/* ── Worksheet Builder Toggle ──────────────────────────────────── */}
-        <div className="mt-10 print:hidden">
-          <button
-            onClick={() => setShowWorksheet(s => !s)}
-            className={`w-full rounded-2xl border-2 transition-all duration-300 overflow-hidden text-left ${
-              showWorksheet
-                ? 'border-amber-400 bg-amber-50 shadow-md'
-                : 'border-gray-200 bg-white hover:border-amber-300 hover:shadow-md'
-            }`}
-          >
-            <div className="px-6 py-5 flex items-center justify-between gap-4">
+        {/* ── Worksheet Builder Panel (collapsible) ─────────────────────── */}
+        <div
+          className={`overflow-hidden transition-all duration-300 print:hidden ${
+            showWorksheet ? 'max-h-[2000px] opacity-100 mt-8' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="rounded-2xl bg-white border-2 border-amber-200 shadow-sm">
+            <div className="px-6 py-4 border-b border-amber-100 bg-gradient-to-r from-amber-50/60 to-transparent flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
-                  <span className="text-white text-lg">📝</span>
+                <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow shrink-0">
+                  <span className="text-white text-base">📝</span>
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900">Worksheet Oluştur</h2>
+                  <h2 className="text-base font-bold text-gray-900">Worksheet Oluştur</h2>
                   <p className="text-xs text-gray-500 truncate">Ders planlarınızdan öğrenci çalışma kağıdı üretin</p>
                 </div>
               </div>
-              <span className={`text-2xl text-amber-600 transition-transform duration-300 ${showWorksheet ? 'rotate-180' : ''}`}>⌄</span>
+              <button
+                onClick={() => setShowWorksheet(false)}
+                className="text-sm text-gray-500 hover:text-gray-800 font-medium px-3 py-1.5 rounded-lg hover:bg-white transition-colors"
+              >
+                ✕ Kapat
+              </button>
             </div>
-          </button>
-        </div>
-
-        {/* ── Worksheet Builder Card (collapsible) ──────────────────────── */}
-        <div
-          className={`overflow-hidden transition-all duration-300 print:hidden ${
-            showWorksheet ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
-          }`}
-        >
-          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm">
             <div className="px-6 py-6 space-y-5">
             {/* Plan dropdown */}
             <div>
