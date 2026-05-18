@@ -6,14 +6,28 @@ import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
 import { logAiCall } from '@/lib/aiLogger'
 import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const HAIKU_MODEL = 'claude-haiku-4-5-20251001'
+
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null
 
 const CURRICULUM_DESCRIPTIONS: Record<string, string> = {
-  IB: 'International Baccalaureate – inquiry-based, conceptual learning with international mindedness and ATL skills',
-  AP: 'Advanced Placement – college-level rigor preparing students for AP exams with rigorous content',
-  NATIONAL: 'Turkish National Curriculum (MEB) – aligned with Milli Müfredat standards and Turkish educational objectives',
-  IGCSE: 'International GCSE – Cambridge curriculum with global perspective and practical application',
-  COMMON_CORE: 'US Common Core – college and career readiness standards focusing on critical thinking',
+  IB: 'International Baccalaureate (inquiry-based, ATL)',
+  AP: 'Advanced Placement (college-level rigor)',
+  NATIONAL: 'Türkiye Milli Müfredat (MEB)',
+  IGCSE: 'Cambridge IGCSE',
+  COMMON_CORE: 'US Common Core',
+}
+
+const SYSTEM_PROMPT = 'Sen deneyimli bir öğretmensin. Verilen bilgilere göre yapılandırılmış bir ders planı oluştur. Sadece geçerli JSON döndür — markdown veya açıklama yok.'
+
+function extractJson(text: string): any {
+  const cleaned = text.replace(/```(?:json)?/g, '').trim()
+  try { return JSON.parse(cleaned) } catch { /* fall through */ }
+  const match = cleaned.match(/\{[\s\S]*\}/)
+  if (match) { try { return JSON.parse(match[0]) } catch { /* ignore */ } }
+  return null
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +45,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Teacher access required' }, { status: 403 })
     }
 
-    // ── Credit check ──
+    if (!anthropic) {
+      return NextResponse.json({ error: 'AI servisi yapılandırılmamış (ANTHROPIC_API_KEY eksik).' }, { status: 500 })
+    }
+
     const creditCheck = await checkAiCredits(user.schoolId ?? null)
     if (!creditCheck.allowed) {
       return NextResponse.json(
@@ -52,88 +69,78 @@ export async function POST(request: NextRequest) {
     }
 
     const curriculumDesc = CURRICULUM_DESCRIPTIONS[curriculumType] || curriculumType
+    const introMin = Math.round(duration * 0.15)
+    const mainMin = Math.round(duration * 0.7)
+    const closureMin = duration - introMin - mainMin
 
-    const prompt = `You are an expert curriculum designer and educator. Generate a comprehensive lesson plan.
+    const userPrompt = `Müfredat: ${curriculumType} — ${curriculumDesc}
+Ders: ${course.name} (${course.code})
+Sınıf seviyesi: ${course.grade || 'belirtilmedi'}
+Ünite: ${unitName}
+Konu/odak: ${topicDescription}
+Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış ~${closureMin} dk)
 
-CURRICULUM TYPE: ${curriculumType} – ${curriculumDesc}
-COURSE: ${course.name} (${course.code})
-GRADE LEVEL: ${course.grade || 'Not specified'}
-UNIT NAME: ${unitName}
-LESSON TOPIC & FOCUS: ${topicDescription}
-LESSON DURATION: ${duration} minutes
-
-Generate a detailed, ready-to-use lesson plan with exactly these sections:
-
-1. LEARNING OBJECTIVES (3-5 objectives)
-   - Use Bloom's Taxonomy verbs
-   - Be specific and measurable
-   - Align with ${curriculumType} standards
-   - Directly address the teacher's stated lesson focus
-   - Format: "Students will be able to..."
-
-2. MATERIALS NEEDED (5-8 items)
-   - Teaching materials, student materials, technology requirements
-
-3. SLIDE OUTLINE (5-8 slides)
-   - Break into logical sections with timing
-   - Include what to show/say per slide
-
-4. ACTIVITIES (3-4 activities)
-   - Engaging, varied (individual, pairs, group)
-   - Include timing and clear instructions
-
-5. ASSESSMENT
-   - 2-3 formative strategies (during lesson)
-   - 1-2 summative ideas (after lesson)
-   - Exit ticket idea
-
-Return ONLY valid JSON (no markdown, no explanation, just JSON):
+Şu yapıda JSON döndür:
 {
-  "learningObjectives": ["string", ...],
-  "materialsNeeded": ["string", ...],
+  "learningObjectives": ["Students will be able to ...", ...],   // 3-5
+  "materialsNeeded": ["...", ...],                                // 5-8
   "slideOutline": [
-    { "slide": 1, "title": "string", "duration": 5, "content": ["string", ...], "notes": "string" },
-    ...
-  ],
+    { "slide": 1, "title": "...", "duration": ${introMin}, "content": ["..."], "notes": "..." }
+  ],                                                              // 5-8 slayt
   "activities": [
-    { "name": "string", "duration": 10, "description": "string", "grouping": "individual|pairs|groups|whole-class" },
-    ...
-  ],
+    { "name": "...", "duration": 10, "description": "...", "grouping": "individual|pairs|groups|whole-class" }
+  ],                                                              // 3-4 aktivite
   "assessment": {
-    "formative": ["string", ...],
-    "summative": ["string", ...],
-    "exitTicket": "string"
+    "formative": ["...", ...],                                    // 2-3
+    "summative": ["...", ...],                                    // 1-2
+    "exitTicket": "..."
   }
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 3000,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }],
-      system: 'You are an expert educator and curriculum designer. Return ONLY valid JSON with no markdown code blocks, no explanations. Just the raw JSON object.'
+    const response = await anthropic.messages.create({
+      model: HAIKU_MODEL,
+      max_tokens: 2500,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
     })
 
-    // ── Consume credits + audit log (Anthropic: input + output tokens) ──
     const tokensUsed = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
-    await consumeAiCredits(user.schoolId ?? null, tokensUsed)
-    await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, hasPersonalData: false })
 
     const content = response.content[0]
-    if (content.type !== 'text') throw new Error('Unexpected response type')
-
-    let generatedPlan
-    try {
-      const cleaned = content.text.replace(/```json\n?|\n?```/g, '').trim()
-      generatedPlan = JSON.parse(cleaned)
-    } catch {
-      console.error('Failed to parse AI response:', content.text)
-      return NextResponse.json({ error: 'Failed to parse AI response. Please try again.' }, { status: 500 })
+    if (content.type !== 'text') {
+      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: HAIKU_MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
+      return NextResponse.json({ error: 'AI yanıtı geçersiz format döndürdü.' }, { status: 500 })
     }
 
-    // Save to database
+    const generatedPlan = extractJson(content.text)
+    if (!generatedPlan) {
+      console.error('Failed to parse AI response:', content.text.slice(0, 500))
+      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: HAIKU_MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
+      return NextResponse.json({ error: 'AI yanıtı ayrıştırılamadı. Lütfen tekrar deneyin.' }, { status: 500 })
+    }
+
+    // Defensive defaults so the UI never crashes
+    const safePlan = {
+      learningObjectives: Array.isArray(generatedPlan.learningObjectives) ? generatedPlan.learningObjectives : [],
+      materialsNeeded:    Array.isArray(generatedPlan.materialsNeeded) ? generatedPlan.materialsNeeded : [],
+      slideOutline:       Array.isArray(generatedPlan.slideOutline) ? generatedPlan.slideOutline : [],
+      activities:         Array.isArray(generatedPlan.activities) ? generatedPlan.activities : [],
+      assessment: {
+        formative:  Array.isArray(generatedPlan.assessment?.formative) ? generatedPlan.assessment.formative : [],
+        summative:  Array.isArray(generatedPlan.assessment?.summative) ? generatedPlan.assessment.summative : [],
+        exitTicket: generatedPlan.assessment?.exitTicket ?? '',
+      },
+    }
+
+    await consumeAiCredits(user.schoolId ?? null, tokensUsed)
+    await logAiCall({
+      endpoint: '/api/teacher/lesson-plans/generate',
+      tokensUsed,
+      model: HAIKU_MODEL,
+      questionType: 'lesson_plan',
+      schoolId: user.schoolId ?? null,
+    })
+
     const lessonPlan = await prisma.lessonPlan.create({
       data: {
         teacherId: user.id,
@@ -143,11 +150,11 @@ Return ONLY valid JSON (no markdown, no explanation, just JSON):
         unitName,
         title: `${unitName} – ${curriculumType}`,
         duration,
-        learningObjectives: JSON.stringify(generatedPlan.learningObjectives),
-        materialsNeeded: JSON.stringify(generatedPlan.materialsNeeded),
-        slideOutline: JSON.stringify(generatedPlan.slideOutline),
-        aiActivities: JSON.stringify(generatedPlan.activities),
-        aiAssessment: JSON.stringify(generatedPlan.assessment),
+        learningObjectives: JSON.stringify(safePlan.learningObjectives),
+        materialsNeeded:    JSON.stringify(safePlan.materialsNeeded),
+        slideOutline:       JSON.stringify(safePlan.slideOutline),
+        aiActivities:       JSON.stringify(safePlan.activities),
+        aiAssessment:       JSON.stringify(safePlan.assessment),
         isAIGenerated: true,
         wasEdited: false,
         schoolId: user.schoolId,
@@ -158,7 +165,7 @@ Return ONLY valid JSON (no markdown, no explanation, just JSON):
       success: true,
       lessonPlan: {
         id: lessonPlan.id,
-        ...generatedPlan,
+        ...safePlan,
         courseName: course.name,
         courseCode: course.code,
         curriculumType,
@@ -169,6 +176,7 @@ Return ONLY valid JSON (no markdown, no explanation, just JSON):
 
   } catch (error: any) {
     console.error('Generate lesson plan error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to generate lesson plan' }, { status: 500 })
+    const message = error?.error?.message || error?.message || 'Failed to generate lesson plan'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
