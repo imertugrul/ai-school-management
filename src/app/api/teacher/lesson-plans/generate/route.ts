@@ -6,7 +6,7 @@ import { checkAiCredits, consumeAiCredits } from '@/lib/aiCredits'
 import { logAiCall } from '@/lib/aiLogger'
 import Anthropic from '@anthropic-ai/sdk'
 
-const HAIKU_MODEL = 'claude-haiku-4-5-20251001'
+const MODEL = 'claude-sonnet-4-6'
 
 const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -98,8 +98,8 @@ Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış
 }`
 
     const response = await anthropic.messages.create({
-      model: HAIKU_MODEL,
-      max_tokens: 2500,
+      model: MODEL,
+      max_tokens: 3000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     })
@@ -108,14 +108,14 @@ Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış
 
     const content = response.content[0]
     if (content.type !== 'text') {
-      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: HAIKU_MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
+      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
       return NextResponse.json({ error: 'AI yanıtı geçersiz format döndürdü.' }, { status: 500 })
     }
 
     const generatedPlan = extractJson(content.text)
     if (!generatedPlan) {
       console.error('Failed to parse AI response:', content.text.slice(0, 500))
-      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: HAIKU_MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
+      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
       return NextResponse.json({ error: 'AI yanıtı ayrıştırılamadı. Lütfen tekrar deneyin.' }, { status: 500 })
     }
 
@@ -136,7 +136,7 @@ Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış
     await logAiCall({
       endpoint: '/api/teacher/lesson-plans/generate',
       tokensUsed,
-      model: HAIKU_MODEL,
+      model: MODEL,
       questionType: 'lesson_plan',
       schoolId: user.schoolId ?? null,
     })
