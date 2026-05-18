@@ -35,7 +35,6 @@ export default function LessonPlansPage() {
   const [assignments, setAssignments] = useState<{ courseId: string; classId: string; course: Course; class: ClassItem }[]>([])
   const [classes, setClasses] = useState<ClassItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -109,11 +108,14 @@ export default function LessonPlansPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
     if (!confirm('Delete this lesson plan?')) return
     await fetch(`/api/teacher/lesson-plans/${id}`, { method: 'DELETE' })
     fetchPlans()
   }
+
+  const openPlan = (id: string) => router.push(`/teacher/lesson-plans/${id}`)
 
   const uniqueCourseIds = [...new Set(plans.map(p => p.course.id))]
   const courseColor = (courseId: string) => COURSE_COLORS[uniqueCourseIds.indexOf(courseId) % COURSE_COLORS.length]
@@ -275,7 +277,14 @@ export default function LessonPlansPage() {
         ) : (
           <div className="space-y-4">
             {plans.map(plan => (
-              <div key={plan.id} className="group relative overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div
+                key={plan.id}
+                onClick={() => openPlan(plan.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter') openPlan(plan.id) }}
+                className="group relative overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+              >
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${courseColor(plan.course.id)} rounded-l-2xl`} />
                 <div className="pl-6 pr-6 py-5">
                   <div className="flex items-start justify-between gap-4">
@@ -298,38 +307,18 @@ export default function LessonPlansPage() {
                       <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{plan.objectives}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs px-3 py-1.5 bg-gray-100 group-hover:bg-blue-100 text-gray-600 group-hover:text-blue-700 rounded-lg transition-colors font-medium">
+                        Details →
+                      </span>
                       <button
-                        onClick={() => setExpanded(expanded === plan.id ? null : plan.id)}
-                        className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 rounded-lg transition-colors font-medium"
-                      >
-                        {expanded === plan.id ? 'Collapse' : 'Details'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(plan.id)}
+                        type="button"
+                        onClick={e => handleDelete(e, plan.id)}
                         className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
                       >
                         Delete
                       </button>
                     </div>
                   </div>
-
-                  {expanded === plan.id && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 grid md:grid-cols-2 gap-4 text-sm">
-                      {[
-                        { label: 'Objectives', value: plan.objectives },
-                        { label: 'Activities', value: plan.activities },
-                        plan.materials ? { label: 'Materials', value: plan.materials } : null,
-                        plan.assessment ? { label: 'Assessment', value: plan.assessment } : null,
-                        plan.homework ? { label: 'Homework', value: plan.homework } : null,
-                        plan.notes ? { label: 'Notes', value: plan.notes } : null,
-                      ].filter(Boolean).map(item => item && (
-                        <div key={item.label}>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{item.label}</p>
-                          <p className="text-gray-700 whitespace-pre-line">{item.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
