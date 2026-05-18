@@ -48,6 +48,43 @@ export default function LessonPlansPage() {
     assessment: '', homework: '', notes: ''
   })
 
+  // ── Worksheet builder state ────────────────────────────────────────────────
+  const [wsPlanId, setWsPlanId] = useState('')
+  const [wsTypes, setWsTypes] = useState<string[]>(['practice'])
+  const [wsLanguage, setWsLanguage] = useState<'tr' | 'en'>('tr')
+  const [wsQuestionCount, setWsQuestionCount] = useState(5)
+  const [wsGenerating, setWsGenerating] = useState(false)
+  const [wsError, setWsError] = useState('')
+  const [worksheet, setWorksheet] = useState<any>(null)
+  const [worksheetMeta, setWorksheetMeta] = useState<any>(null)
+
+  const toggleWsType = (t: string) => {
+    setWsTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  }
+
+  const generateWorksheet = async () => {
+    if (!wsPlanId) { setWsError('Önce bir ders planı seçin.'); return }
+    if (wsTypes.length === 0) { setWsError('En az bir worksheet tipi seçin.'); return }
+    setWsError(''); setWsGenerating(true); setWorksheet(null); setWorksheetMeta(null)
+    try {
+      const res = await fetch(`/api/teacher/lesson-plans/${wsPlanId}/worksheet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ types: wsTypes, language: wsLanguage, questionCount: wsQuestionCount }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || 'Worksheet oluşturulamadı.')
+      setWorksheet(data.worksheet)
+      setWorksheetMeta(data.meta)
+    } catch (err: any) {
+      setWsError(err.message)
+    } finally {
+      setWsGenerating(false)
+    }
+  }
+
+  const printWorksheet = () => window.print()
+
   useEffect(() => {
     fetchAssignments()
   }, [])
@@ -324,7 +361,272 @@ export default function LessonPlansPage() {
             ))}
           </div>
         )}
+
+        {/* ── Worksheet Builder ─────────────────────────────────────────── */}
+        <div className="mt-10 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden print:hidden">
+          <div className="px-6 py-5 border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/40 to-transparent">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/20">
+                <span className="text-white text-lg">📝</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Worksheet Oluştur</h2>
+                <p className="text-xs text-gray-500">Ders planlarınızdan öğrenci çalışma kağıdı üretin</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-6 space-y-5">
+            {/* Plan dropdown */}
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-2">Ders Planı <span className="text-red-500">*</span></label>
+              <select
+                className="input-field"
+                value={wsPlanId}
+                onChange={e => setWsPlanId(e.target.value)}
+              >
+                <option value="">Ders planı seçin...</option>
+                {plans.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.title} — {p.course.code}{p.class ? ` · ${p.class.name}` : ''} ({new Date(p.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })})
+                  </option>
+                ))}
+              </select>
+              {plans.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1.5">Önce bir ders planı oluşturun.</p>
+              )}
+            </div>
+
+            {/* Types */}
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-2">Worksheet Tipi <span className="text-red-500">*</span></label>
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                {[
+                  { value: 'practice', label: 'Alıştırma Soruları', icon: '✏️' },
+                  { value: 'activity', label: 'Etkinlik Sayfası',   icon: '🎯' },
+                  { value: 'reading',  label: 'Okuma Metni + Sorular', icon: '📖' },
+                  { value: 'notes',    label: 'Not Alma Şablonu',   icon: '📓' },
+                ].map(t => (
+                  <label
+                    key={t.value}
+                    className={`flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                      wsTypes.includes(t.value)
+                        ? 'border-amber-400 bg-amber-50'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={wsTypes.includes(t.value)}
+                      onChange={() => toggleWsType(t.value)}
+                      className="rounded accent-amber-500"
+                    />
+                    <span className="text-lg">{t.icon}</span>
+                    <span className="text-sm font-medium text-gray-800">{t.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Language + count */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Dil</label>
+                <div className="flex gap-2">
+                  {[{ v: 'tr', label: 'Türkçe' }, { v: 'en', label: 'İngilizce' }].map(l => (
+                    <label
+                      key={l.v}
+                      className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-xl cursor-pointer text-sm font-medium transition-all ${
+                        wsLanguage === l.v ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="ws-language"
+                        value={l.v}
+                        checked={wsLanguage === l.v}
+                        onChange={() => setWsLanguage(l.v as 'tr' | 'en')}
+                        className="accent-amber-500"
+                      />
+                      {l.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Soru Sayısı (alıştırma)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  className="input-field"
+                  value={wsQuestionCount}
+                  onChange={e => setWsQuestionCount(Math.min(Math.max(Number(e.target.value) || 1, 1), 20))}
+                />
+              </div>
+            </div>
+
+            {wsError && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                <span className="text-red-500 mt-0.5">⚠</span>
+                <span>{wsError}</span>
+              </div>
+            )}
+
+            <button
+              onClick={generateWorksheet}
+              disabled={wsGenerating || !wsPlanId || wsTypes.length === 0}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-md shadow-orange-500/30 hover:shadow-lg hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            >
+              {wsGenerating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Worksheet oluşturuluyor…
+                </>
+              ) : (
+                <>✨ Worksheet Oluştur</>
+              )}
+            </button>
+            <p className="text-xs text-gray-400 text-center">Günlük limit: 10 worksheet / öğretmen</p>
+          </div>
+        </div>
+
+        {/* ── Worksheet Result ──────────────────────────────────────────── */}
+        {worksheet && (
+          <div className="mt-6 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            {/* Print header (hidden on screen) */}
+            <div className="hidden print:block px-8 pt-8 pb-4 border-b border-gray-300">
+              <h1 className="text-2xl font-bold">{worksheetMeta?.unitName || 'Worksheet'}</h1>
+              <p className="text-sm text-gray-600">
+                {worksheetMeta?.courseCode} – {worksheetMeta?.courseName}
+                {worksheetMeta?.grade && <> · Sınıf: {worksheetMeta.grade}</>}
+              </p>
+              <div className="flex gap-8 mt-4 text-sm">
+                <div>Öğrenci Adı: <span className="inline-block w-64 border-b border-gray-400" /></div>
+                <div>Tarih: <span className="inline-block w-32 border-b border-gray-400" /></div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 print:hidden">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow">
+                  <span className="text-white text-lg">📄</span>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 truncate">{worksheetMeta?.unitName || 'Worksheet'}</h3>
+                  <p className="text-xs text-gray-500 truncate">
+                    {worksheetMeta?.courseCode} · {worksheetMeta?.language === 'tr' ? 'Türkçe' : 'İngilizce'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={printWorksheet} className="btn-secondary text-sm">📄 PDF / Yazdır</button>
+                <button onClick={() => { setWorksheet(null); setWorksheetMeta(null) }} className="btn-secondary text-sm">✕ Kapat</button>
+              </div>
+            </div>
+
+            <div className="px-6 py-6 space-y-8">
+              {/* Practice */}
+              {worksheet.practice?.questions?.length > 0 && (
+                <WorksheetSection icon="✏️" title="Alıştırma Soruları">
+                  <ol className="space-y-4 list-decimal list-inside">
+                    {worksheet.practice.questions.map((q: any, i: number) => (
+                      <li key={i} className="text-sm text-gray-800">
+                        <span className="font-medium">{q.question}</span>
+                        {q.type === 'mcq' && Array.isArray(q.options) && (
+                          <ul className="mt-2 ml-6 space-y-1.5">
+                            {q.options.map((opt: string, j: number) => (
+                              <li key={j} className="flex items-start gap-2 text-sm text-gray-700">
+                                <span className="w-5 h-5 border border-gray-400 rounded-full inline-block shrink-0 mt-0.5" />
+                                <span>{String.fromCharCode(65 + j)}) {opt}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {q.type === 'short' && (
+                          <div className="mt-2 ml-6 border-b border-gray-300 h-8" />
+                        )}
+                        {q.type === 'truefalse' && (
+                          <div className="mt-2 ml-6 flex gap-6 text-sm text-gray-700">
+                            <span className="flex items-center gap-2"><span className="w-4 h-4 border border-gray-400 rounded inline-block" /> Doğru</span>
+                            <span className="flex items-center gap-2"><span className="w-4 h-4 border border-gray-400 rounded inline-block" /> Yanlış</span>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </WorksheetSection>
+              )}
+
+              {/* Activity */}
+              {worksheet.activity?.activities?.length > 0 && (
+                <WorksheetSection icon="🎯" title="Etkinlikler">
+                  <div className="space-y-4">
+                    {worksheet.activity.activities.map((a: any, i: number) => (
+                      <div key={i} className="border border-gray-200 rounded-xl p-4 print:break-inside-avoid">
+                        <h4 className="font-bold text-sm text-gray-900 mb-1">{a.title}</h4>
+                        <p className="text-sm text-gray-700 mb-3 whitespace-pre-line">{a.instructions}</p>
+                        <div className="border border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 min-h-[80px] text-xs text-gray-400 italic whitespace-pre-line">
+                          {a.studentSpace || 'Öğrenci için boşluk'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </WorksheetSection>
+              )}
+
+              {/* Reading */}
+              {worksheet.reading?.text && (
+                <WorksheetSection icon="📖" title="Okuma Metni">
+                  <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line bg-gray-50 rounded-xl p-4 border border-gray-200 print:break-inside-avoid">
+                    {worksheet.reading.text}
+                  </p>
+                  {worksheet.reading.questions?.length > 0 && (
+                    <ol className="mt-4 space-y-3 list-decimal list-inside">
+                      {worksheet.reading.questions.map((q: any, i: number) => (
+                        <li key={i} className="text-sm text-gray-800">
+                          <span className="font-medium">{q.question}</span>
+                          <div className="mt-2 ml-6 border-b border-gray-300 h-8" />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </WorksheetSection>
+              )}
+
+              {/* Notes */}
+              {worksheet.notes?.sections?.length > 0 && (
+                <WorksheetSection icon="📓" title="Not Alma Şablonu">
+                  <div className="space-y-4">
+                    {worksheet.notes.sections.map((s: any, i: number) => (
+                      <div key={i} className="print:break-inside-avoid">
+                        <h4 className="font-bold text-sm text-gray-900 mb-2">{s.title}</h4>
+                        <div className="space-y-1">
+                          {Array.from({ length: Math.max(1, Math.min(s.lines ?? 4, 12)) }).map((_, j) => (
+                            <div key={j} className="border-b border-gray-300 h-6" />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </WorksheetSection>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  )
+}
+
+function WorksheetSection({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
+  return (
+    <section className="print:break-inside-avoid">
+      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+        <span className="text-lg">{icon}</span>
+        <h3 className="text-base font-bold text-gray-900">{title}</h3>
+      </div>
+      {children}
+    </section>
   )
 }

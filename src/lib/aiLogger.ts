@@ -13,6 +13,7 @@ export async function logAiCall(params: {
   questionType?: string
   cached?: boolean
   schoolId?: string | null
+  userId?: string | null
 }): Promise<void> {
   try {
     await prisma.aiLog.create({
@@ -24,6 +25,7 @@ export async function logAiCall(params: {
         questionType:    params.questionType ?? null,
         cached:          params.cached ?? false,
         schoolId:        params.schoolId ?? null,
+        userId:          params.userId ?? null,
       },
     })
   } catch (err) {

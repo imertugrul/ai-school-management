@@ -841,11 +841,13 @@ model AiLog {
   questionType    String?
   cached          Boolean  @default(false)
   schoolId        String?
+  userId          String?
   createdAt       DateTime @default(now())
 
   @@index([createdAt])
   @@index([endpoint])
   @@index([schoolId])
+  @@index([userId, createdAt])
 }
 
 // ─── Cached AI feedback for repeated wrong MCQ answers ───
