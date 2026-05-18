@@ -193,13 +193,31 @@ SADECE geçerli JSON döndür, başka hiçbir metin ekleme.`
       userId: teacher.id,
     })
 
+    const topic = plan.unitName || plan.title
+    const saved = await prisma.worksheet.create({
+      data: {
+        title: `${topic} - Worksheet`,
+        topic,
+        grade: plan.course.grade ?? null,
+        curriculum: plan.curriculumType ?? null,
+        language,
+        types,
+        content: parsed,
+        teacherId: teacher.id,
+        lessonPlanId: plan.id,
+        schoolId: teacher.schoolId ?? null,
+      },
+    })
+
     return NextResponse.json({
       success: true,
+      worksheetId: saved.id,
       worksheet: parsed,
       truncated,
       dailyUsage: { used: todayCount + 1, limit: DAILY_LIMIT },
       meta: {
-        unitName: plan.unitName || plan.title,
+        title: saved.title,
+        unitName: topic,
         courseCode: plan.course.code,
         courseName: plan.course.name,
         grade: plan.course.grade,

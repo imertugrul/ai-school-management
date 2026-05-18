@@ -84,6 +84,7 @@ model User {
   organizedEvents       Event[]        @relation("EventOrganizer")
   eventRSVPs            EventRSVP[]    @relation("UserEventRSVP")
   lessonPlans           LessonPlan[]   @relation("TeacherLessonPlans")
+  worksheets            Worksheet[]    @relation("TeacherWorksheets")
   teachingNotes         TeachingNote[] @relation("TeacherNotes")
   notesAboutMe          TeachingNote[] @relation("StudentNotes")
   parentLinks           ParentStudent[] @relation("ParentLinks")
@@ -740,6 +741,30 @@ model LessonPlan {
   duration    Int       @default(45)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  worksheets  Worksheet[]
+}
+
+// ─── AI-generated Worksheets ───
+model Worksheet {
+  id           String    @id @default(cuid())
+  title        String
+  topic        String
+  grade        String?
+  curriculum   String?
+  language     String    @default("tr")
+  types        String[]  @default([])
+  content      Json
+  teacherId    String
+  teacher      User      @relation("TeacherWorksheets", fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonPlanId String?
+  lessonPlan   LessonPlan? @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  schoolId     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([teacherId, createdAt])
+  @@index([lessonPlanId])
 }
 
 // ─── Teaching Notes ───
