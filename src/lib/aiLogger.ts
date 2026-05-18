@@ -1,6 +1,6 @@
 /**
  * AI audit logger for KVKK / GDPR compliance.
- * Every AI API call should be logged via logAiCall().
+ * Every AI API call (and cache hit) should be logged via logAiCall().
  * hasPersonalData must always be false — if it's true, the prompt was not anonymized correctly.
  */
 import { prisma } from '@/lib/prisma'
@@ -9,6 +9,10 @@ export async function logAiCall(params: {
   endpoint: string
   tokensUsed: number
   hasPersonalData?: boolean
+  model?: string
+  questionType?: string
+  cached?: boolean
+  schoolId?: string | null
 }): Promise<void> {
   try {
     await prisma.aiLog.create({
@@ -16,6 +20,10 @@ export async function logAiCall(params: {
         endpoint:        params.endpoint,
         tokensUsed:      params.tokensUsed,
         hasPersonalData: params.hasPersonalData ?? false,
+        model:           params.model ?? null,
+        questionType:    params.questionType ?? null,
+        cached:          params.cached ?? false,
+        schoolId:        params.schoolId ?? null,
       },
     })
   } catch (err) {

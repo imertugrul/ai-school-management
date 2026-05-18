@@ -83,18 +83,32 @@ export async function POST(
 
       if (studentAnswers.length === 0) continue
 
-      const { results, tokensUsed } = await batchGradeQuestion(
+      const { results, tokensUsed, model } = await batchGradeQuestion(
         {
+          id: question.id,
           type: question.type,
           content: question.content,
           points: question.points,
+          options: question.options,
           correctAnswer: question.correctAnswer ?? undefined,
           rubric: question.rubric,
+          config: question.config,
         },
         studentAnswers.map(sa => ({ studentIndex: sa.studentIndex, answer: sa.answer }))
       )
 
       totalTokensUsed += tokensUsed
+
+      if (tokensUsed > 0) {
+        await logAiCall({
+          endpoint: '/api/tests/[id]/grade-all',
+          tokensUsed,
+          model,
+          questionType: question.type,
+          cached: false,
+          schoolId: user.schoolId ?? null,
+        })
+      }
 
       // Save results and accumulate scores
       for (const result of results) {
@@ -153,9 +167,8 @@ export async function POST(
       )
     )
 
-    // ── Consume credits + audit log ──
+    // ── Consume credits ──
     await consumeAiCredits(user.schoolId ?? null, totalTokensUsed)
-    await logAiCall({ endpoint: '/api/tests/[id]/grade-all', tokensUsed: totalTokensUsed, hasPersonalData: false })
 
     return NextResponse.json({
       success: true,

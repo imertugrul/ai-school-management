@@ -837,10 +837,28 @@ model AiLog {
   endpoint        String
   tokensUsed      Int      @default(0)
   hasPersonalData Boolean  @default(false)
+  model           String?
+  questionType    String?
+  cached          Boolean  @default(false)
+  schoolId        String?
   createdAt       DateTime @default(now())
 
   @@index([createdAt])
   @@index([endpoint])
+  @@index([schoolId])
+}
+
+// ─── Cached AI feedback for repeated wrong MCQ answers ───
+model QuestionFeedbackCache {
+  id          String   @id @default(cuid())
+  questionId  String
+  wrongAnswer String   @db.Text
+  feedback    String   @db.Text
+  model       String
+  createdAt   DateTime @default(now())
+
+  @@unique([questionId, wrongAnswer])
+  @@index([questionId])
 }
 
 model MediaLibraryItem {
