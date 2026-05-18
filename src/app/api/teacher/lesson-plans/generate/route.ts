@@ -20,14 +20,44 @@ const CURRICULUM_DESCRIPTIONS: Record<string, string> = {
   COMMON_CORE: 'US Common Core',
 }
 
-const SYSTEM_PROMPT = 'Sen deneyimli bir öğretmensin. Verilen bilgilere göre yapılandırılmış bir ders planı oluştur. Sadece geçerli JSON döndür — markdown veya açıklama yok.'
+const SYSTEM_PROMPT = 'Sen deneyimli bir öğretmensin. Yapılandırılmış ders planı oluştur. SADECE geçerli JSON döndür — açıklama, yorum, markdown veya kod bloğu ekleme.'
 
 function extractJson(text: string): any {
-  const cleaned = text.replace(/```(?:json)?/g, '').trim()
-  try { return JSON.parse(cleaned) } catch { /* fall through */ }
-  const match = cleaned.match(/\{[\s\S]*\}/)
-  if (match) { try { return JSON.parse(match[0]) } catch { /* ignore */ } }
+  // 1) ```json ... ``` veya ``` ... ``` blok
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  if (fenced?.[1]) {
+    try { return JSON.parse(fenced[1].trim()) } catch { /* fall through */ }
+  }
+
+  // 2) İlk { → son } dilim
+  const braceStart = text.indexOf('{')
+  const braceEnd = text.lastIndexOf('}')
+  if (braceStart !== -1 && braceEnd !== -1 && braceEnd > braceStart) {
+    const sliced = text.slice(braceStart, braceEnd + 1)
+    try { return JSON.parse(sliced) } catch { /* fall through */ }
+  }
+
+  // 3) Ham metni dene
+  try { return JSON.parse(text.trim()) } catch { /* fall through */ }
+
+  console.error('JSON parse failed. Raw response (first 2000 chars):', text.slice(0, 2000))
   return null
+}
+
+function fallbackPlanFromText(text: string, duration: number) {
+  return {
+    learningObjectives: [],
+    materialsNeeded: [],
+    slideOutline: [{
+      slide: 1,
+      title: 'AI yanıtı (ham metin)',
+      duration,
+      content: text.split('\n').filter(l => l.trim() !== '').slice(0, 40),
+      notes: 'AI yanıtı JSON olarak ayrıştırılamadı. Lütfen elle düzenleyin veya tekrar oluşturun.',
+    }],
+    activities: [],
+    assessment: { formative: [], summative: [], exitTicket: '' },
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -80,31 +110,36 @@ Sınıf seviyesi: ${course.grade || 'belirtilmedi'}
 Konu/odak: ${topicDescription}
 Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış ~${closureMin} dk)
 
-Şu yapıda JSON döndür:
+Beklentiler: 3-5 learning objective, 5-8 materyal, 5-8 slayt, 3-4 aktivite, 2-3 formative + 1-2 summative + 1 exitTicket.
+
+Tam olarak şu şemada JSON döndür:
 {
-  "learningObjectives": ["Students will be able to ...", ...],   // 3-5
-  "materialsNeeded": ["...", ...],                                // 5-8
+  "learningObjectives": ["Students will be able to ..."],
+  "materialsNeeded": ["..."],
   "slideOutline": [
     { "slide": 1, "title": "...", "duration": ${introMin}, "content": ["..."], "notes": "..." }
-  ],                                                              // 5-8 slayt
+  ],
   "activities": [
-    { "name": "...", "duration": 10, "description": "...", "grouping": "individual|pairs|groups|whole-class" }
-  ],                                                              // 3-4 aktivite
+    { "name": "...", "duration": 10, "description": "...", "grouping": "individual" }
+  ],
   "assessment": {
-    "formative": ["...", ...],                                    // 2-3
-    "summative": ["...", ...],                                    // 1-2
+    "formative": ["..."],
+    "summative": ["..."],
     "exitTicket": "..."
   }
-}`
+}
+
+SADECE geçerli JSON döndür. Başka hiçbir metin, açıklama veya kod bloğu ekleme. "grouping" değeri sadece şu olabilir: individual | pairs | groups | whole-class.`
 
     const response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 3000,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     })
 
     const tokensUsed = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
+    console.log(`[lesson-plans/generate] model=${MODEL} stop_reason=${response.stop_reason} input=${response.usage?.input_tokens} output=${response.usage?.output_tokens}`)
 
     const content = response.content[0]
     if (content.type !== 'text') {
@@ -112,11 +147,13 @@ Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış
       return NextResponse.json({ error: 'AI yanıtı geçersiz format döndürdü.' }, { status: 500 })
     }
 
-    const generatedPlan = extractJson(content.text)
-    if (!generatedPlan) {
-      console.error('Failed to parse AI response:', content.text.slice(0, 500))
-      await logAiCall({ endpoint: '/api/teacher/lesson-plans/generate', tokensUsed, model: MODEL, questionType: 'lesson_plan', schoolId: user.schoolId ?? null })
-      return NextResponse.json({ error: 'AI yanıtı ayrıştırılamadı. Lütfen tekrar deneyin.' }, { status: 500 })
+    const truncated = response.stop_reason === 'max_tokens'
+    const parsed = extractJson(content.text)
+    const generatedPlan = parsed ?? fallbackPlanFromText(content.text, duration)
+    const usedFallback = !parsed
+
+    if (usedFallback) {
+      console.warn(`[lesson-plans/generate] JSON parse failed (truncated=${truncated}). Fallback plan used.`)
     }
 
     // Defensive defaults so the UI never crashes
@@ -163,6 +200,8 @@ Süre: ${duration} dakika (giriş ~${introMin} dk, ana ~${mainMin} dk, kapanış
 
     return NextResponse.json({
       success: true,
+      usedFallback,
+      truncated,
       lessonPlan: {
         id: lessonPlan.id,
         ...safePlan,
