@@ -2,98 +2,67 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
+import { validateScheduleSlot } from '@/lib/scheduleValidation'
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session || !session.user) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! }
-    })
-
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
     if (!user || user.role !== 'TEACHER') {
       return NextResponse.json({ error: 'Teacher access required' }, { status: 403 })
     }
 
     const { courseId, dayOfWeek, startTime, endTime, room } = await request.json()
 
-    // Get course assignment to verify teacher owns this course
+    if (!courseId || dayOfWeek === undefined || dayOfWeek === null || !startTime || !endTime) {
+      return NextResponse.json({ error: 'courseId, dayOfWeek, startTime ve endTime zorunlu.' }, { status: 400 })
+    }
+
+    // Verify the teacher owns this course assignment
     const assignment = await prisma.courseAssignment.findFirst({
-      where: {
-        courseId,
-        teacherId: user.id
-      },
-      include: {
-        course: true,
-        class: true
-      }
+      where: { courseId, teacherId: user.id },
+      include: { course: true, class: true },
     })
-
     if (!assignment) {
-      return NextResponse.json({ 
-        error: 'You are not assigned to this course' 
-      }, { status: 403 })
+      return NextResponse.json({ error: 'Bu derse atanmamışsınız.' }, { status: 403 })
     }
 
-    // CONFLICT CHECK 1: Teacher cannot be in two places at same time
-    const teacherConflict = await prisma.schedule.findFirst({
-      where: {
+    const validationError = await validateScheduleSlot(
+      {
         teacherId: user.id,
-        dayOfWeek,
-        startTime
-      }
-    })
-
-    if (teacherConflict) {
-      return NextResponse.json({ 
-        error: `You already have a class at ${startTime} on this day` 
-      }, { status: 400 })
+        classId: assignment.classId,
+        dayOfWeek: Number(dayOfWeek),
+        startTime,
+        endTime,
+      },
+      user.schoolId ?? null,
+    )
+    if (validationError) {
+      const status = validationError.code === 'TEACHER_CONFLICT' || validationError.code === 'CLASS_CONFLICT' ? 409 : 400
+      return NextResponse.json({ error: validationError.message, code: validationError.code }, { status })
     }
 
-    // CONFLICT CHECK 2: Class cannot have two courses at same time
-    if (assignment.classId) {
-      const classConflict = await prisma.schedule.findFirst({
-        where: {
-          classId: assignment.classId,
-          dayOfWeek,
-          startTime
-        }
-      })
-
-      if (classConflict) {
-        return NextResponse.json({ 
-          error: `This class already has a course at ${startTime} on this day` 
-        }, { status: 400 })
-      }
-    }
-
-    // Create schedule entry
     const schedule = await prisma.schedule.create({
       data: {
         courseId,
         teacherId: user.id,
         classId: assignment.classId,
-        dayOfWeek,
+        dayOfWeek: Number(dayOfWeek),
         startTime,
         endTime,
-        room: room || null
+        room: room || null,
       },
-      include: {
-        course: true,
-        class: true
-      }
+      include: { course: true, class: true },
     })
 
     return NextResponse.json({ success: true, schedule })
 
   } catch (error: any) {
     console.error('Add schedule error:', error)
-    return NextResponse.json({ 
-      error: error.message || 'Failed to add schedule entry' 
-    }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Schedule eklenemedi.' }, { status: 500 })
   }
 }

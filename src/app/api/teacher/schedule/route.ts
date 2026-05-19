@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
+import { getSchoolHours } from '@/lib/scheduleValidation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,14 +20,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Teacher access required' }, { status: 403 })
     }
 
-    const schedules = await prisma.schedule.findMany({
-      where: { teacherId: user.id, isActive: true },
-      include: {
-        course: { select: { id: true, code: true, name: true } },
-        class:  { select: { id: true, name: true } }
-      },
-      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
-    })
+    const [schedules, schoolHours] = await Promise.all([
+      prisma.schedule.findMany({
+        where: { teacherId: user.id, isActive: true },
+        include: {
+          course: { select: { id: true, code: true, name: true } },
+          class:  { select: { id: true, name: true } }
+        },
+        orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
+      }),
+      getSchoolHours(user.schoolId ?? null),
+    ])
 
     const totalMinutes = schedules.reduce((sum, s) => {
       const [sh, sm] = s.startTime.split(':').map(Number)
@@ -37,6 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       schedules,
+      schoolHours,
       stats: {
         totalClasses: schedules.length,
         uniqueCourses: new Set(schedules.map(s => s.courseId)).size,

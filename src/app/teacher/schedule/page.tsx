@@ -49,10 +49,12 @@ export default function TeacherSchedulePage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remove this schedule entry?')) return
-    await fetch(`/api/teacher/schedule?id=${id}`, { method: 'DELETE' })
+    if (!confirm('Bu dersi programdan silmek istediğinize emin misiniz?')) return
+    await fetch(`/api/teacher/schedule/${id}`, { method: 'DELETE' })
     fetchSchedule()
   }
+
+  const handleEdit = (id: string) => router.push(`/teacher/schedule/add?id=${id}`)
 
   const getDaySchedule = (day: number) =>
     schedules.filter(s => s.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime))
@@ -188,13 +190,22 @@ export default function TeacherSchedulePage() {
                                   `/teacher/attendance?classId=${entry.class!.id}&date=${new Date().toISOString().split('T')[0]}`
                                 )}
                                 className="flex-1 text-xs py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
+                                title="Yoklama"
                               >
-                                Attendance
+                                Yoklama
                               </button>
                             )}
                             <button
+                              onClick={() => handleEdit(entry.id)}
+                              className="text-xs px-2 py-1.5 bg-gray-100 text-gray-500 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                              title="Düzenle"
+                            >
+                              ✏️
+                            </button>
+                            <button
                               onClick={() => handleDelete(entry.id)}
                               className="text-xs px-2 py-1.5 bg-gray-100 text-gray-400 rounded-lg hover:bg-red-100 hover:text-red-500 transition-colors"
+                              title="Sil"
                             >
                               ✕
                             </button>
